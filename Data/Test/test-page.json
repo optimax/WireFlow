@@ -1,0 +1,25 @@
+{
+  "$type": "WireFlow.DesignerCanvas, WireFlow.Core",
+  "Children": {
+    "$type": "System.Windows.Controls.UIElementCollection, PresentationFramework",
+    "$values": []
+  },
+  "LogicalOrientationPublic": 1,
+  "Language": "en-us",
+  "Name": "Background",
+  "LayoutTransform": "Identity",
+  "MaxWidth": "Infinity",
+  "MaxHeight": "Infinity",
+  "HorizontalAlignment": 3,
+  "VerticalAlignment": 3,
+  "IsInitialized": true,
+  "IsLoaded": true,
+  "IsMeasureValid": true,
+  "IsArrangeValid": true,
+  "IsInputMethodEnabled": true,
+  "Opacity": 1.0,
+  "Uid": "",
+  "IsEnabled": true,
+  "IsHitTestVisible": true,
+  "IsVisible": true
+}

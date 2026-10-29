@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.20706</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{12FC2B9B-4BDE-423B-A28D-972783F2D1D2}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>WireFlow</RootNamespace>
+    <AssemblyName>WireFlow.Designer</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Compile Include="Classes\CanvasEx.cs" />
+    <Compile Include="Classes\ConfigSettings.cs" />
+    <Compile Include="Classes\DesignerNavigator.cs" />
+    <Compile Include="Classes\DesignerNavigatorDocument.cs" />
+    <Compile Include="Classes\RecentFileList.cs" />
+    <Compile Include="DrawingTools\ButtonDrawingTool.cs" />
+    <Compile Include="DrawingTools\ImageDrawingTool.cs" />
+    <Compile Include="DrawingTools\DrawingTool.cs" />
+    <Compile Include="DrawingTools\EllipseDrawingTool.cs" />
+    <Compile Include="DrawingTools\IDrawingTool.cs" />
+    <Compile Include="DrawingTools\InteractiveDrawingTool.cs" />
+    <Compile Include="DrawingTools\ModeSelectionTool.cs" />
+    <Compile Include="DrawingTools\BoxDrawingTool.cs" />
+    <Compile Include="DrawingTools\RectangleDrawingTool.cs" />
+    <Compile Include="DrawingTools\TextDrawingTool.cs" />
+    <Compile Include="DrawingTools\PanDrawingTool.cs" />
+    <Compile Include="DrawingTools\NavigateDrawingTool.cs" />
+    <Compile Include="DrawingTools\SelectDrawingTool.cs" />
+    <Compile Include="DrawingTools\SeparatorDrawingTool.cs" />
+    <Compile Include="Classes\EditableListBox.cs" />
+    <Compile Include="Classes\Globals.cs" />
+    <Compile Include="Snippets\DynamicCanvas.cs" />
+    <Compile Include="Snippets\EnumerableFunctions.cs" />
+    <Compile Include="Classes\TextEditingAdorner.cs" />
+    <Compile Include="Classes\TreeViewExt.cs" />
+    <Compile Include="ViewModels\BaseDialogViewModel.cs" />
+    <Compile Include="ViewModels\BaseViewModel.cs" />
+    <Compile Include="ViewModels\SelectImageViewModel.cs" />
+    <Compile Include="Views\NewPageDlg.xaml.cs">
+      <DependentUpon>NewPageDlg.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\NewPartDlg.xaml.cs">
+      <DependentUpon>NewPartDlg.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SelectImageDlg.xaml.cs">
+      <DependentUpon>SelectImageDlg.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\NewPartDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\SelectImageDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Xaml\Cursors.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Classes\DesignerContextMenu.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Xaml\GlobalStyles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Xaml\GlobalTemplates.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Xaml\Logo.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Xaml\LogoShadow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\MainDesignerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Classes\RelayCommand.cs" />
+    <Compile Include="Views\MainDesignerWindow.xaml.cs">
+      <DependentUpon>MainDesignerWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Page Include="Views\NewPageDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="Classes\ResizingAdorner.cs" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Xceed.Wpf.AvalonDock">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.9.0\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.Toolkit">
+      <HintPath>..\packages\Extended.Wpf.Toolkit.2.9.0\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
+    <ProjectReference Include="..\WireFlow.Core\WireFlow.Core.csproj">
+      <Project>{be207cfb-77e4-41ae-acf6-af8bb4fa1c34}</Project>
+      <Name>WireFlow.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WireFlow.Repository.Folder\WireFlow.Repository.Folder.csproj">
+      <Project>{22653210-7114-4903-8b32-94b12173a00a}</Project>
+      <Name>WireFlow.Repository.Folder</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WireFlow.Types\WireFlow.Types.csproj">
+      <Project>{c3d3ceb2-9d26-45f6-8934-205df548ce5f}</Project>
+      <Name>WireFlow.Types</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Xceed.Wpf.AvalonDock.Themes.Metro\Xceed.Wpf.AvalonDock.Themes.Metro.csproj">
+      <Project>{89286eb4-b4a1-418c-839a-067b00f442d8}</Project>
+      <Name>Xceed.Wpf.AvalonDock.Themes.Metro</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="SplashScreen.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Views\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\pen-rectangle.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\pen-ellipse.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\pen-box.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\pen-image.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\navigate.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\navigate - Copy.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\pen-text.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Cursors\pan-hand.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\minus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\plus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\default-image.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

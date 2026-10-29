@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DesignerCanvas Background="#FF333333" Name="Background" Width="1024" Height="768" RenderTransform="{x:Null}" RenderTransformOrigin="0,0" xmlns="clr-namespace:WireFlow;assembly=WireFlow.Core" xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Layer Name="Layer1" Width="1024" Height="768" av:Canvas.Left="0" av:Canvas.Top="0">
+    <Grid Width="800" Height="120" ClipToBounds="True" av:Canvas.Left="100" av:Canvas.Top="230">
+      <av:Rectangle RadiusX="0" RadiusY="0" Fill="#44DD0000" Stroke="#FFFFFFFF" StrokeThickness="2" Width="800" Height="120" Opacity="1" />
+      <av:TextBlock Text="Ever wished you could find a reasonably-priced expert software development team that would treat your vision and goals as their own?" FontFamily="Impact" FontWeight="Normal" FontSize="30" Foreground="#FF999999" LineHeight="30" LineStackingStrategy="BlockLineHeight" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="1" />
+    </Grid>
+  </Layer>
+</DesignerCanvas>

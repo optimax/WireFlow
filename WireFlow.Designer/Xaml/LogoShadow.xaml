@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+<Canvas xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Name="WireflowLogo" Width="590" Height="435">
+    <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="path3343" Fill="#FF2C2C2C" Height="275" Canvas.Left="50" Stretch="Fill" Canvas.Top="80" Width="70">
+        <Path.Data>
+            <PathGeometry Figures="m 145.66682 436.83819 72.60482 0 0 -268.49592 -72.60482 0 z" FillRule="evenodd"/>
+        </Path.Data>
+    </Path>
+    <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="path3345" Fill="#FF2C2C2C" Height="275" Canvas.Left="250" Stretch="Fill" Canvas.Top="80" Width="70">
+        <Path.Data>
+            <PathGeometry Figures="m 332.41616 437.37078 72.60588 0 0 -268.49592 -72.60588 0 z" FillRule="evenodd"/>
+        </Path.Data>
+    </Path>
+    <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="path3347" Fill="#FF2C2C2C" Height="160" Canvas.Left="150" Stretch="Fill" Canvas.Top="179" Width="70">
+        <Path.Data>
+            <PathGeometry Figures="m 240.72796 436.83819 72.51614 0 0 -161.36339 -72.51614 0 z" FillRule="evenodd"/>
+        </Path.Data>
+    </Path>
+    <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="path3349" Fill="#FF2C2C2C" Height="70" Canvas.Left="350" Stretch="Fill" Canvas.Top="80" Width="190">
+        <Path.Data>
+            <PathGeometry Figures="m 430.05134 239.79357 0 -72.25011 193.14112 0 0 72.25011 z" FillRule="evenodd"/>
+        </Path.Data>
+    </Path>
+    <Path xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Name="path3351" Fill="#FF2C2C2C" Height="70" Canvas.Left="350" Stretch="Fill" Canvas.Top="194" Width="90">
+        <Path.Data>
+            <PathGeometry Figures="m 428.89871 343.64167 0 -72.24985 96.56936 0 0 72.24985 z" FillRule="evenodd"/>
+        </Path.Data>
+    </Path>
+</Canvas>
+
+</Grid>

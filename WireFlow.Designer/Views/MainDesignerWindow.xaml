@@ -1,0 +1,371 @@
+﻿<Window x:Class="WireFlow.MainDesignerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:tk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+    xmlns:system="clr-namespace:System;assembly=mscorlib"
+    xmlns:wireFlowCore="clr-namespace:WireFlow;assembly=WireFlow.Core"
+    xmlns:wireFlow="clr-namespace:WireFlow"
+    Background="{StaticResource NormalColorBrush}"
+    Title="{Binding DesignerTitle}"
+    Icon="logo.png"
+    Loaded="Window_Loaded"
+    Closing="Window_Closing" WindowStartupLocation="CenterScreen"
+    >
+    <Window.Resources>
+        <Style x:Key="TooBarPanelStyle" TargetType="{x:Type ToolBarPanel}">
+            <Setter Property="Background" Value="{StaticResource ToolbarPanelBackgroundBrush}"/>
+        </Style>
+    </Window.Resources>
+
+
+    <DockPanel Name="ClientPanel">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File" Style="{StaticResource MainMenuItemStyle}">
+                <MenuItem Header="_New..." Command="{Binding NewFileCmd}"/>
+                <MenuItem Header="_Open..." Command="{Binding OpenFileCmd}"/>
+                <MenuItem Header="_Save" Command="{Binding SaveFileCmd}"/>
+                <MenuItem Header="Save _As..." Command="{Binding SaveFileAsCmd}"/>
+                <MenuItem Header="Reload from File" Command="{Binding ReloadFromFileCmd}" InputGestureText="F5"/>
+                <MenuItem Header="_Close" Command="{Binding CloseFileCmd}"/>
+                <Separator/>
+                <MenuItem Header="Export Page As..." Command="{Binding ExportPageAsCmd}"/>
+                <wireFlow:RecentFileList x:Name="RecentFileList" />
+                <MenuItem Header="E_xit" Command="{Binding ExitCmd}"/>
+            </MenuItem>
+
+            <MenuItem Header="_Edit" Style="{StaticResource MainMenuItemStyle}">
+                <MenuItem Header="_Undo"/>
+                <MenuItem Header="_Redo"/>
+                <Separator/>
+                <MenuItem Header="Cut"/>
+                <MenuItem Header="Copy"/>
+                <MenuItem Header="Paste"/>
+                <Separator/>
+                <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
+            </MenuItem>
+            <MenuItem Header="Object" Style="{StaticResource MainMenuItemStyle}">
+                <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
+                <Separator/>
+                <MenuItem Header="Grouping">
+                    <MenuItem Header="Group" Command="{Binding GroupSelectedCmd}"/>
+                    <MenuItem Header="Ungroup" Command="{Binding UngroupSelectedCmd}"/>
+                </MenuItem>
+                <MenuItem Header="Ordering">
+                    <MenuItem Header="Bring to Front" Command="{Binding ObjectBringToFrontCmd}"/>
+                    <MenuItem Header="Send to Back" Command="{Binding ObjectSendToBackCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Bring Forward" Command="{Binding ObjectBringForwardCmd}"/>
+                    <MenuItem Header="Send Backward" Command="{Binding ObjectSendBackwardCmd}"/>
+                </MenuItem>
+                <MenuItem Header="Alignment">
+                    <MenuItem Header="Center in Page" Command="{Binding CenterInPageCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Center Vertically" Command="{Binding AlignCentersVerticallyCmd}"/>
+                    <MenuItem Header="Center Horizontally" Command="{Binding AlignCentersHorizontallyCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Align Top" Command="{Binding AlignTopsCmd}"/>
+                    <MenuItem Header="Align Bottom" Command="{Binding AlignBottomsCmd}"/>
+                    <MenuItem Header="Align Left" Command="{Binding AlignLeftsCmd}"/>
+                    <MenuItem Header="Align Right" Command="{Binding AlignRightsCmd}"/>
+                </MenuItem>
+                <MenuItem Header="Spacing">
+                    <MenuItem Header="Distribute Horizontally" Command="{Binding DistributeHorizontallyCmd}"/>
+                    <MenuItem Header="Distribute Vertically" Command="{Binding DistributeVerticallyCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Stack Horizontally" Command="{Binding StackHorizontallyCmd}"/>
+                    <MenuItem Header="Stack Vertically" Command="{Binding StackVerticallyCmd}"/>
+                </MenuItem>
+                <MenuItem Header="Sizing">
+                    <MenuItem Header="Make Same Width" Command="{Binding MakeSameWidthCmd}"/>
+                    <MenuItem Header="Make Same Height" Command="{Binding MakeSameHeightCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Make Same Size" Command="{Binding MakeSameSizeCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Exchange Width and Height" Command="{Binding ExchangeWidthAndHeightCmd}"/>
+                </MenuItem>
+                <MenuItem Header="Rotation">
+                    <MenuItem Header="Rotate 90&#186; Clockwise" Command="{Binding Rotate90DegClockwiseCmd}"/>
+                    <MenuItem Header="Rotate 90&#186; Anticlockwise" Command="{Binding Rotate90DegAnticlockwiseCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Rotate 180&#186;" Command="{Binding Rotate180DegCmd}" />
+                </MenuItem>
+            </MenuItem>
+
+            <MenuItem Header="_Debug" Style="{StaticResource MainMenuItemStyle}">
+                <MenuItem Header="Debugger Breakpoint!" Command="{Binding DebugBreakpointCmd}"/>
+                <Separator/>
+                <MenuItem Header="Refresh Outline" Command="{Binding DebugPopulateLayersCmd}"/>
+                <Separator/>
+                <MenuItem Header="Blank Designer Tab" Command="{Binding DebugBlankCanvasCmd}"/>
+
+            </MenuItem>
+
+            <MenuItem Header="_Help" Style="{StaticResource MainMenuItemStyle}">
+                <MenuItem Header="View Help" Command="{Binding DebugGenerateWPFColorChartCmd}"/>
+                <MenuItem Header="WPF Color Chart" Command="{Binding DebugGenerateWPFColorChartCmd}"/>
+                <Separator/>
+                <MenuItem Header="About"/>
+
+            </MenuItem>
+        </Menu>
+
+        <ToolBarTray DockPanel.Dock="Top" Background="#444444" >
+            <ToolBar Name="ButtonBar" Visibility="Hidden">
+                <RadioButton Name="btnNone" Margin="3" Content="None" Style="{StaticResource {x:Type ToggleButton}}" IsChecked="True" Focusable="False"/>
+                <RadioButton Name="btnRectangle" Margin="3" Content="Rectangle" Style="{StaticResource {x:Type ToggleButton}}" Focusable="False"/>
+                <RadioButton Name="btnEllipse" Margin="3" Content="Ellipse" Style="{StaticResource {x:Type ToggleButton}}" Focusable="False"/>
+            </ToolBar>
+        </ToolBarTray>
+
+        <StatusBar DockPanel.Dock="Bottom" Height="22" Background="#444"></StatusBar>
+
+
+        <xcad:DockingManager
+            Name="DockingManager"
+            AllowMixedOrientation="True"
+            BorderThickness="0"
+            Background="Transparent"
+            >
+
+            <xcad:DockingManager.DocumentHeaderTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding IconSource}" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding Title}"  Margin="0,0,5,0" FontSize="15" Foreground="{StaticResource LightLightColorBrush}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </xcad:DockingManager.DocumentHeaderTemplate>
+
+
+            <xcad:LayoutRoot x:Name="LayoutRoot">
+
+                <xcad:LayoutPanel Orientation="Horizontal">
+
+                    <xcad:LayoutAnchorablePaneGroup DockWidth="300"  x:Name="LeftPane" Orientation="Vertical">
+
+
+                        <xcad:LayoutAnchorablePane DockHeight="*">
+                            <xcad:LayoutAnchorable ContentId="tools" Title="Tools" CanHide="False" CanClose="False">
+                                <Grid>
+                                    <ListBox Name="Tools" Padding="3" BorderThickness="0" SelectedItem="{Binding Path=SelectedDrawingTool,Mode=OneWay}" SelectedIndex="{Binding SelectedToolIndex}"
+                                        ItemsSource="{Binding DrawingTools}">
+                                        <ListBox.Resources>
+                                            <DataTemplate DataType="{x:Type wireFlow:DrawingTool}">
+                                                <Grid Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                    <TextBlock Text="{Binding Title}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.Resources>
+                                    </ListBox>
+                                </Grid>
+                            </xcad:LayoutAnchorable>
+
+                            <xcad:LayoutAnchorable Title="History" ContentId="layouts" CanHide="False" CanClose="False">
+                                <DockPanel>
+                                    <ListBox BorderThickness="0"
+
+                                             ItemTemplate="{StaticResource ListOfNamesDataTemplate}">
+                                    </ListBox>
+                                </DockPanel>
+                            </xcad:LayoutAnchorable>
+
+                        </xcad:LayoutAnchorablePane>
+
+                        <xcad:LayoutAnchorablePane DockHeight="2*">
+                            <xcad:LayoutAnchorable Title="Pages" ContentId="pages" CanHide="False" CanClose="False">
+
+
+                                <DockPanel>
+                                    <ToolBarPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                                Margin="1,0,2,0" ToolTip="Add New Page" Command="{Binding NewPageCmd}">
+                                            <Image Source="/Images/plus.png" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                                Margin="1,0,2,0" ToolTip="Delete Page" Command="{Binding DeletePageCmd}">
+                                            <Image Source="/Images/minus.png" Width="14" Height="14"/>
+                                        </Button>
+                                    </ToolBarPanel>
+
+
+                                    <wireFlow:EditableListBox x:Name="ListBoxPages" BorderThickness="0" Padding="0"
+                                         ItemsSource="{Binding Pages}" SelectedItem="{Binding CurrentPageName}" MouseDoubleClick="ListBoxPages_MouseDoubleClick"
+                                         ItemTemplate="{StaticResource ListOfNamesDataTemplate}" SelectionChanged="ListBoxPages_SelectionChanged"
+                                         PreviewMouseLeftButtonDown="ListBoxPages_PreviewMouseLeftButtonDown" >
+                                        <ListBox.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Rename" Command="{Binding PagesRenamePageCmd}"/>
+                                            </ContextMenu>
+                                        </ListBox.ContextMenu>
+                                    </wireFlow:EditableListBox>
+
+                                </DockPanel>
+
+
+
+                            </xcad:LayoutAnchorable>
+
+                            <xcad:LayoutAnchorable Title="Layouts" ContentId="layouts" CanHide="False" CanClose="False">
+                                <DockPanel>
+                                    <ToolBarPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                                Command="{Binding NewLayoutCmd}"
+                                                Margin="1,0,2,0" ToolTip="Add New Layout">
+                                            <Image Source="/Images/plus.png" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                                Command="{Binding DeleteLayoutCmd}"
+                                                Margin="1,0,2,0" ToolTip="Delete Layout">
+                                            <Image Source="/Images/minus.png" Width="14" Height="14"/>
+                                        </Button>
+                                    </ToolBarPanel>
+                                    <ListBox Name="ListBoxLayouts" BorderThickness="0"
+                                             ItemsSource="{Binding Layouts}"
+                                             SelectedItem="{Binding CurrentLayoutName}"
+                                             ItemTemplate="{StaticResource ListOfNamesDataTemplate}"
+                                             MouseDoubleClick="ListBoxLayouts_MouseDoubleClick">
+                                    </ListBox>
+                                </DockPanel>
+                            </xcad:LayoutAnchorable>
+
+
+                            <xcad:LayoutAnchorable Title="Parts" ContentId="parts" CanHide="False" CanClose="False">
+                                <DockPanel>
+                                    <ToolBarPanel DockPanel.Dock="Top" Background="#444444" Orientation="Horizontal">
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                                ToolTip="Add New Part" Command="{Binding NewPartCmd}">
+                                            <Image Source="/Images/plus.png" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                                ToolTip="Delete Part" Command="{Binding DeletePartCmd}">
+                                            <Image Source="/Images/minus.png" Width="14" Height="14"/>
+                                        </Button>
+                                    </ToolBarPanel>
+                                    <ListBox  Name="ListBoxParts" Padding="3" BorderThickness="0"
+                                          ItemsSource="{Binding Parts}"
+                                              SelectedItem="{Binding CurrentPartName}"
+                                          ItemTemplate="{StaticResource ListOfNamesDataTemplate}"
+                                          MouseDoubleClick="ListBoxParts_MouseDoubleClick">
+                                    </ListBox>
+                                </DockPanel>
+                            </xcad:LayoutAnchorable>
+
+
+                            <xcad:LayoutAnchorable Title="Images" ContentId="images" CanHide="False" CanClose="False">
+                                <DockPanel>
+                                    <ToolBarPanel DockPanel.Dock="Top" Background="{StaticResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                                ToolTip="Add Image to Project" Command="{Binding ImportImageCmd}">
+                                            <Image Source="/Images/plus.png" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                                ToolTip="Delete Image from Project" Command="{Binding DeleteImageCmd}">
+                                            <Image Source="/Images/minus.png" Width="14" Height="14"/>
+                                        </Button>
+                                    </ToolBarPanel>
+                                    <ListBox Name="ListBoxImages" BorderThickness="0"
+                                             ItemsSource="{Binding Images}" SelectionMode="Extended"
+                                               SelectedItem="{Binding CurrentImageName}"
+                                          ItemTemplate="{StaticResource ListOfNamesDataTemplate}">
+                                    </ListBox>
+                                </DockPanel>
+
+                            </xcad:LayoutAnchorable>
+
+                        </xcad:LayoutAnchorablePane>
+
+                    </xcad:LayoutAnchorablePaneGroup>
+
+
+
+
+                    <xcad:LayoutDocumentPaneGroup>
+                        <xcad:LayoutDocumentPane x:Name="DocumentPane" ShowHeader="True" PropertyChanged="DocumentPane_PropertyChanged">
+                            <!-- Designer Documents Inserted Here at Runtime -->
+                        </xcad:LayoutDocumentPane>
+                    </xcad:LayoutDocumentPaneGroup>
+
+
+
+                    <xcad:LayoutAnchorablePaneGroup DockWidth="300" x:Name="RightPane" Orientation="Vertical">
+                        <xcad:LayoutAnchorablePane>
+                            <xcad:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="False" CanClose="False">
+
+                                <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged">
+                                    <TreeView.Resources>
+                                        <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                            <Setter Property="IsExpanded" Value="True" />
+                                            <EventSetter Event="RequestBringIntoView" Handler="TreeViewItem_RequestBringIntoView"/>
+                                            <EventSetter Event="Selected" Handler="TreeViewItem_Selected"/>
+                                        </Style>
+
+                                        <HierarchicalDataTemplate DataType="{x:Type wireFlowCore:UICanvasProxy}" ItemsSource="{Binding Elements}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
+                                                <TextBlock>
+                                                    <Run Text="{Binding Path=Type,Mode=OneWay}"/>
+                                                    <Run Text=":"/>
+                                                    <Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
+                                                </TextBlock>
+                                                <TextBlock Foreground="Gray">
+                                                    <Run Text=" ["/><Run Text="{Binding Path=Elements.Count,Mode=OneWay}"/><Run Text="]"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+
+                                        <HierarchicalDataTemplate DataType="{x:Type wireFlowCore:UIElementProxy}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
+                                                <TextBlock>
+                                                    <Run Text="{Binding Path=Type,Mode=OneWay}"/><Run Text=": "/><Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+
+                                    </TreeView.Resources>
+
+                                </TreeView>
+
+                            </xcad:LayoutAnchorable>
+                        </xcad:LayoutAnchorablePane>
+                        <xcad:LayoutAnchorablePane>
+                            <xcad:LayoutAnchorable ContentId="properties" Title="Properties" CanHide="False" CanClose="False" AutoHideWidth="240" >
+                                <tk:PropertyGrid
+                                    Name="PropertyGrid"
+                                    NameColumnWidth="160"
+                                    AutoGenerateProperties="True"
+                                    BorderThickness="0"
+                                    SelectedObject="{Binding CurrentElement}"
+                                    Background="#333"
+                                    Foreground="LightGray"
+                                    FilterWatermark="Filter Properties"
+                                    ShowAdvancedOptions="False">
+                                    <tk:PropertyGrid.Resources>
+                                        <Style TargetType="{x:Type GroupItem}">
+                                            <Setter Property="Background" Value="{StaticResource DarkDarkDarkBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource LightColorBrush}"/>
+                                        </Style>
+                                    </tk:PropertyGrid.Resources>
+                                    <tk:PropertyGrid.PropertyContainerStyle>
+                                        <Style TargetType="{x:Type tk:PropertyItemBase}">
+                                            <Setter Property="Background" Value="{StaticResource ListBackgroundBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
+                                        </Style>
+                                    </tk:PropertyGrid.PropertyContainerStyle>
+
+                                </tk:PropertyGrid>
+                            </xcad:LayoutAnchorable>
+                        </xcad:LayoutAnchorablePane>
+
+                    </xcad:LayoutAnchorablePaneGroup>
+                </xcad:LayoutPanel>
+
+            </xcad:LayoutRoot>
+        </xcad:DockingManager>
+
+
+
+    </DockPanel>
+
+</Window>

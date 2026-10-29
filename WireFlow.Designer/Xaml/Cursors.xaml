@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FrameworkElement x:Key="PenRectangleCursor" Cursor="/Cursors/pen-rectangle.cur"/>
+    <FrameworkElement x:Key="PenEllipseCursor" Cursor="/Cursors/pen-ellipse.cur"/>
+    <FrameworkElement x:Key="PenImageCursor" Cursor="/Cursors/pen-image.cur"/>
+    <FrameworkElement x:Key="PenBoxCursor" Cursor="/Cursors/pen-box.cur"/>
+    <FrameworkElement x:Key="PenTextCursor" Cursor="/Cursors/pen-text.cur"/>
+    <FrameworkElement x:Key="NavigateCursor" Cursor="/Cursors/navigate.cur"/>
+    <FrameworkElement x:Key="PanHandCursor" Cursor="/Cursors/pan-hand.cur"/>
+</ResourceDictionary>
