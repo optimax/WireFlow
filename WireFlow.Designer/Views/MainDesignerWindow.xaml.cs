@@ -221,7 +221,8 @@ namespace WireFlow
                 if (selectedToolIndex == value)
                     return;
                 selectedToolIndex = value;
-                if (CurrentDesigner != null)
+                // The ListBox reports -1 when its selection is cleared; keep the designer's current tool then.
+                if (CurrentDesigner != null && selectedToolIndex >= 0 && selectedToolIndex < Tools.Items.Count)
                     CurrentDesigner.SelectedDrawingTool = Tools.Items[selectedToolIndex] as IDrawingTool;
                 OnPropertyChanged(nameof(SelectedToolIndex));
             }
