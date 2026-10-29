@@ -229,7 +229,7 @@ namespace WireFlow
 
 
         public IDrawingTool DefaultDrawingTool { get; set; }
-        public IDrawingTool SelectedDrawingTool => CurrentDesigner.SelectedDrawingTool;
+        public IDrawingTool SelectedDrawingTool => CurrentDesigner?.SelectedDrawingTool;
         public Canvas CurrentCanvas => CurrentDesigner?.Designer?.Canvas;
 
         public FrameworkElement CurrentElement
