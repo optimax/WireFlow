@@ -1,0 +1,29 @@
+{
+  "Master": "",
+  "Width": "NaN",
+  "Height": "NaN",
+  "Layers": [
+    {
+      "Elements": [
+        {
+          "$type": "WireFlow.FlowElement, WireFlow.Types",
+          "Stroke": "#FF000000",
+          "StrokeThickness": 3.0,
+          "Color": "Black",
+          "Font": "Segoe UI",
+          "FontSize": 12.0,
+          "FontWeight": 400,
+          "LineHeight": "NaN",
+          "VerticalAlignment": 3,
+          "HorizontalAlignment": 3,
+          "Width": 900.0,
+          "Height": 41.0,
+          "Fill": "#FFDEDEDE",
+          "Type": "rect"
+        }
+      ],
+      "Name": "Layer1"
+    }
+  ],
+  "Name": "Main"
+}
