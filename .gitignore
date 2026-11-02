@@ -4,3 +4,4 @@ bin
 *.bak
 pages.archive
 project.archive
+packages/
