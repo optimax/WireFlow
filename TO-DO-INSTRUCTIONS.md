@@ -30,5 +30,9 @@ After completing each task, build the solution in Release mode to make the execu
 
 Proceed until the end, or until you encounter the line `# END-OF-TO-DO`, or `# STOP` whichever comes first. Do NOT work on TO-DO items beyond one of these markers.
 
+**NOTE: Run Autonomously**
+
+Do not stop for questions. Make reasonable assumptions and raise any questions via TO-DO file, while you proceed under the assumptions you make on your own.
+
 ---
 
