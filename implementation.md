@@ -26,6 +26,10 @@ Shared projects:
 - NuGet packages are `PackageReference` items restored to the NuGet global packages folder. The `packages/` folder at the root is left over from `packages.config` and is not used by the build.
 - Each project declares its assembly identity in `Properties\AssemblyInfo.cs`. `Directory.Build.props` turns off the SDK-generated copies of those attributes, so the SDK only adds the ones the files lack, such as `SupportedOSPlatform`.
 
+## Application icons
+
+`WireFlow.Designer\Designer.ico` (white WF mark on a red tile, as in `Documents\logo.png`) and `Browser\Browser.ico` (red WF mark on a charcoal tile with a gray rim, after the Browser's MetroDark theme) are the projects' `ApplicationIcon`s. `Documents\make-icons.ps1` draws them on a whole-pixel grid at 16–256 px; change the script and run it again rather than editing the `.ico` files. The Designer's main window sets its own title-bar icon, `Views\logo.png`; the Browser's windows use the application icon.
+
 ## Publishing
 
 `publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published.
@@ -40,7 +44,7 @@ WireFlow itself is copyright Optimax Corporation.
 | Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 2.9.0 | MS-PL | Designer, Metro theme |
 | Infragistics.Themes.MetroDark.Wpf (also supplies `WPFToolkit.dll` and the `System.Windows.Controls.*.Toolkit` DLLs) | 1.0.0 | Not declared in the package | Browser |
 
-Extended.Wpf.Toolkit is pinned to 2.9.0 on purpose. Version 5.1.2 is under the Xceed Community License: non-commercial use by fewer than 10 users only. Check the license of any version above 2.9.0 before upgrading.
+Extended.Wpf.Toolkit is pinned to 2.9.0 on purpose. Versions 3.7.0–3.8.1 and 4.0.0 onwards, 5.1.2 included, are under the Xceed Community License: non-commercial use by fewer than 10 users only. The last MS-PL version is 3.8.2, published as 3.8.1 under MS-PL; like 2.9.0, it ships only `lib/net40` DLLs. Upgrading to it also means refreshing the `Xceed.Wpf.AvalonDock.Themes.Metro` source from 3.8.2.
 
 ## Project file format
 
@@ -61,4 +65,5 @@ JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element list
 - **`DesignerPanel` lives in Core, but the `DesignerBackgroundBrush` resource exists only in the Designer.** It uses `TryFindResource` so the Browser can host it.
 - **The Designer's Outline view is a snapshot.** `MainDesignerWindow.PopulateOutlineTree` rebuilds it on navigation, on a tab switch, and when the current `DesignerNavigator` raises `ElementsChanged`. A new `DesignerNavigator` operation that adds, removes or reorders elements must call `OnElementsChanged()`, or the Outline goes stale.
 - **A WPF `ListBox` reports a cleared selection as `SelectedIndex` -1.** Code that indexes `Items` with it must check the range.
+- **.NET Framework's `System.Drawing.Icon` skips PNG-compressed icon images,** such as the 256 px images of the application icons, so Windows PowerShell cannot load them that way. Check a built exe with the shell's `PrivateExtractIcons` instead.
 - **Old sample pages without `$type` tags** (the drafts in `Data/OPTIMAX.zip`) cannot be deserialized into the abstract `FlowElementBase`.

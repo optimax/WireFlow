@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>WireFlow</RootNamespace>
     <AssemblyName>WireFlow.Browser</AssemblyName>
+    <ApplicationIcon>Browser.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
