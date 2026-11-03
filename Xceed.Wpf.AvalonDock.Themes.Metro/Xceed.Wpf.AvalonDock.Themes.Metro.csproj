@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <!-- The package also ships an Xceed.Wpf.AvalonDock.Themes.Metro.dll, which has the same name as this project: take only AvalonDock itself. -->
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="2.9.0" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" NoWarn="NU1701" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="3.8.2" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" NoWarn="NU1701" />
     <Reference Include="Xceed.Wpf.AvalonDock">
       <HintPath>$(PkgExtended_Wpf_Toolkit)\lib\net40\Xceed.Wpf.AvalonDock.dll</HintPath>
     </Reference>
