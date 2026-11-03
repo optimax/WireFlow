@@ -2,43 +2,38 @@
 
 ## Current objective
 
-The solution has been converted from .NET Framework 4.8 to .NET 10 (`net10.0-windows`, WPF). Two questions on that TO-DO item are open in `TO-DO.md`: upgrading Newtonsoft.Json, and the missing `publish-locally.bat`.
+The solution runs on .NET 10 (`net10.0-windows`, WPF), with Newtonsoft.Json 13.0.4 and a `publish-locally.bat` that publishes the Designer. The next TO-DO item is "Outline Sync".
 
 ## Work completed
 
 - All 7 projects are SDK-style, targeting `net10.0-windows`. They keep their assembly names, root namespaces, `Properties\AssemblyInfo.cs` files and WPF `Resource` items.
-- `packages.config` files are replaced by `PackageReference`. The package versions are unchanged: Newtonsoft.Json 8.0.3, Extended.Wpf.Toolkit 2.9.0, Infragistics.Themes.MetroDark.Wpf 1.0.0.
+- NuGet packages are `PackageReference` items: Newtonsoft.Json 13.0.4, Extended.Wpf.Toolkit 2.9.0, Infragistics.Themes.MetroDark.Wpf 1.0.0.
 - The Designer and the Metro theme project take only the Xceed DLLs they use from Extended.Wpf.Toolkit (see "Known traps" in `implementation.md`).
-- The Metro theme project is signed through `SignAssembly` / `AssemblyOriginatorKeyFile` instead of an `AssemblyKeyFile` attribute, whose `..\..\sn.snk` path only worked from the old `obj\Debug` folder.
-- `Directory.Build.props` stops the SDK from generating the attributes the `AssemblyInfo.cs` files already declare. The SDK still adds `SupportedOSPlatform`, which keeps analyzer CA1416 quiet about the registry calls in `RecentFileList`.
-- The unused `WPFToolkit` reference in `WireFlow.Types` was dropped.
-- `App.config` / `app.config` (which only held the .NET Framework `supportedRuntime`) and the `packages.config` files were deleted.
-- The root `implementation.md` was created.
+- The Metro theme project is signed through `SignAssembly` / `AssemblyOriginatorKeyFile`.
+- `Directory.Build.props` stops the SDK from generating the attributes the `AssemblyInfo.cs` files already declare.
+- `publish-locally.bat` publishes the 64-bit Designer, built in Release mode, framework-dependent, to `c:\Programs\Optimax\WireFlow`.
 
 ## Files changed
 
-- `Browser/WireFlow.Browser.csproj`, `WireFlow.Core/WireFlow.Core.csproj`, `WireFlow.Designer/WireFlow.Designer.csproj`, `WireFlow.Repository.Archive/WireFlow.Repository.Archive.csproj`, `WireFlow.Repository.Folder/WireFlow.Repository.Folder.csproj`, `WireFlow.Types/WireFlow.Types.csproj`, `Xceed.Wpf.AvalonDock.Themes.Metro/Xceed.Wpf.AvalonDock.Themes.Metro.csproj` — rewritten as SDK-style.
+- All 7 `*.csproj` files — SDK-style. Newtonsoft.Json 13.0.4 in `WireFlow.Repository.Folder` and `WireFlow.Designer`.
 - `Xceed.Wpf.AvalonDock.Themes.Metro/Properties/AssemblyInfo.cs` — signing attributes removed.
-- `Directory.Build.props`, `implementation.md`, `HANDOFF.md` — new.
-- `Browser/App.config`, `WireFlow.Designer/app.config`, `Browser/packages.config`, `WireFlow.Designer/packages.config`, `WireFlow.Repository.Folder/packages.config` — deleted.
-- `TO-DO.md` — task status and questions.
+- `Directory.Build.props`, `publish-locally.bat`, `implementation.md`, `HANDOFF.md` — new.
+- `Browser/App.config`, `WireFlow.Designer/app.config`, the three `packages.config` files — deleted.
 
 ## Build result
 
-- Debug and Release: 0 errors, 8 warnings. All the warnings are NU1701 for Newtonsoft.Json 8.0.3 (NuGet falls back to its .NET Framework DLL).
-- A restore that can reach nuget.org also reports NU1903, a known high-severity vulnerability in Newtonsoft.Json 8.0.3 (GHSA-5crp-9r3c-p9vr).
+Debug: 0 errors. The only warnings were MSB3026 copy retries caused by file locks while Visual Studio had the solution open; the retries succeeded.
 
 ## Test result
 
-- The Browser and the Designer (Debug) start and stay running. The Designer's main window loads its AvalonDock layout and the Metro theme.
-- A script loaded a copy of `Data/WIREFLOW` through `FlatFolderRepository` on .NET 10. The project and its `Main` page loaded, and saving the page again produced a byte-identical file.
+- The Browser and the Designer start and stay running. The Designer's main window loads its AvalonDock layout and the Metro theme.
+- A script loaded a copy of `Data/WIREFLOW` through `FlatFolderRepository` with Newtonsoft.Json 13.0.4. The project and its `Main` page loaded, and saving produced byte-identical files.
 - Not tested: interactive use. That includes drawing, docking, the property grid, opening a project in the Browser, and following links.
 
 ## Unresolved problems
 
-- Newtonsoft.Json 8.0.3: the fallback DLL and the vulnerability (question 1 in `TO-DO.md`).
-- `publish-locally.bat`, required by `TO-DO-INSTRUCTIONS.md`, does not exist (question 2 in `TO-DO.md`).
-- `packages/` is in `.gitignore`, but 43 files in it are still tracked. The build no longer uses that folder.
+- There is no third-party notices file. `AGENTS.md` asks for one to be updated with the exact license texts whenever a package changes, and the Newtonsoft.Json package ships its `LICENSE.md`.
+- `packages/` is in `.gitignore`, but files in it are still tracked. The build does not use that folder.
 
 ## Known regressions
 
@@ -46,4 +41,4 @@ None found.
 
 ## Recommended next step
 
-Open the solution in Visual Studio (reload the projects when prompted), and exercise the Designer and the Browser interactively. Then answer the two questions in `TO-DO.md`.
+The "Outline Sync" TO-DO item: a new element, such as a rectangle, does not appear in the Outline view.

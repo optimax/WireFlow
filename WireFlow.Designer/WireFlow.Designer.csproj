@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="8.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- Xceed.Wpf.AvalonDock.Themes.Metro comes from the project in this solution, so take only these two DLLs from the package. -->
     <PackageReference Include="Extended.Wpf.Toolkit" Version="2.9.0" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" NoWarn="NU1701" />
     <Reference Include="Xceed.Wpf.AvalonDock">

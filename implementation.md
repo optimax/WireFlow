@@ -26,13 +26,17 @@ Shared projects:
 - NuGet packages are `PackageReference` items restored to the NuGet global packages folder. The `packages/` folder at the root is left over from `packages.config` and is not used by the build.
 - Each project declares its assembly identity in `Properties\AssemblyInfo.cs`. `Directory.Build.props` turns off the SDK-generated copies of those attributes, so the SDK only adds the ones the files lack, such as `SupportedOSPlatform`.
 
+## Publishing
+
+`publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published.
+
 ## Third-party components and licensing
 
 WireFlow itself is copyright Optimax Corporation.
 
 | Component | Version | License | Used by |
 |---|---|---|---|
-| Newtonsoft.Json | 8.0.3 | MIT | Repository.Folder, Designer |
+| Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer |
 | Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 2.9.0 | MS-PL | Designer, Metro theme |
 | Infragistics.Themes.MetroDark.Wpf (also supplies `WPFToolkit.dll` and the `System.Windows.Controls.*.Toolkit` DLLs) | 1.0.0 | Not declared in the package | Browser |
 
@@ -51,8 +55,7 @@ JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element list
 ## Known traps
 
 - **Two `Xceed.Wpf.AvalonDock.Themes.Metro.dll`.** The Extended.Wpf.Toolkit package ships its own Metro theme DLL with the same assembly name as the project in this solution. The Designer and the Metro theme project therefore reference the package with `ExcludeAssets="all"` and `GeneratePathProperty="true"`, and take only the DLLs they use through `$(PkgExtended_Wpf_Toolkit)`. A NuGet "update" that re-adds every DLL of the package brings the clash back.
-- **Newtonsoft.Json 8.0.3 has no .NET Core build.** NuGet falls back to its `lib/net45` DLL (warning NU1701), which works on .NET 10. With nuget.org reachable, restore also reports the known vulnerability GHSA-5crp-9r3c-p9vr (warning NU1903).
-- **Single-file `dotnet run app.cs` scripts default to `PublishAot=true`,** which disables dynamic code. Newtonsoft.Json 8.0.3 then throws `PlatformNotSupportedException` while deserializing. Add `#:property PublishAot=false` to scripts that load WireFlow documents.
+- **Single-file `dotnet run app.cs` scripts default to `PublishAot=true`,** which disables dynamic code generation, unlike the apps. Add `#:property PublishAot=false` to scripts that load WireFlow documents, so that Newtonsoft.Json runs as it does in the apps.
 - **Visual Studio's design-time builds share `obj/` with command-line builds.** A command-line build while the solution is open in Visual Studio can fail with CS2001 (a missing `*.g.cs`); building again succeeds.
 - **Line endings.** The repository has `core.autocrlf=true` and no `.gitattributes`: the index holds LF, the working tree CRLF. Git Bash `sed -i` rewrites a CRLF file as LF; run `unix2dos` on it afterwards.
 - **`DesignerPanel` lives in Core, but the `DesignerBackgroundBrush` resource exists only in the Designer.** It uses `TryFindResource` so the Browser can host it.
