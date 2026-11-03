@@ -186,6 +186,7 @@ namespace WireFlow
         public event PropertyChangedEventHandler PropertyChanged;
         public event Action<DesignerNavigator, string> PageNameChanged;
         public event Action<DesignerNavigator, FrameworkElement> SelectionChanged;
+        public event Action<DesignerNavigator> ElementsChanged;
 
         public event Action<DesignerNavigator, string> Navigating;
         //public event Action<DesignerNavigator, string> NavigationFailed;
@@ -214,6 +215,15 @@ namespace WireFlow
         protected virtual void OnSelectionChanged(FrameworkElement element)
         {
             SelectionChanged?.Invoke(this,element);
+        }
+
+
+        /// <summary>
+        /// Raised after elements are added to, removed from, or reordered within the page's element tree.
+        /// </summary>
+        protected virtual void OnElementsChanged()
+        {
+            ElementsChanged?.Invoke(this);
         }
 
 
@@ -1117,6 +1127,7 @@ namespace WireFlow
             SelectElement(element);
 
             IsModified = true;
+            OnElementsChanged();
         }
 
 
@@ -1155,6 +1166,7 @@ namespace WireFlow
 
             SelectElement(shape);
             IsModified = true;
+            OnElementsChanged();
         }
 
 
@@ -1184,6 +1196,7 @@ namespace WireFlow
             RebuildSelection();
 
             IsModified = true;
+            OnElementsChanged();
         }
 
 
@@ -1204,6 +1217,7 @@ namespace WireFlow
             CurrentElement = CurrentCanvas;
 
             IsModified = true;
+            OnElementsChanged();
         }
 
 
@@ -1260,6 +1274,7 @@ namespace WireFlow
             SelectElement(group);
 
             IsModified = true;
+            OnElementsChanged();
         }
 
 
@@ -1318,6 +1333,7 @@ namespace WireFlow
             }
 
             IsModified = true;
+            OnElementsChanged();
         }
 
 
@@ -1918,6 +1934,7 @@ namespace WireFlow
                     }
                 }
             });
+            OnElementsChanged();
             //if (!HasElementsSelected)
             //    return;
             //foreach (UIElement e in selectedElements)
@@ -1956,6 +1973,7 @@ namespace WireFlow
                     }
                 }
             });
+            OnElementsChanged();
             //if (!HasElementsSelected)
             //    return;
             //foreach (FrameworkElement e in selectedElements)
@@ -1991,6 +2009,7 @@ namespace WireFlow
                     parent.Children.Insert(0, e);
                 }
             });
+            OnElementsChanged();
             //if (!HasElementsSelected)
             //    return;
             //foreach (FrameworkElement e in selectedElements)
@@ -2024,6 +2043,7 @@ namespace WireFlow
                 }
 
             });
+            OnElementsChanged();
             //if (!HasElementsSelected)
             //    return;
             //foreach (FrameworkElement e in selectedElements)

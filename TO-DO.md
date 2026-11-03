@@ -22,8 +22,10 @@ Question 2: `TO-DO-INSTRUCTIONS.md` says to run `publish-locally.bat` after each
 
 A: Create one. It should publish 64-bit WireFlow Designer to `c:\Programs\Optimax\WireFlow` in Release mode.
 
-## Outline Sync
+## [DONE] Outline Sync
 
 Adding a new element to a page, for example a rectangle, is not reflected in the Outline view.
+
+Done: the Outline is rebuilt after an element is created, duplicated, deleted, grouped, ungrouped or moved in the z-order. The build succeeds and the Designer starts; drawing a shape and watching the Outline was not tested interactively. See `HANDOFF.md`.
 
 # END-OF-TO-DO

@@ -527,6 +527,14 @@ namespace WireFlow
         }
 
 
+        private void NavigatorElementsChangedHandler(DesignerNavigator sender)
+        {
+            // The outline shows only the current designer's elements
+            if (sender == CurrentDesigner)
+                PopulateOutlineTree();
+        }
+
+
         #endregion
 
 
@@ -903,6 +911,7 @@ namespace WireFlow
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
+            navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
             navigator.SelectedDrawingTool = DefaultDrawingTool;
@@ -932,6 +941,7 @@ namespace WireFlow
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
+            navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
             navigator.SelectedDrawingTool = DefaultDrawingTool;
@@ -956,6 +966,7 @@ namespace WireFlow
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
+            navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
             navigator.SelectedDrawingTool = DefaultDrawingTool;
