@@ -2,11 +2,11 @@
 
 WireFlow uses the third-party components below. Each section names the component, its version, the products that use it, and its license text exactly as the component ships or declares it.
 
-## Extended WPF Toolkit 3.8.2 (Xceed.Wpf.AvalonDock, Xceed.Wpf.Toolkit)
+## Extended WPF Toolkit 3.6.0 (Xceed.Wpf.AvalonDock, Xceed.Wpf.Toolkit)
 
-Copyright © Xceed Software Inc. 2010-2020. Used by WireFlow Designer.
+Copyright © Xceed Software Inc. 2010-2019. Used by WireFlow Designer.
 
-The NuGet package `Extended.Wpf.Toolkit` 3.8.2 declares the Microsoft Public License (MS-PL), and its description reads "v3.8.2 is equivalent to v3.8.1 with an MS-PL license." The `LICENSE.txt` file bundled in that package contains Xceed's Community License Agreement instead, which contradicts the declared license.
+The NuGet package `Extended.Wpf.Toolkit` 3.6.0 declares the Microsoft Public License (MS-PL). The package contains no license file; the text below is the `license.md` of Xceed's source repository at its "V3.6.0 Released" commit.
 
 ```text
 # Microsoft Public License (Ms-PL)

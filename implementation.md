@@ -41,12 +41,16 @@ WireFlow itself is copyright Optimax Corporation.
 | Component | Version | License | Used by |
 |---|---|---|---|
 | Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer |
-| Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 3.8.2 | MS-PL (declared; see below) | Designer, Metro theme |
+| Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 3.6.0 | MS-PL | Designer, Metro theme |
 | Infragistics.Themes.MetroDark.Wpf (also supplies `WPFToolkit.dll` and the `System.Windows.Controls.*.Toolkit` DLLs) | 1.0.0 | Not declared in the package | Browser |
 
-Extended.Wpf.Toolkit is pinned to 3.8.2 on purpose: it is the last version whose package declares MS-PL ("equivalent to v3.8.1 with an MS-PL license"). Versions 3.7.0–3.8.1 and 4.0.0 onwards, 5.1.2 included, are under the Xceed Community License: non-commercial use by fewer than 10 users only. Like 2.9.0, 3.8.2 ships only `lib/net40` DLLs.
+Extended.Wpf.Toolkit is pinned to 3.6.0 on purpose: it is the last version that is MS-PL both in its package and in its published source, which matches the `Xceed.Wpf.AvalonDock.Themes.Metro` source in this solution. It ships only `lib/net40` DLLs, and NuGet lists it as unlisted, though it still restores. Do not upgrade it:
 
-The `LICENSE.txt` bundled in the 3.8.2 package is the Community License, which contradicts the declared MS-PL; whether to stay on 3.8.2 is an open question in `TO-DO.md`. Version 3.6.0 is MS-PL both in its package and in its source on GitHub. Xceed never published 3.8.x source under MS-PL: from the 3.7.0 commit on, the repository's `license.md` is the Community License.
+- Versions 3.7.0–3.8.1 and 4.0.0 onwards, 5.1.2 included, are under the Xceed Community License: non-commercial use by fewer than 10 users only.
+- 3.8.2 declares MS-PL, but the `LICENSE.txt` inside its package is the Community License.
+- Xceed never published 3.7+ source under MS-PL: from the 3.7.0 commit on, the repository's `license.md` is the Community License.
+
+AvalonDock is to be replaced by an OptimaxTools.Dock assembly in this solution (see `TO-DO.md`).
 
 `THIRD-PARTY-NOTICES.md` holds the license texts. Update it with the exact texts whenever a package is added, removed or upgraded.
 

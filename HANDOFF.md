@@ -2,12 +2,12 @@
 
 ## Current objective
 
-Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion. Upgraded, with an open license question: AvalonDock (Extended.Wpf.Toolkit) 3.8.2. Next: "Properties Pane Styles", then "Convert to WPF Fluent Themes", "Convert Data to SQLite", "Remove Dependency on AvalonDock".
+Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, and AvalonDock (Extended.Wpf.Toolkit) 3.6.0. Next: "Properties Pane Styles", then "Convert to WPF Fluent Themes", "Convert Data to SQLite", "Remove Dependency on AvalonDock".
 
 ## Work completed
 
 - All 7 projects are SDK-style, targeting `net10.0-windows`. They keep their assembly names, root namespaces, `Properties\AssemblyInfo.cs` files and WPF `Resource` items. The solution file is `WireFlow.slnx`.
-- NuGet packages are `PackageReference` items: Newtonsoft.Json 13.0.4, Extended.Wpf.Toolkit 3.8.2, Infragistics.Themes.MetroDark.Wpf 1.0.0. `THIRD-PARTY-NOTICES.md` holds their license texts.
+- NuGet packages are `PackageReference` items: Newtonsoft.Json 13.0.4, Extended.Wpf.Toolkit 3.6.0, Infragistics.Themes.MetroDark.Wpf 1.0.0. `THIRD-PARTY-NOTICES.md` holds their license texts.
 - The Designer and the Metro theme project take only the Xceed DLLs they use from Extended.Wpf.Toolkit (see "Known traps" in `implementation.md`).
 - `Xceed.Wpf.AvalonDock.Themes.Metro` is the Xceed 3.6.0 theme source (the last MS-PL source) with WireFlow's two brush colors. It is signed through `SignAssembly` / `AssemblyOriginatorKeyFile`.
 - `Directory.Build.props` stops the SDK from generating the attributes the `AssemblyInfo.cs` files already declare.
@@ -17,7 +17,7 @@ Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion. Upgraded, wit
 
 ## Files changed
 
-- All 7 `*.csproj` files — SDK-style. Newtonsoft.Json 13.0.4 in `WireFlow.Repository.Folder` and `WireFlow.Designer`; Extended.Wpf.Toolkit 3.8.2 in `WireFlow.Designer` and `Xceed.Wpf.AvalonDock.Themes.Metro`; `ApplicationIcon` in `WireFlow.Designer` and `WireFlow.Browser`.
+- All 7 `*.csproj` files — SDK-style. Newtonsoft.Json 13.0.4 in `WireFlow.Repository.Folder` and `WireFlow.Designer`; Extended.Wpf.Toolkit 3.6.0 in `WireFlow.Designer` and `Xceed.Wpf.AvalonDock.Themes.Metro`; `ApplicationIcon` in `WireFlow.Designer` and `WireFlow.Browser`.
 - `Xceed.Wpf.AvalonDock.Themes.Metro/` — `Theme.xaml`, `Brushes.xaml`, `MetroTheme.cs` from the 3.6.0 source; `AssemblyVersionInfo.cs` version 3.6; `Properties/AssemblyInfo.cs` signing attributes removed.
 - `Directory.Build.props`, `publish-locally.bat`, `implementation.md`, `HANDOFF.md`, `THIRD-PARTY-NOTICES.md` — new.
 - `Browser/App.config`, `WireFlow.Designer/app.config`, the three `packages.config` files — deleted.
@@ -28,19 +28,18 @@ Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion. Upgraded, wit
 
 ## Build result
 
-Debug and Release: 0 errors, 0 warnings, with Extended.Wpf.Toolkit 3.8.2. Visual Studio's MSBuild and `dotnet build` both build `WireFlow.slnx`. Builds while Visual Studio has the solution open can show MSB3026 copy retries caused by file locks; the retries succeed.
+Debug and Release: 0 errors, 0 warnings, with Extended.Wpf.Toolkit 3.6.0. Visual Studio's MSBuild and `dotnet build` both build `WireFlow.slnx`. Builds while Visual Studio has the solution open can show MSB3026 copy retries caused by file locks; the retries succeed.
 
 ## Test result
 
 - The Browser and the Designer start and stay running.
-- With AvalonDock 3.8.2, the Designer's UI Automation tree shows the menu, status bar, and the docked Tools, Pages, Outline and Properties panes with their title bars and auto-hide pins. The rendering itself was not seen: screen captures from this environment show WPF windows as blank white, for the 2.9 build as well.
+- With AvalonDock 3.6.0 (and earlier 3.8.2), the Designer's UI Automation tree shows the menu, status bar, and the docked Tools, Pages, Outline and Properties panes with their title bars and auto-hide pins. The rendering itself was not seen: screen captures from this environment show WPF windows as blank white, for the 2.9 build as well.
 - A script loaded a copy of `Data/WIREFLOW` through `FlatFolderRepository` with Newtonsoft.Json 13.0.4. The project and its `Main` page loaded, and saving produced byte-identical files.
 - `PrivateExtractIcons`, which the shell uses, reads 16, 32, 48 and 256 px icons from both built exes. A desktop shortcut was not checked; the shell's icon cache can keep showing an old icon for a while.
 - Not tested: interactive use. That includes drawing a shape and watching the Outline update, docking, the property grid, opening a project in the Browser, and following links.
 
 ## Unresolved problems
 
-- The `LICENSE.txt` inside the Extended.Wpf.Toolkit 3.8.2 package is Xceed's Community License, although the package declares MS-PL. The question is in `TO-DO.md` under "Upgrade AvalonDock"; 3.6.0 is the unambiguous MS-PL alternative.
 - `packages/` is in `.gitignore`, but files in it are still tracked. The build does not use that folder.
 
 ## Known regressions
@@ -49,4 +48,4 @@ None found.
 
 ## Recommended next step
 
-The "Properties Pane Styles" TO-DO item. Check the Designer interactively with AvalonDock 3.8.2: docking, floating and auto-hiding panes, and the property grid.
+The "Properties Pane Styles" TO-DO item. Check the Designer interactively with AvalonDock 3.6.0: docking, floating and auto-hiding panes, and the property grid.
