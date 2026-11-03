@@ -22,7 +22,7 @@ Shared projects:
 ## Development environment
 
 - .NET 10, target framework `net10.0-windows`, WPF (`UseWPF`). All projects are SDK-style.
-- Visual Studio 2026 (18.x) with the .NET 10 SDK. The solution file is the classic `.sln`.
+- Visual Studio 2026 (18.x) with the .NET 10 SDK. The solution file is `WireFlow.slnx`, the XML solution format; it lists the projects only, as they all use the default Debug and Release configurations for Any CPU. ReSharper's settings are in `WireFlow.slnx.DotSettings`.
 - NuGet packages are `PackageReference` items restored to the NuGet global packages folder. The `packages/` folder at the root is left over from `packages.config` and is not used by the build.
 - Each project declares its assembly identity in `Properties\AssemblyInfo.cs`. `Directory.Build.props` turns off the SDK-generated copies of those attributes, so the SDK only adds the ones the files lack, such as `SupportedOSPlatform`.
 

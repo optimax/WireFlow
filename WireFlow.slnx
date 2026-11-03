@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Browser/WireFlow.Browser.csproj" />
+  <Project Path="WireFlow.Core/WireFlow.Core.csproj" />
+  <Project Path="WireFlow.Designer/WireFlow.Designer.csproj" />
+  <Project Path="WireFlow.Repository.Archive/WireFlow.Repository.Archive.csproj" />
+  <Project Path="WireFlow.Repository.Folder/WireFlow.Repository.Folder.csproj" />
+  <Project Path="WireFlow.Types/WireFlow.Types.csproj" />
+  <Project Path="Xceed.Wpf.AvalonDock.Themes.Metro/Xceed.Wpf.AvalonDock.Themes.Metro.csproj" />
+</Solution>
