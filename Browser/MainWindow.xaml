@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wireFlow="clr-namespace:WireFlow;assembly=WireFlow.Core"
+        xmlns:themes="clr-namespace:MaxServices.Core.Themes;assembly=MaxServices.Core"
         Title="{Binding WindowTitle}"
         Height="900" Width="1200"
         WindowStartupLocation="CenterScreen"
@@ -40,16 +41,16 @@
     </Window.InputBindings>
 
 
-    <Grid Name="MainGrid" Background="Black">
+    <Grid Name="MainGrid" Background="{DynamicResource {x:Static themes:Palette.AppBackground}}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="22"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
 
 
-        <Menu Background="LightGray" FontSize="15">
+        <Menu FontSize="15">
             <MenuItem Header="File" Visibility="Visible">
                 <MenuItem Header="New" Click="MenuItem_New_Click"/>
                 <MenuItem Header="Open..." Click="MenuItem_Open_Click"/>
@@ -74,6 +75,16 @@
                 <MenuItem Header="Show 5x5 Grid" Click="MenuItem_ViewToggleGrid_Click" IsCheckable="True" IsChecked="{Binding Show5x5Grid}"/>
                 <MenuItem Header="Show 7x7 Grid" Click="MenuItem_ViewToggleGrid_Click" IsCheckable="True" IsChecked="{Binding Show7x7Grid}"/>
                 <MenuItem Header="Show 12x12 Grid" Click="MenuItem_ViewToggleGrid_Click" IsCheckable="True" IsChecked="{Binding Show12x12Grid}"/>
+                <Separator/>
+                <!-- As in the Designer and PDFTools -->
+                <MenuItem Header="_Theme" x:Name="ThemeMenuItem">
+                    <MenuItem Header="_System" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.System}" Click="ThemeMenuItem_Click"
+                              ToolTip="Follow Windows: Settings › Personalization › Colors › Choose your app mode."/>
+                    <MenuItem Header="_Light" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Light}" Click="ThemeMenuItem_Click"/>
+                    <MenuItem Header="_Dark" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Dark}" Click="ThemeMenuItem_Click"/>
+                    <MenuItem Header="_Classic" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Classic}" Click="ThemeMenuItem_Click"
+                              ToolTip="Windows' classic controls instead of the Windows 11 look. Light only."/>
+                </MenuItem>
             </MenuItem>
 
             <MenuItem Header="Debug">
@@ -84,20 +95,20 @@
             </MenuItem>
         </Menu>
 
-        <ToolBarTray Grid.Row="1" Margin="0,1" Background="#666">
-            <ToolBar Background="#666" ToolBarTray.IsLocked="True" SizeChanged="ToolBar_SizeChanged">
-                <Button Content="Home" Foreground="LightGray" ToolBar.OverflowMode="Never"/>
-                <Button Content="Back" Foreground="LightGray" ToolBar.OverflowMode="Never"/>
-                <Button Content="Forward" Foreground="LightGray" ToolBar.OverflowMode="Never"/>
+        <ToolBarTray Grid.Row="1" Margin="0,1" Background="{DynamicResource {x:Static themes:Palette.PaneHeader}}">
+            <ToolBar Background="{DynamicResource {x:Static themes:Palette.PaneHeader}}" ToolBarTray.IsLocked="True" SizeChanged="ToolBar_SizeChanged">
+                <Button Content="Home" ToolBar.OverflowMode="Never"/>
+                <Button Content="Back" ToolBar.OverflowMode="Never"/>
+                <Button Content="Forward" ToolBar.OverflowMode="Never"/>
             </ToolBar>
         </ToolBarTray>
 
         <DockPanel Grid.Row="2">
             <Grid DockPanel.Dock="Top" Height="40" VerticalAlignment="Top" Opacity="0.5" Visibility="{Binding ShowNodeTitle, Converter={StaticResource BoolToVisConverter}, FallbackValue=Visible}">
-                <TextBlock Foreground="White" FontSize="24" TextAlignment="Center" Background="#FF363636" Text="{Binding NodeTitle}"></TextBlock>
+                <TextBlock Foreground="{DynamicResource {x:Static themes:Palette.Text}}" FontSize="24" TextAlignment="Center" Background="{DynamicResource {x:Static themes:Palette.SectionCaption}}" Text="{Binding NodeTitle}"></TextBlock>
             </Grid>
 
-            <wireFlow:DesignerPanel x:Name="Viewer" ClipToBounds="True" Background="#222"/>
+            <wireFlow:DesignerPanel x:Name="Viewer" ClipToBounds="True" Background="{DynamicResource {x:Static themes:Palette.PreviewBackground}}"/>
 
         </DockPanel>
 

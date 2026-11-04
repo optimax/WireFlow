@@ -14,6 +14,7 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using MaxServices.Core.Themes;
 using WireFlow.Annotations;
 
 namespace WireFlow
@@ -25,6 +26,7 @@ namespace WireFlow
     {
         #region Fields
 
+        private BrowserSettings Settings { get; }
         private string documentFileName;
         private bool showNodeTitle = true;
 
@@ -173,6 +175,10 @@ namespace WireFlow
 
         public MainWindow()
         {
+            // The theme before the window is built
+            Settings = BrowserSettings.Load();
+            AppTheme.Apply(AppTheme.TryParse(Settings.Theme, out var theme) ? theme : ThemeChoice.System);
+            SourceInitialized += (s, e) => AppTheme.ApplyTitleBar(this);
             History = new List<string>();
             ReloadFileCommand = new RelayCommand(ReloadFile);
             RefreshViewCommand = new RelayCommand(RefreshNode);
@@ -181,6 +187,7 @@ namespace WireFlow
             ShowTestWindowCommand = new RelayCommand(ShowTestWindow);
 
             InitializeComponent();
+            UpdateThemeMenu();
             DataContext = this;
 
 
@@ -233,6 +240,27 @@ namespace WireFlow
 
 
         #region Menu
+
+
+        // View → Theme: System, Light, Dark or Classic, as in the Designer; kept in the settings at once
+        private void ThemeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!((sender as MenuItem)?.Tag is ThemeChoice choice))
+                return;
+            AppTheme.Apply(choice);
+            Settings.Theme = choice.ToString();
+            Settings.Save();
+            UpdateThemeMenu();
+        }
+
+
+
+        private void UpdateThemeMenu()
+        {
+            foreach (var item in ThemeMenuItem.Items.OfType<MenuItem>())
+                item.IsChecked = item.Tag is ThemeChoice choice && choice == AppTheme.Choice;
+        }
+
 
 
         private void MenuItem_Open_Click(object sender, RoutedEventArgs e)

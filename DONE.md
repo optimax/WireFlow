@@ -46,3 +46,11 @@ A: Drop to 3.6.0. We are getting rid of the dependency anyway (see below).
 
 Done: Extended.Wpf.Toolkit is now 3.6.0 in the Designer and the theme project. It matches the 3.6.0 theme source and is MS-PL in both its package and its source. The solution builds with 0 errors and 0 warnings, and the Designer starts with all its panes. `THIRD-PARTY-NOTICES.md` and `implementation.md` are updated.
 
+## [DONE] Properties Pane Styles
+
+ ![pasted-2](<TO-DO.images/pasted-2.png>)
+
+The Properties pane has a white background in what is a dark Theme which is jarring. 
+
+Done: the property list, the empty area below it, the category headers, the text editors and the filter box now use the pane's dark colors. The toolkit's template hard-codes those light colors, so the Designer overrides them from code when the grid loads (see "Known traps" in `implementation.md`). Checked in off-screen renders of the real Designer window, with and without a selected element; the checkbox and the scrollbar keep the standard WPF look, as elsewhere in the Designer. The Fluent themes item below will revisit these colors.
+

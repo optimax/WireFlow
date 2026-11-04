@@ -28,16 +28,17 @@ Shared projects:
 
 ## Application icons
 
-`WireFlow.Designer\Designer.ico` (white WF mark on a red tile, as in `Documents\logo.png`) and `Browser\Browser.ico` (red WF mark on a charcoal tile with a gray rim, after the Browser's MetroDark theme) are the projects' `ApplicationIcon`s. `Documents\make-icons.ps1` draws them on a whole-pixel grid at 16–256 px; change the script and run it again rather than editing the `.ico` files. The Designer's main window sets its own title-bar icon, `Views\logo.png`; the Browser's windows use the application icon.
+`WireFlow.Designer\Designer.ico` (white WF mark on a red tile, as in `Documents\logo.png`) and `Browser\Browser.ico` (red WF mark on a charcoal tile with a gray rim) are the projects' `ApplicationIcon`s. `Documents\make-icons.ps1` draws them on a whole-pixel grid at 16–256 px; change the script and run it again rather than editing the `.ico` files. The Designer's main window sets its own title-bar icon, `Views\logo.png`; the Browser's windows use the application icon.
 
 ## Themes
 
-The Designer has the themes of Optimax's other programs (PDFTools): View → Theme offers System, Light, Dark and Classic, kept in its settings (`ConfigSettings.Theme`; anything else is System). They come from `MaxServices.Core` 1.1.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` and found through `nuget.config`. Its `AppTheme` swaps the first dictionary of `App.xaml` (WPF's Fluent light or dark, or Core's classic) and puts its palette after it.
+The Designer and the Browser have the themes of Optimax's other programs (PDFTools): View → Theme offers System, Light, Dark and Classic, kept in each program's settings (the Designer's `ConfigSettings.Theme`; the Browser's `BrowserSettings.Theme`, in `%APPDATA%\WireFlow\WireFlow.Browser.config`; anything else is System). They come from `MaxServices.Core` 1.1.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` and found through `nuget.config`. Its `AppTheme` swaps the first dictionary of `App.xaml` (WPF's Fluent light or dark, or Core's classic) and puts its palette after it.
 
 - `DesignerTheme` applies a choice and keeps the Designer's own brush keys (`ListBackgroundBrush`, `LightLightColorBrush`, `DesignerBackgroundBrush` and the others it lists) and the Metro theme's base colors in the application's resources as the palette's brushes for the current theme. XAML uses those keys by `DynamicResource`, and code by `SetResourceReference`, so that a change of theme reaches them.
-- The Designer has no implicit styles for standard controls (menus, list boxes, tree views, splitters): one would hide Fluent's style, and Classic has no Fluent style to base one on. `EditableListBox`, a type of its own that the theme's `ListBox` style does not reach, has one that sets only colors and fonts.
+- The Browser's XAML uses the palette's keys (`Palette.AppBackground`, `Palette.PaneHeader` and others) by `DynamicResource` directly; it has no brush keys of its own to map.
+- Neither program has implicit styles for standard controls (menus, list boxes, tree views, splitters): one would hide Fluent's style, and Classic has no Fluent style to base one on. `EditableListBox`, a type of its own that the theme's `ListBox` style does not reach, has one that sets only colors and fonts.
 - The page and what is drawn on it keep their own colors; the area around the page follows the theme.
-- The Browser keeps the Infragistics MetroDark theme (see `TO-DO.md`).
+- Fluent's menus and toolbars are taller than the old ones: give the rows that hold them `Auto` height rather than a fixed one.
 
 ## Publishing
 
@@ -49,9 +50,8 @@ WireFlow itself is copyright Optimax Corporation.
 
 | Component | Version | License | Used by |
 |---|---|---|---|
-| Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer |
+| Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer, Browser |
 | Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 3.6.0 | MS-PL | Designer, Metro theme |
-| Infragistics.Themes.MetroDark.Wpf (also supplies `WPFToolkit.dll` and the `System.Windows.Controls.*.Toolkit` DLLs) | 1.0.0 | Not declared in the package | Browser |
 
 Extended.Wpf.Toolkit is pinned to 3.6.0 on purpose: it is the last version that is MS-PL both in its package and in its published source, which matches the `Xceed.Wpf.AvalonDock.Themes.Metro` source in this solution. It ships only `lib/net40` DLLs, and NuGet lists it as unlisted, though it still restores. Do not upgrade it:
 

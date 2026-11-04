@@ -51,7 +51,7 @@ The source of the Extended WPF Toolkit 3.6.0 AvalonDock Metro theme, published b
 
 ## Newtonsoft.Json 13.0.4
 
-Used by WireFlow Designer and WireFlow Browser (through WireFlow.Repository.Folder).
+Used by WireFlow Designer and WireFlow Browser, directly and through WireFlow.Repository.Folder.
 
 ```text
 The MIT License (MIT)
@@ -75,7 +75,3 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
-
-## Infragistics.Themes.MetroDark.Wpf 1.0.0
-
-By Brian Lagunas. Used by WireFlow Browser. The package also supplies `WPFToolkit.dll` and the `System.Windows.Controls.*.Toolkit` DLLs. It declares no license and contains no license text.

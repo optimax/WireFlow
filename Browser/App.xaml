@@ -5,10 +5,12 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
 
+            <!-- WPF's Fluent theme, light or dark, with Core's styles over it, as in the Designer and PDFTools: Core's
+                 AppTheme swaps the first dictionary for the chosen theme's and puts its palette after it -->
             <ResourceDictionary>
                 <ResourceDictionary.MergedDictionaries>
-                    <ResourceDictionary Source="Themes/MetroDark/MetroDark.MSControls.Core.Implicit.xaml" />
-                    <ResourceDictionary Source="Themes/MetroDark/MetroDark.MSControls.Toolkit.Implicit.xaml" />
+                    <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.Light.xaml" />
+                    <ResourceDictionary Source="pack://application:,,,/MaxServices.Core;component/Themes/FluentStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             </ResourceDictionary>
 

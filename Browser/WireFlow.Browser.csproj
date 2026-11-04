@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -12,7 +12,6 @@
   <ItemGroup>
     <Resource Include="forest.jpg" />
     <Resource Include="Telemon.JPG" />
-    <Resource Include="Themes\MetroDark\HowToApplyTheme.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,7 +36,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Infragistics.Themes.MetroDark.Wpf" Version="1.0.0" NoWarn="NU1701" />
+    <!-- The System, Light, Dark and Classic themes of Optimax's programs, from LocalPackages, as in the Designer -->
+    <PackageReference Include="MaxServices.Core" Version="1.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
