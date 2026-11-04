@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Markup;
@@ -272,6 +273,7 @@ namespace WireFlow
             SetupCommands();
 
             PropertyGrid.PropertyValueChanged += PropertyGridOnPropertyValueChanged;
+            PropertyGrid.Loaded += PropertyGridLoadedHandler;
             RecentFileList.MenuClick += (s, e) => OpenProjectFile(e.Filepath);
 
             this.SourceInitialized += (x, y) =>
@@ -279,6 +281,42 @@ namespace WireFlow
                 //LoadAndApplyConfigSettings(); does not work here
             };
 
+        }
+
+
+        // The toolkit's PropertyGrid template paints the property list with x:Static system brushes and its category
+        // headers with a fixed light color, which no style can override. Give them the grid's own dark colors instead.
+        private void PropertyGridLoadedHandler(object sender, RoutedEventArgs e)
+        {
+            var items = PropertyGrid.Template?.FindName("PART_PropertyItemsControl", PropertyGrid) as PropertyItemsControl;
+            if (items == null)
+                return;
+
+            var background = new Binding(nameof(Background)) { Source = PropertyGrid };
+            items.SetBinding(BackgroundProperty, background);
+            if (VisualTreeHelper.GetParent(items) is Panel container)
+                container.SetBinding(Panel.BackgroundProperty, background);
+            if (PropertyGrid.Template.FindName("searchBoxContainer", PropertyGrid) is Border searchBox)
+                searchBox.SetResourceReference(Border.BackgroundProperty, "ListBackgroundBrush");
+            if (PropertyGrid.Template.FindName("_txtFilter", PropertyGrid) is TextBox filter)
+            {
+                filter.SetResourceReference(ForegroundProperty, "LightLightColorBrush");
+                filter.SetResourceReference(TextBox.CaretBrushProperty, "LightLightColorBrush");
+            }
+
+            var categoryStyle = (Style)PropertyGrid.FindResource("PropertyCategoryStyle");
+            var selector = items.GroupStyle.FirstOrDefault()?.ContainerStyleSelector as CategoryGroupStyleSelector;
+            if (selector == null || selector.ItemGroupStyle == categoryStyle)
+                return;
+            items.GroupStyle.Clear();
+            items.GroupStyle.Add(new GroupStyle
+            {
+                ContainerStyleSelector = new CategoryGroupStyleSelector
+                {
+                    SingleDefaultCategoryItemGroupStyle = selector.SingleDefaultCategoryItemGroupStyle,
+                    ItemGroupStyle = categoryStyle
+                }
+            });
         }
 
 
