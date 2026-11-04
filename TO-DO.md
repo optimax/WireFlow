@@ -36,7 +36,7 @@ The Properties pane has a white background in what is a dark Theme which is jarr
 
 ## Convert to WPF Fluent Themes
 
-Convert the application chrome to WPF Fluent themes, with the selection of Light, Dark, System, and None/Classic (like PDFTools and other Optimax apps). Make the selection available under View menu (after Edit).
+Convert the application chrome to WPF Fluent themes, with the selection of Light, Dark, System, and None/Classic (like PDFTools and other Optimax apps). Make the theme selection available under View|Theme menu (place View after Edit).
 
 ## Convert Data to SQLite
 
@@ -51,5 +51,7 @@ Create an equivalent OptimaxTools.Dock assembly using the 3.8.2 AvalonDock code 
 **(b) A decompilation of the MS-PL 3.8.2 binaries. MS-PL allows derivative works, but the result has no comments, and the XAML has to be recovered from BAML.**
 **(c) Dirkster.AvalonDock. It is an MS-PL fork of Xceed AvalonDock, maintained since 2019, with .NET Core/.NET 8+ builds and many fixes. It is not "the 3.8.2 code", though.**
 **Unless you say otherwise, I will assume (a) when I reach this item.**
+
+A: Let's explore the Dirkster option. What license does it have?
 
 # END-OF-TO-DO
