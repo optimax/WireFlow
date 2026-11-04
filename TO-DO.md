@@ -26,7 +26,7 @@ A: Yes, the same as Designer.
 
 Done: the View menu of the Designer (after Edit) and of the Browser has Theme → System, Light, Dark, Classic, as in PDFTools, and each program remembers its choice (the Browser in a new `%APPDATA%\WireFlow\WireFlow.Browser.config`). Menus, toolbars, panes, pane titles, the Outline, the Properties pane, the docking chrome and the area around the page follow the theme; the page keeps its own colors. The Browser no longer uses the Infragistics MetroDark theme, and its package is removed. Checked in off-screen renders of both real windows in Dark, Light and Classic. Not yet checked by hand, and AvalonDock's Ctrl+Tab window stays white.
 
-## Convert Data to SQLite
+## [QUESTION] Convert Data to SQLite
 
 Convert the WireFlow project files and subordinate folders into SQLite databases, with `.wf` extension. Figure out appropriate schema to support the functionality. Convert both Designer and Browser to use `.wf` files.
 
@@ -44,6 +44,10 @@ Each document stays one JSON value, as written today, rather than a table per el
 **Question 2: opening a `.project` in the Designer converts it once into a `.wf` file of the same name beside it (`WireFlow.project` → `WireFlow.wf`) and opens that; the folder is left as it is. New projects are `.wf` files. Unless you say otherwise, I proceed this way.**
 
 **Question 3: the Browser opens `.wf` files only, since it only views; a `.project` is converted by opening it once in the Designer. Should the Browser convert `.project` files too? I am assuming not.**
+
+Update to question 1: 9.0.2 brings `SQLitePCLRaw.lib.e_sqlite3` 2.1.10, which NuGet flags with a high-severity advisory (NU1903, GHSA-2m69-gcr7-jv3q). I used `Microsoft.Data.Sqlite` 10.0.14 instead, the current .NET 10 release, which brings SQLitePCLRaw 2.1.13 and is not flagged. `THIRD-PARTY-NOTICES.md` has the license texts of both, and a note on SQLite itself.
+
+Done, under the assumptions above: a new `WireFlow.Repository.Sqlite` project keeps a project in one `.wf` file with the tables of the plan, and both programs use it. The Designer's File → New makes `.wf` files, and File → Open also offers `.project` files, which it converts once into a `.wf` beside them, copying every file's JSON as it is, and leaves the folder as it is. If that `.wf` already exists, it opens it instead. The Browser opens `.wf` files and explains that a `.project` has to be opened in the Designer first. Saving, unsaved edits, archived revisions, images, renaming and deleting work as in the folder storage; deleting a part now deletes the part (it used to delete a layout of the same name). Checked: 34 checks of the storage against copies of `Data/WIREFLOW` and `Data/Test`, and off-screen renders of the real Designer converting and showing `Data/WIREFLOW` and of the Browser showing the resulting `.wf`. Not yet checked by hand. Found in passing, in both storages: a part saved in the Designer cannot be read back (`GetPart` returns null), recorded in `implementation.md`; not fixed here. The task stays open for the questions.
 
 ## Remove Dependency on AvalonDock
 

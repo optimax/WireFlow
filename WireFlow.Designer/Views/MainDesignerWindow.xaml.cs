@@ -620,7 +620,8 @@ namespace WireFlow
             if (project == null)
                 return;
 
-            FileName = dlg.FileName;
+            // The repository may have given the name its extension
+            FileName = Engine.ProjectFileName;
 
             NewPageNode();
 
@@ -663,7 +664,9 @@ namespace WireFlow
             if (dlg.ShowDialog() != true)
                 return;
             OpenProjectFile(dlg.FileName);
-            RecentFileList.InsertFile(dlg.FileName);
+            // The .wf file that a folder project (.project) was converted into
+            if (!string.IsNullOrWhiteSpace(FileName))
+                RecentFileList.InsertFile(FileName);
         }
 
 
@@ -692,9 +695,25 @@ namespace WireFlow
                 return;
             CloseProject();
 
-            var project = Engine.OpenProject(fileName);
+            FlowProject project;
+            string reason;
+            try
+            {
+                project = Engine.OpenProject(fileName);
+                reason = "It is not a WireFlow project, or it was made by a later version of WireFlow.";
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidDataException)
+            {
+                // Converting a folder project (.project) into a .wf file failed
+                project = null;
+                reason = ex.Message;
+            }
             if (project == null)
+            {
+                MessageBox.Show($"WireFlow Designer could not open \"{fileName}\".\n\n{reason}", "Open Project",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
             string homePage = project.Home;
             //string background = Project.Background;
 
@@ -952,7 +971,7 @@ namespace WireFlow
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (msgResult != MessageBoxResult.Yes)
                 return;
-            Engine.DeleteLayout(partName);
+            Engine.DeletePart(partName);
             var parts = Engine.Parts;
             Parts = new ObservableCollection<string>(parts);
         }

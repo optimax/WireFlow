@@ -14,7 +14,8 @@ namespace WireFlow
         private void Application_Startup(object sender, StartupEventArgs e)
         {
 
-            Repository = new FlatFolderRepository();
+            // Opening a folder project (.project) converts it into a .wf file beside it
+            Repository = new SqliteRepository() { ConvertFolderProjects = true };
             Engine = new WireFlowEngine(Repository);
             MainDesignerWindow wnd = new MainDesignerWindow(Engine);
 

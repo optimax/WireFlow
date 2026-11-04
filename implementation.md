@@ -7,7 +7,7 @@ WireFlow is a tool for building wireframes and clickable prototypes: pages are d
 | Product | Project | Role |
 |---|---|---|
 | WireFlow Designer | `WireFlow.Designer` | WPF editor with a docking UI (AvalonDock): pages, layouts (master pages), parts, images, outline, properties. |
-| WireFlow Browser | `WireFlow.Browser` | WPF viewer: opens a `.project`, shows its `Home` page and follows `Href` clicks with back/forward history. |
+| WireFlow Browser | `WireFlow.Browser` | WPF viewer: opens a `.wf` project, shows its `Home` page and follows `Href` clicks with back/forward history. |
 
 Shared projects:
 
@@ -15,7 +15,8 @@ Shared projects:
 |---|---|
 | `WireFlow.Types` | Data model (`FlowProject`, `FlowPage`, `FlowLayer`, `FlowElement`, `FlowImage`, `FlowGroup`, `FlowPart`) and the `IFlowRepository` interface. Uses WPF value types such as `FontStretch` and `Stretch`. |
 | `WireFlow.Core` | `WireFlowEngine` (renders the model to WPF controls and serializes them back), `DesignerPanel`, outline wrappers, grids. |
-| `WireFlow.Repository.Folder` | `FlatFolderRepository`, the storage in use. |
+| `WireFlow.Repository.Sqlite` | `SqliteRepository`, the storage in use: a project in one SQLite database file (`.wf`). Converts folder projects (`.project`) into `.wf` files. |
+| `WireFlow.Repository.Folder` | `FlatFolderRepository`, the earlier storage: a project as a folder. Read when a folder project is converted; its `SerializeToJSON` and `DeserializeFromJSON` are the JSON settings of both storages. |
 | `WireFlow.Repository.Archive` | `ZipArchiveRepository`, an unimplemented stub. |
 | `Xceed.Wpf.AvalonDock.Themes.Metro` | Source copy of the Extended WPF Toolkit 3.6.0 AvalonDock Metro theme, used by the Designer, with two brush colors in `Brushes.xaml` changed for WireFlow and a themed background for the document pane in `Theme.xaml`. 3.6.0 is the last theme source Xceed published under MS-PL; the 3.8 theme differs from it only by one template moved into a keyed resource. Strong-named with `sn.snk`. |
 
@@ -52,6 +53,9 @@ WireFlow itself is copyright Optimax Corporation.
 |---|---|---|---|
 | Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer, Browser |
 | Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 3.6.0 | MS-PL | Designer, Metro theme |
+| Microsoft.Data.Sqlite (with Microsoft.Data.Sqlite.Core) | 10.0.14 | MIT | Repository.Sqlite |
+| SQLitePCLRaw (bundle_e_sqlite3, core, lib.e_sqlite3, provider.e_sqlite3) | 2.1.13 | Apache-2.0 | Microsoft.Data.Sqlite |
+| SQLite (`e_sqlite3.dll`, in SQLitePCLRaw.lib.e_sqlite3) | as built by SQLitePCLRaw 2.1.13 | Public domain | SQLitePCLRaw |
 
 Extended.Wpf.Toolkit is pinned to 3.6.0 on purpose: it is the last version that is MS-PL both in its package and in its published source, which matches the `Xceed.Wpf.AvalonDock.Themes.Metro` source in this solution. It ships only `lib/net40` DLLs, and NuGet lists it as unlisted, though it still restores. Do not upgrade it:
 
@@ -65,13 +69,20 @@ AvalonDock is to be replaced by an OptimaxTools.Dock assembly in this solution (
 
 ## Project file format
 
-A project is a folder:
+A project is one SQLite database file, `<name>.wf`, written by `SqliteRepository`. `PRAGMA application_id` is `0x57464C57` ("WFLW") and `PRAGMA user_version` the format number, now 1; a file with another application id, or a higher format number, is not opened. Format 1 has four tables:
 
-- `<name>.project` — `FlowProject` JSON (size, background, home page).
-- `pages/*.page`, `layouts/*.master`, `parts/*.part` — JSON documents. Unsaved edits are written to `*.new` files beside them; `SaveProject` archives the previous version into `pages.archive/` (and the other `*.archive/` folders) under the project's `RevisionNo`, then promotes the `.new` files.
-- `images/` — imported images.
+- `Project` — one row: the `FlowProject` JSON (size, background, home page, `RevisionNo`).
+- `Documents` — one row per page, layout and part (`Kind` `page`, `layout` or `part`, and `Name`): `Saved`, the JSON of the saved version, and `Draft`, the JSON of the unsaved edits. `SavePage`, `SaveLayout` and `SavePart` write the draft. `SaveProject`, in one transaction, raises `RevisionNo`, archives the project and the saved version of each document that has a draft under the new revision, and makes the drafts the saved versions.
+- `Archive` — earlier versions (`Kind`, which can also be `project`, `Name`, `RevisionNo`, JSON): the version that the save of that revision replaced.
+- `Images` — imported images (`Name`, the file name, and `Data`).
+
+Names compare ignoring case, as file names did. Each document stays one JSON value rather than a table per element type: the element model is open-ended (`$type` tags), and the programs read and write whole pages. As in the folder storage, a page is read with its draft, but a layout used as a master and a part are read in their saved version only. Renaming a layout or a part is not implemented, since pages and elements refer to them by name, and deleting or renaming a page or layout leaves its archived versions under the old name.
+
+Each operation opens the file and closes it again: pooling is off, so the file is not held open between operations, and the Browser can view a project the Designer is editing. A new or converted file is built under a temporary name (`<name>.wf.tmp`) and then moved into place.
 
 JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element lists carry `$type` tags. Unknown keys are dropped on load and are therefore lost on the next save.
+
+**Folder projects.** The earlier storage, `FlatFolderRepository`, keeps a project as a folder: `<name>.project` (the `FlowProject` JSON); `pages/*.page`, `layouts/*.master` and `parts/*.part`, with unsaved edits in `*.new` files beside them; `pages.archive/` and the other `*.archive/` folders, holding `<name>.<revision>` files; and `images/`. When the Designer opens a `.project`, `SqliteRepository` converts it into `<name>.wf` beside it, copying the JSON of every file as it is, and opens that; the folder is left as it is. If that `.wf` file already exists, it is opened, not replaced. The Browser opens `.wf` files only and says so when given a `.project`.
 
 ## Known traps
 
@@ -81,6 +92,8 @@ JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element list
 - **`dotnet publish` into an existing folder copies a file only when it is newer than the one there.** After a package downgrade, the publish succeeds but keeps the newer DLLs of the old version. Publish into an empty folder, as `publish-locally.bat` does.
 - **Visual Studio's design-time builds share `obj/` with command-line builds.** A command-line build while the solution is open in Visual Studio can fail with CS2001 (a missing `*.g.cs`); building again succeeds.
 - **Line endings.** The repository has `core.autocrlf=true` and no `.gitattributes`: the index holds LF, the working tree CRLF. Git Bash `sed -i` rewrites a CRLF file as LF; run `unix2dos` on it afterwards.
+- **Microsoft.Data.Sqlite 9.x brings SQLitePCLRaw 2.1.10,** whose `lib.e_sqlite3` NuGet flags with a high-severity advisory (NU1903, GHSA-2m69-gcr7-jv3q). Microsoft.Data.Sqlite 10.0.14 brings 2.1.13, which is not flagged. Keep the NuGet audit warnings visible when upgrading it.
+- **A part saved by `SavePart` cannot be read back by `GetPart`,** in either storage: the part is serialized without a root `$type` tag, and `GetPart` deserializes it into the abstract `FlowElementBase`, which fails and returns null.
 - **`DesignerPanel` lives in Core, but the `DesignerBackgroundBrush` resource exists only in the Designer.** It uses `TryFindResource` so the Browser can host it.
 - **The Designer's Outline view is a snapshot.** `MainDesignerWindow.PopulateOutlineTree` rebuilds it on navigation, on a tab switch, and when the current `DesignerNavigator` raises `ElementsChanged`. A new `DesignerNavigator` operation that adds, removes or reorders elements must call `OnElementsChanged()`, or the Outline goes stale.
 - **The Xceed `PropertyGrid` template hard-codes light colors.** Its property list uses `x:Static` system brushes, its filter box `White`, and its category headers an `Expander` style with `#FFF0F0F0`, so no resource or implicit style reaches them, and each category's `GroupItem` gets an explicit style from the template's `CategoryGroupStyleSelector`. `MainDesignerWindow.PropertyGridLoadedHandler` sets local values on those template parts and swaps in a `CategoryGroupStyleSelector` whose `ItemGroupStyle` is `PropertyCategoryStyle` from the grid's resources.

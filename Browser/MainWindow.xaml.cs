@@ -192,7 +192,7 @@ namespace WireFlow
 
 
 
-            Repository = new FlatFolderRepository();
+            Repository = new SqliteRepository();
             Repository.ProjectFileLoaded = s =>
             {
                 DocumentFileName = s;
@@ -506,7 +506,14 @@ namespace WireFlow
 
             Project = Engine.OpenProject(fileName);
             if (Project == null)
+            {
+                string name = System.IO.Path.GetFileName(fileName);
+                MessageBox.Show(SqliteRepository.IsFolderProject(fileName)
+                        ? $"WireFlow Browser opens .wf files. Open \"{name}\" once in WireFlow Designer, which converts it into a .wf file."
+                        : $"\"{name}\" is not a WireFlow project, or it was made by a later version of WireFlow.",
+                    "WireFlow Browser", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
+            }
             string homeNode = Project.Home;
             string background = Project.Background;
             ResetCanvas(background);

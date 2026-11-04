@@ -43,7 +43,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WireFlow.Core\WireFlow.Core.csproj" />
-    <ProjectReference Include="..\WireFlow.Repository.Folder\WireFlow.Repository.Folder.csproj" />
+    <ProjectReference Include="..\WireFlow.Repository.Sqlite\WireFlow.Repository.Sqlite.csproj" />
     <ProjectReference Include="..\WireFlow.Types\WireFlow.Types.csproj" />
   </ItemGroup>
 
