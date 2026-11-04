@@ -8,5 +8,7 @@
         public double Width { get; set; } = double.NaN;
         public double Height { get; set; } = double.NaN;
         public string Background { get; set; } = Constants.DEFAULT_BACKGROUND;
+        // System, Light, Dark or Classic (MaxServices.Core's ThemeChoice); anything else is System
+        public string Theme { get; set; } = "System";
     }
 }

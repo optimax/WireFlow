@@ -88,6 +88,9 @@
          TargetType="{x:Type avalonDockControls:LayoutDocumentPaneControl}">
     <Setter Property="BorderBrush"
             Value="{x:Null}" />
+    <!-- WireFlow: the base style's white otherwise shows around the documents in a dark theme -->
+    <Setter Property="Background"
+            Value="{DynamicResource AvalonDock_ThemeMetro_BaseColor1}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type avalonDockControls:LayoutDocumentPaneControl}">

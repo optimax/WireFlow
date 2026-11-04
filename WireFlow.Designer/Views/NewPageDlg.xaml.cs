@@ -31,6 +31,7 @@ namespace WireFlow.Views
 
             this.layoutsProvider = layoutsProvider;
             InitializeComponent();
+            SourceInitialized += (s, e) => MaxServices.Core.Themes.AppTheme.ApplyTitleBar(this);
             this.SourceInitialized += (x, y) =>
             {
                 this.HideMinimizeAndMaximizeButtons();

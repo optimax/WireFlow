@@ -8,7 +8,11 @@
     <Application.Resources>
 
         <ResourceDictionary>
+            <!-- WPF's Fluent theme, light or dark, with Core's styles over it, as in PDFTools: Core's AppTheme swaps the
+                 first dictionary for the chosen theme's and puts its palette after it (DesignerTheme) -->
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaxServices.Core;component/Themes/FluentStyles.xaml" />
                 <ResourceDictionary Source="Xaml/Cursors.xaml" />
                 <ResourceDictionary Source="Classes/DesignerContextMenu.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/Xceed.Wpf.AvalonDock.Themes.Metro;component/Theme.xaml" />

@@ -17,7 +17,7 @@ Shared projects:
 | `WireFlow.Core` | `WireFlowEngine` (renders the model to WPF controls and serializes them back), `DesignerPanel`, outline wrappers, grids. |
 | `WireFlow.Repository.Folder` | `FlatFolderRepository`, the storage in use. |
 | `WireFlow.Repository.Archive` | `ZipArchiveRepository`, an unimplemented stub. |
-| `Xceed.Wpf.AvalonDock.Themes.Metro` | Source copy of the Extended WPF Toolkit 3.6.0 AvalonDock Metro theme, used by the Designer, with two brush colors in `Brushes.xaml` changed for WireFlow. 3.6.0 is the last theme source Xceed published under MS-PL; the 3.8 theme differs from it only by one template moved into a keyed resource. Strong-named with `sn.snk`. |
+| `Xceed.Wpf.AvalonDock.Themes.Metro` | Source copy of the Extended WPF Toolkit 3.6.0 AvalonDock Metro theme, used by the Designer, with two brush colors in `Brushes.xaml` changed for WireFlow and a themed background for the document pane in `Theme.xaml`. 3.6.0 is the last theme source Xceed published under MS-PL; the 3.8 theme differs from it only by one template moved into a keyed resource. Strong-named with `sn.snk`. |
 
 ## Development environment
 
@@ -29,6 +29,15 @@ Shared projects:
 ## Application icons
 
 `WireFlow.Designer\Designer.ico` (white WF mark on a red tile, as in `Documents\logo.png`) and `Browser\Browser.ico` (red WF mark on a charcoal tile with a gray rim, after the Browser's MetroDark theme) are the projects' `ApplicationIcon`s. `Documents\make-icons.ps1` draws them on a whole-pixel grid at 16–256 px; change the script and run it again rather than editing the `.ico` files. The Designer's main window sets its own title-bar icon, `Views\logo.png`; the Browser's windows use the application icon.
+
+## Themes
+
+The Designer has the themes of Optimax's other programs (PDFTools): View → Theme offers System, Light, Dark and Classic, kept in its settings (`ConfigSettings.Theme`; anything else is System). They come from `MaxServices.Core` 1.1.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` and found through `nuget.config`. Its `AppTheme` swaps the first dictionary of `App.xaml` (WPF's Fluent light or dark, or Core's classic) and puts its palette after it.
+
+- `DesignerTheme` applies a choice and keeps the Designer's own brush keys (`ListBackgroundBrush`, `LightLightColorBrush`, `DesignerBackgroundBrush` and the others it lists) and the Metro theme's base colors in the application's resources as the palette's brushes for the current theme. XAML uses those keys by `DynamicResource`, and code by `SetResourceReference`, so that a change of theme reaches them.
+- The Designer has no implicit styles for standard controls (menus, list boxes, tree views, splitters): one would hide Fluent's style, and Classic has no Fluent style to base one on. `EditableListBox`, a type of its own that the theme's `ListBox` style does not reach, has one that sets only colors and fonts.
+- The page and what is drawn on it keep their own colors; the area around the page follows the theme.
+- The Browser keeps the Infragistics MetroDark theme (see `TO-DO.md`).
 
 ## Publishing
 
@@ -67,6 +76,7 @@ JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element list
 ## Known traps
 
 - **Two `Xceed.Wpf.AvalonDock.Themes.Metro.dll`.** The Extended.Wpf.Toolkit package ships its own Metro theme DLL with the same assembly name as the project in this solution. The Designer and the Metro theme project therefore reference the package with `ExcludeAssets="all"` and `GeneratePathProperty="true"`, and take only the DLLs they use through `$(PkgExtended_Wpf_Toolkit)`. A NuGet "update" that re-adds every DLL of the package brings the clash back.
+- **Scratch programs that host the Designer's window.** Creating `App` queues its `Startup` handler, which opens a real Designer window as soon as the dispatcher runs and applies the saved theme. `MainDesignerWindow` also writes its settings (`%APPDATA%\WireFlow\WireFlow.Designer.config`) when it closes. Remove the `Startup` handler, and keep a copy of the settings file to put back.
 - **Single-file `dotnet run app.cs` scripts default to `PublishAot=true`,** which disables dynamic code generation, unlike the apps. Add `#:property PublishAot=false` to scripts that load WireFlow documents, so that Newtonsoft.Json runs as it does in the apps.
 - **`dotnet publish` into an existing folder copies a file only when it is newer than the one there.** After a package downgrade, the publish succeeds but keeps the newer DLLs of the old version. Publish into an empty folder, as `publish-locally.bat` does.
 - **Visual Studio's design-time builds share `obj/` with command-line builds.** A command-line build while the solution is open in Visual Studio can fail with CS2001 (a missing `*.g.cs`); building again succeeds.

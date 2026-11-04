@@ -3,11 +3,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:tk="http://schemas.xceed.com/wpf/xaml/toolkit"
     xmlns:tkEditors="clr-namespace:Xceed.Wpf.Toolkit.PropertyGrid.Editors;assembly=Xceed.Wpf.Toolkit"
+    xmlns:themes="clr-namespace:MaxServices.Core.Themes;assembly=MaxServices.Core"
     xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
     xmlns:system="clr-namespace:System;assembly=mscorlib"
     xmlns:wireFlowCore="clr-namespace:WireFlow;assembly=WireFlow.Core"
     xmlns:wireFlow="clr-namespace:WireFlow"
-    Background="{StaticResource NormalColorBrush}"
+    Background="{DynamicResource NormalColorBrush}"
     Title="{Binding DesignerTitle}"
     Icon="logo.png"
     Loaded="Window_Loaded"
@@ -15,14 +16,14 @@
     >
     <Window.Resources>
         <Style x:Key="TooBarPanelStyle" TargetType="{x:Type ToolBarPanel}">
-            <Setter Property="Background" Value="{StaticResource ToolbarPanelBackgroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarPanelBackgroundBrush}"/>
         </Style>
     </Window.Resources>
 
 
     <DockPanel Name="ClientPanel">
         <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_File" Style="{StaticResource MainMenuItemStyle}">
+            <MenuItem Header="_File">
                 <MenuItem Header="_New..." Command="{Binding NewFileCmd}"/>
                 <MenuItem Header="_Open..." Command="{Binding OpenFileCmd}"/>
                 <MenuItem Header="_Save" Command="{Binding SaveFileCmd}"/>
@@ -35,7 +36,7 @@
                 <MenuItem Header="E_xit" Command="{Binding ExitCmd}"/>
             </MenuItem>
 
-            <MenuItem Header="_Edit" Style="{StaticResource MainMenuItemStyle}">
+            <MenuItem Header="_Edit">
                 <MenuItem Header="_Undo"/>
                 <MenuItem Header="_Redo"/>
                 <Separator/>
@@ -45,7 +46,18 @@
                 <Separator/>
                 <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
             </MenuItem>
-            <MenuItem Header="Object" Style="{StaticResource MainMenuItemStyle}">
+            <MenuItem Header="_View">
+                <!-- As in PDFTools; DesignerTheme applies the choice -->
+                <MenuItem Header="_Theme" x:Name="ThemeMenuItem">
+                    <MenuItem Header="_System" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.System}" Click="ThemeMenuItem_Click"
+                              ToolTip="Follow Windows: Settings › Personalization › Colors › Choose your app mode."/>
+                    <MenuItem Header="_Light" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Light}" Click="ThemeMenuItem_Click"/>
+                    <MenuItem Header="_Dark" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Dark}" Click="ThemeMenuItem_Click"/>
+                    <MenuItem Header="_Classic" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Classic}" Click="ThemeMenuItem_Click"
+                              ToolTip="Windows' classic controls instead of the Windows 11 look. Light only."/>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="Object">
                 <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
                 <Separator/>
                 <MenuItem Header="Grouping">
@@ -93,7 +105,7 @@
                 </MenuItem>
             </MenuItem>
 
-            <MenuItem Header="_Debug" Style="{StaticResource MainMenuItemStyle}">
+            <MenuItem Header="_Debug">
                 <MenuItem Header="Debugger Breakpoint!" Command="{Binding DebugBreakpointCmd}"/>
                 <Separator/>
                 <MenuItem Header="Refresh Outline" Command="{Binding DebugPopulateLayersCmd}"/>
@@ -102,7 +114,7 @@
 
             </MenuItem>
 
-            <MenuItem Header="_Help" Style="{StaticResource MainMenuItemStyle}">
+            <MenuItem Header="_Help">
                 <MenuItem Header="View Help" Command="{Binding DebugGenerateWPFColorChartCmd}"/>
                 <MenuItem Header="WPF Color Chart" Command="{Binding DebugGenerateWPFColorChartCmd}"/>
                 <Separator/>
@@ -111,7 +123,7 @@
             </MenuItem>
         </Menu>
 
-        <ToolBarTray DockPanel.Dock="Top" Background="#444444" >
+        <ToolBarTray DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" >
             <ToolBar Name="ButtonBar" Visibility="Hidden">
                 <RadioButton Name="btnNone" Margin="3" Content="None" Style="{StaticResource {x:Type ToggleButton}}" IsChecked="True" Focusable="False"/>
                 <RadioButton Name="btnRectangle" Margin="3" Content="Rectangle" Style="{StaticResource {x:Type ToggleButton}}" Focusable="False"/>
@@ -119,7 +131,7 @@
             </ToolBar>
         </ToolBarTray>
 
-        <StatusBar DockPanel.Dock="Bottom" Height="22" Background="#444"></StatusBar>
+        <StatusBar DockPanel.Dock="Bottom" Height="22" Background="{DynamicResource ToolbarPanelBackgroundBrush}"></StatusBar>
 
 
         <xcad:DockingManager
@@ -133,7 +145,7 @@
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
                         <Image Source="{Binding IconSource}" Margin="0,0,5,0"/>
-                        <TextBlock Text="{Binding Title}"  Margin="0,0,5,0" FontSize="15" Foreground="{StaticResource LightLightColorBrush}"/>
+                        <TextBlock Text="{Binding Title}"  Margin="0,0,5,0" FontSize="15" Foreground="{DynamicResource LightLightColorBrush}"/>
                     </StackPanel>
                 </DataTemplate>
             </xcad:DockingManager.DocumentHeaderTemplate>
@@ -179,11 +191,11 @@
 
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}"
                                                 Margin="1,0,2,0" ToolTip="Add New Page" Command="{Binding NewPageCmd}">
                                             <Image Source="/Images/plus.png" Width="14" Height="14"/>
                                         </Button>
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}"
                                                 Margin="1,0,2,0" ToolTip="Delete Page" Command="{Binding DeletePageCmd}">
                                             <Image Source="/Images/minus.png" Width="14" Height="14"/>
                                         </Button>
@@ -210,12 +222,12 @@
                             <xcad:LayoutAnchorable Title="Layouts" ContentId="layouts" CanHide="False" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}"
                                                 Command="{Binding NewLayoutCmd}"
                                                 Margin="1,0,2,0" ToolTip="Add New Layout">
                                             <Image Source="/Images/plus.png" Width="14" Height="14"/>
                                         </Button>
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}"
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}"
                                                 Command="{Binding DeleteLayoutCmd}"
                                                 Margin="1,0,2,0" ToolTip="Delete Layout">
                                             <Image Source="/Images/minus.png" Width="14" Height="14"/>
@@ -233,12 +245,12 @@
 
                             <xcad:LayoutAnchorable Title="Parts" ContentId="parts" CanHide="False" CanClose="False">
                                 <DockPanel>
-                                    <ToolBarPanel DockPanel.Dock="Top" Background="#444444" Orientation="Horizontal">
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                    <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
                                                 ToolTip="Add New Part" Command="{Binding NewPartCmd}">
                                             <Image Source="/Images/plus.png" Width="14" Height="14"/>
                                         </Button>
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
                                                 ToolTip="Delete Part" Command="{Binding DeletePartCmd}">
                                             <Image Source="/Images/minus.png" Width="14" Height="14"/>
                                         </Button>
@@ -255,12 +267,12 @@
 
                             <xcad:LayoutAnchorable Title="Images" ContentId="images" CanHide="False" CanClose="False">
                                 <DockPanel>
-                                    <ToolBarPanel DockPanel.Dock="Top" Background="{StaticResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                    <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
                                                 ToolTip="Add Image to Project" Command="{Binding ImportImageCmd}">
                                             <Image Source="/Images/plus.png" Width="14" Height="14"/>
                                         </Button>
-                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                                        <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
                                                 ToolTip="Delete Image from Project" Command="{Binding DeleteImageCmd}">
                                             <Image Source="/Images/minus.png" Width="14" Height="14"/>
                                         </Button>
@@ -338,8 +350,8 @@
                                     AutoGenerateProperties="True"
                                     BorderThickness="0"
                                     SelectedObject="{Binding CurrentElement}"
-                                    Background="#333"
-                                    Foreground="LightGray"
+                                    Background="{DynamicResource ListBackgroundBrush}"
+                                    Foreground="{DynamicResource LightLightColorBrush}"
                                     FilterWatermark="Filter Properties"
                                     ShowAdvancedOptions="False">
                                     <tk:PropertyGrid.Resources>
@@ -376,7 +388,7 @@
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type GroupItem}">
                                                         <Expander Header="{Binding Name}" IsExpanded="True" Template="{StaticResource PropertyCategoryExpanderTemplate}"
-                                                                  Background="{StaticResource DarkDarkDarkBrush}" Foreground="{StaticResource LightColorBrush}"
+                                                                  Background="{DynamicResource DarkDarkDarkBrush}" Foreground="{DynamicResource LightColorBrush}"
                                                                   HeaderTemplate="{Binding CategoryGroupHeaderTemplate, RelativeSource={RelativeSource AncestorType={x:Type tk:PropertyGrid}}}">
                                                             <ItemsPresenter/>
                                                         </Expander>
@@ -385,15 +397,15 @@
                                             </Setter>
                                         </Style>
                                         <Style TargetType="{x:Type tkEditors:PropertyGridEditorTextBox}">
-                                            <Setter Property="Background" Value="{StaticResource ListBackgroundBrush}"/>
-                                            <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
-                                            <Setter Property="CaretBrush" Value="{StaticResource LightLightColorBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource ListBackgroundBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource LightLightColorBrush}"/>
+                                            <Setter Property="CaretBrush" Value="{DynamicResource LightLightColorBrush}"/>
                                         </Style>
                                     </tk:PropertyGrid.Resources>
                                     <tk:PropertyGrid.PropertyContainerStyle>
                                         <Style TargetType="{x:Type tk:PropertyItemBase}">
-                                            <Setter Property="Background" Value="{StaticResource ListBackgroundBrush}"/>
-                                            <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource ListBackgroundBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource LightLightColorBrush}"/>
                                         </Style>
                                     </tk:PropertyGrid.PropertyContainerStyle>
 

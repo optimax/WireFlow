@@ -12,6 +12,7 @@ namespace WireFlow.Views
         public SelectImageDlg(Window owner, SelectImageViewModel vm)
         {
             InitializeComponent();
+            SourceInitialized += (s, e) => MaxServices.Core.Themes.AppTheme.ApplyTitleBar(this);
             Owner = owner;
             VM = vm;
             DataContext = VM;

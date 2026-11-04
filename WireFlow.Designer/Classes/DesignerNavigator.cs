@@ -235,7 +235,8 @@ namespace WireFlow
 
         public DesignerNavigator(WireFlowEngine engine, string background)
         {
-            Background = FindResource("DesignerBackgroundBrush") as Brush;
+            // By reference, so that the area around the page follows the theme
+            SetResourceReference(BackgroundProperty, "DesignerBackgroundBrush");
             Engine = engine;
             CanvasBackground = background;
             Loaded += Window_OnLoaded;

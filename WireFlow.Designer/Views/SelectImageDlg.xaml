@@ -12,12 +12,12 @@
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
         <DockPanel>
-            <ToolBarPanel DockPanel.Dock="Top" Background="{StaticResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
-                <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+            <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
+                <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
                                                 ToolTip="Add Image to Project" Command="{Binding ImportImageCmd}">
                     <Image Source="/Images/plus.png" Width="14" Height="14"/>
                 </Button>
-                <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{StaticResource DarkDarkDarkBrush}" Margin="1,0,2,0"
+                <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
                                                 ToolTip="Delete Image from Project" Command="{Binding DeleteImageCmd}">
                     <Image Source="/Images/minus.png" Width="14" Height="14"/>
                 </Button>

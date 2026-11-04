@@ -27,21 +27,16 @@
     <Color x:Key="GreenColor" >#3c9b3c</Color>
 
 
-    <!-- Solid Brushes -->
+    <!-- Solid Brushes. NormalColorBrush, ListBackgroundBrush, ToolbarPanelBackgroundBrush, DarkDarkDarkBrush,
+         LightLightColorBrush, LightColorBrush and DesignerBackgroundBrush follow the theme: DesignerTheme keeps them in
+         the application's resources, so they are used by DynamicResource. -->
     <SolidColorBrush x:Key="YellowBrush" Color="{StaticResource YellowColor}"/>
     <SolidColorBrush x:Key="WhiteBrush" Color="White"/>
-    <SolidColorBrush x:Key="LightColorBrush" Color="{StaticResource LightColor}"/>
-    <SolidColorBrush x:Key="LightLightColorBrush" Color="{StaticResource LightLightColor}"/>
     <SolidColorBrush x:Key="GlowColorBrush" Color="{StaticResource GlowColor}"/>
-    <SolidColorBrush x:Key="NormalColorBrush" Color="{StaticResource NormalColor}"/>
     <SolidColorBrush x:Key="GroupBoxBorderBrush" Color="LightGray"/>
     <SolidColorBrush x:Key="GroupBoxHeaderBrush" Color="White"/>
     <SolidColorBrush x:Key="DarkDarkBrush" Color="{StaticResource DarkDarkColor}" />
-    <SolidColorBrush x:Key="DarkDarkDarkBrush" Color="{StaticResource DarkDarkDarkColor}" />
     <SolidColorBrush x:Key="DesignerCanvasBrush" Color="{StaticResource DesignerCanvasColor}" />
-    <SolidColorBrush x:Key="ListBackgroundBrush" Color="{StaticResource ListBackgroundColor}" />
-    <SolidColorBrush x:Key="ToolbarPanelBackgroundBrush" Color="{StaticResource ToolbarPanelBackgroundColor}" />
-    <SolidColorBrush x:Key="DesignerBackgroundBrush" Color="{StaticResource DesignerBackgroundColor}" />
 
 
 
@@ -94,90 +89,28 @@
         <GradientStop Color="Black" Offset="1" />
     </RadialGradientBrush>
 
-    <Style TargetType="{x:Type Menu}">
-        <Setter Property="Background" Value="{StaticResource DarkDarkBrush}"/>
-        <Setter Property="FontFamily" Value="{DynamicResource {x:Static SystemFonts.MenuFontFamilyKey}}"/>
-        <!--<Setter Property="FontSize" Value="{DynamicResource {x:Static SystemFonts.MenuFontSizeKey}}"/>-->
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontStyle" Value="{DynamicResource {x:Static SystemFonts.MenuFontStyleKey}}"/>
-        <Setter Property="FontWeight" Value="{DynamicResource {x:Static SystemFonts.MenuFontWeightKey}}"/>
-        <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
-    </Style>
-
-
-    <Style x:Key="MainMenuItemStyle" TargetType="{x:Type MenuItem}">
-        <Setter Property="Background" Value="{StaticResource DarkDarkBrush}"/>
-        <!--<Setter Property="FontSize" Value="{DynamicResource {x:Static SystemFonts.MenuFontSizeKey}}"/>-->
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontStyle" Value="{DynamicResource {x:Static SystemFonts.MenuFontStyleKey}}"/>
-        <Setter Property="FontWeight" Value="{DynamicResource {x:Static SystemFonts.MenuFontWeightKey}}"/>
-        <Setter Property="Foreground"  Value="{StaticResource ControlForegroundBrush}"/>
-    </Style>
-
-    <Style TargetType="{x:Type MenuItem}">
-        <Setter Property="FontFamily" Value="{DynamicResource {x:Static SystemFonts.MenuFontFamilyKey}}"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontStyle" Value="{DynamicResource {x:Static SystemFonts.MenuFontStyleKey}}"/>
-        <Setter Property="FontWeight" Value="{DynamicResource {x:Static SystemFonts.MenuFontWeightKey}}"/>
-        <Setter Property="Foreground" Value="Black"/>
-    </Style>
-
-
-    <Style TargetType="{x:Type ListBox}">
-        <Setter Property="FontFamily" Value="{DynamicResource {x:Static SystemFonts.MenuFontFamilyKey}}"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontStyle" Value="{DynamicResource {x:Static SystemFonts.MenuFontStyleKey}}"/>
-        <Setter Property="FontWeight" Value="{DynamicResource {x:Static SystemFonts.MenuFontWeightKey}}"/>
-        <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
-        <Setter Property="Background" Value="{StaticResource ListBackgroundBrush}"/>
-    </Style>
-
+    <!-- Menus, list boxes, tree views and splitters take the theme's own styles: an implicit style here would hide
+         Fluent's, and Classic has no Fluent styles to base one on. EditableListBox is a ListBox of its own type, which
+         the theme's ListBox style does not reach. -->
     <Style TargetType="{x:Type wireFlow:EditableListBox}">
         <Setter Property="FontFamily" Value="{DynamicResource {x:Static SystemFonts.MenuFontFamilyKey}}"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontStyle" Value="{DynamicResource {x:Static SystemFonts.MenuFontStyleKey}}"/>
         <Setter Property="FontWeight" Value="{DynamicResource {x:Static SystemFonts.MenuFontWeightKey}}"/>
-        <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
-        <Setter Property="Background" Value="{StaticResource ListBackgroundBrush}"/>
-    </Style>
-
-
-
-    <Style TargetType="{x:Type TreeView}">
-        <Setter Property="FontFamily" Value="{DynamicResource {x:Static SystemFonts.MenuFontFamilyKey}}"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontStyle" Value="{DynamicResource {x:Static SystemFonts.MenuFontStyleKey}}"/>
-        <Setter Property="FontWeight" Value="{DynamicResource {x:Static SystemFonts.MenuFontWeightKey}}"/>
-        <Setter Property="Background" Value="{StaticResource ListBackgroundBrush}"/>
-    </Style>
-
-
-    <Style TargetType="{x:Type TreeViewItem}">
-        <Setter Property="Margin" Value="0,0,0,0"/>
-        <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
-    </Style>
-
-
-
-    <Style TargetType="{x:Type GridSplitter}">
-        <Setter Property="Background" Value="{StaticResource DarkDarkBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource LightLightColorBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ListBackgroundBrush}"/>
     </Style>
 
 
     <Style TargetType="{x:Type xcad:AnchorablePaneTitle}">
-        <Setter Property="Foreground" Value="{StaticResource LightLightColorBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource LightLightColorBrush}"/>
         <Setter Property="FontSize" Value="15"/>
         <Setter Property="Margin" Value="5,0,5,5"/>
     </Style>
 
 
     <Style TargetType="{x:Type ToolBarPanel}">
-        <Setter Property="Background" Value="{StaticResource ToolbarPanelBackgroundBrush}"/>
-    </Style>
-
-
-    <Style x:Name="DarkBackground" TargetType="{x:Type Panel}">
-        <Setter Property="Background" Value="{StaticResource ToolbarPanelBackgroundBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource ToolbarPanelBackgroundBrush}"/>
     </Style>
 
 

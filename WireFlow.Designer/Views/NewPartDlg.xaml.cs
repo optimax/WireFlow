@@ -22,6 +22,7 @@ namespace WireFlow.Views
         public NewPartDlg(Window owner, string partName = null)
         {
             InitializeComponent();
+            SourceInitialized += (s, e) => MaxServices.Core.Themes.AppTheme.ApplyTitleBar(this);
             Owner = owner;
             this.SourceInitialized += (x, y) =>
             {

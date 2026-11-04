@@ -39,6 +39,8 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <!-- The System, Light, Dark and Classic themes of Optimax's programs, from LocalPackages -->
+    <PackageReference Include="MaxServices.Core" Version="1.1.0" />
     <!-- Xceed.Wpf.AvalonDock.Themes.Metro comes from the project in this solution, so take only these two DLLs from the package. -->
     <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" NoWarn="NU1701" />
     <Reference Include="Xceed.Wpf.AvalonDock">

@@ -108,8 +108,8 @@ namespace WireFlow
             TranslateTransform tt = new TranslateTransform();
             group.Children.Add(tt);
 
-            // Only the Designer defines this brush; hosts like the Browser set Background themselves.
-            Background = TryFindResource("DesignerBackgroundBrush") as Brush;
+            // Only the Designer defines this brush, and changes it with the theme; hosts like the Browser set Background themselves.
+            SetResourceReference(BackgroundProperty, "DesignerBackgroundBrush");
 
             Canvas.RenderTransform = group;
             Canvas.RenderTransformOrigin = new Point(0.0, 0.0);

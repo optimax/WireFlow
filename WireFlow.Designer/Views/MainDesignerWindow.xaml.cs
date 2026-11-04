@@ -25,6 +25,7 @@ using Newtonsoft.Json.Serialization;
 using WireFlow.Views;
 using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.Toolkit.PropertyGrid;
+using MaxServices.Core.Themes;
 using Formatting = Newtonsoft.Json.Formatting;
 
 namespace WireFlow
@@ -261,7 +262,11 @@ namespace WireFlow
 
         public MainDesignerWindow(WireFlowEngine engine)
         {
+            // The theme before the window is built; Window_Loaded applies the rest of the settings
+            LoadConfigSettings();
+            DesignerTheme.Apply(DesignerTheme.Parse(Config.Theme));
             InitializeComponent();
+            UpdateThemeMenu();
             DataContext = this;
             Engine = engine;
             //Engine.NavigateToNodeFunc = NavigateInNavMode;
@@ -279,6 +284,7 @@ namespace WireFlow
             this.SourceInitialized += (x, y) =>
             {
                 //LoadAndApplyConfigSettings(); does not work here
+                AppTheme.ApplyTitleBar(this);
             };
 
         }
@@ -343,7 +349,7 @@ namespace WireFlow
         {
             KeyBinding keyBinding = new KeyBinding(ReloadFromFileCmd, Key.F5, ModifierKeys.None);
             InputBindings.Add(keyBinding);
-            LoadAndApplyConfigSettings();
+            ApplyConfigSettings();
 
             //TODO: Select default tool upon window loaded
             //SelectTool(TOOL_SELECT);
@@ -374,7 +380,7 @@ namespace WireFlow
 
         #region Config
 
-        private void LoadAndApplyConfigSettings()
+        private void LoadConfigSettings()
         {
             if (File.Exists(ConfigFileName))
             {
@@ -386,7 +392,27 @@ namespace WireFlow
                 Config = new ConfigSettings();
             }
             Debug.Assert(Config != null);
-            ApplyConfigSettings();
+        }
+
+
+
+        // View → Theme: System, Light, Dark or Classic, as in PDFTools; kept in the settings at once
+        private void ThemeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (!((sender as MenuItem)?.Tag is ThemeChoice choice))
+                return;
+            DesignerTheme.Apply(choice);
+            Config.Theme = choice.ToString();
+            PersistConfigSettings();
+            UpdateThemeMenu();
+        }
+
+
+
+        private void UpdateThemeMenu()
+        {
+            foreach (var item in ThemeMenuItem.Items.OfType<MenuItem>())
+                item.IsChecked = item.Tag is ThemeChoice choice && choice == AppTheme.Choice;
         }
 
 
