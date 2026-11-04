@@ -2,9 +2,9 @@
 
 WireFlow uses the third-party components below. Each section names the component, its version, the products that use it, and its license text exactly as the component ships or declares it.
 
-## Extended WPF Toolkit 3.6.0 (Xceed.Wpf.AvalonDock, Xceed.Wpf.Toolkit)
+## Extended WPF Toolkit 3.6.0 (Xceed.Wpf.Toolkit)
 
-Copyright © Xceed Software Inc. 2010-2019. Used by WireFlow Designer.
+Copyright © Xceed Software Inc. 2010-2019. Used by WireFlow Designer, for its property grid (`Xceed.Wpf.Toolkit.dll`); the package's AvalonDock DLLs are not used.
 
 The NuGet package `Extended.Wpf.Toolkit` 3.6.0 declares the Microsoft Public License (MS-PL). The package contains no license file; the text below is the `license.md` of Xceed's source repository at its "V3.6.0 Released" commit.
 
@@ -43,11 +43,46 @@ A "contributor" is any person that distributes its contribution under this licen
 
 ```
 
-## Xceed.Wpf.AvalonDock.Themes.Metro (source in this repository)
+## OptimaxTools.Dock (source in this repository, from Dirkster.AvalonDock 5.0.1)
 
-Copyright (C) 2007-2018 Xceed Software Inc. Used by WireFlow Designer.
+`OptimaxTools.Dock`, `OptimaxTools.Dock.Core` and `OptimaxTools.Dock.Themes.Metro` are the `AvalonDock`, `AvalonDock.Core` and `AvalonDock.Themes.Metro` components of Dirkster.AvalonDock 5.0.1 (https://github.com/Dirkster99/AvalonDock, tag `v5.0.1`), a fork of Xceed's AvalonDock, renamed. Used by WireFlow Designer. Their namespaces, assembly names, pack URIs and XAML namespace are renamed, WPF's `Dock` enum is written out in full where the new namespace hides it, two brush colors and two backgrounds of the Metro theme are changed for WireFlow, and the assemblies are signed with WireFlow's own key. The file headers and notices of the source are kept.
 
-The source of the Extended WPF Toolkit 3.6.0 AvalonDock Metro theme, published by Xceed under the Microsoft Public License (MS-PL; text above). Two brush colors in `Brushes.xaml` are changed for WireFlow, and the assembly is signed with WireFlow's own key.
+The source is published under the Microsoft Public License (MS-PL). Each of the three folders holds a copy of the repository's `LICENSE`, as section 3(D) requires for source; its text:
+
+```text
+Ms-PL
+Microsoft Public License (Ms-PL)
+
+This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
+
+1. Definitions
+
+The terms "reproduce," "reproduction," "derivative works," and "distribution" have the same meaning here as under U.S. copyright law.
+
+A "contribution" is the original software, or any additions or changes to the software.
+
+A "contributor" is any person that distributes its contribution under this license.
+
+"Licensed patents" are a contributor's patent claims that read directly on its contribution.
+
+2. Grant of Rights
+
+(A) Copyright Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free copyright license to reproduce its contribution, prepare derivative works of its contribution, and distribute its contribution or any derivative works that you create.
+
+(B) Patent Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free license under its licensed patents to make, have made, use, sell, offer for sale, import, and/or otherwise dispose of its contribution in the software or derivative works of the contribution in the software.
+
+3. Conditions and Limitations
+
+(A) No Trademark License- This license does not grant you rights to use any contributors' name, logo, or trademarks.
+
+(B) If you bring a patent claim against any contributor over patents that you claim are infringed by the software, your patent license from such contributor to the software ends automatically.
+
+(C) If you distribute any portion of the software, you must retain all copyright, patent, trademark, and attribution notices that are present in the software.
+
+(D) If you distribute any portion of the software in source code form, you may do so only under this license by including a complete copy of this license with your distribution. If you distribute any portion of the software in compiled or object code form, you may only do so under a license that complies with this license.
+
+(E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement.
+```
 
 ## Newtonsoft.Json 13.0.4
 

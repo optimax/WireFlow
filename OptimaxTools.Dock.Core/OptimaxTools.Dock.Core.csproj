@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The AvalonDock.Core component of Dirkster.AvalonDock 5.0.1 (MS-PL, see LICENSE), renamed: OptimaxTools.Dock.Core -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>OptimaxTools.Dock.Core</RootNamespace>
+    <AssemblyName>OptimaxTools.Dock.Core</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\OptimaxTools.Dock\sn.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+</Project>

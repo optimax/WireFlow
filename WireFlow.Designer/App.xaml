@@ -15,7 +15,7 @@
                 <ResourceDictionary Source="pack://application:,,,/MaxServices.Core;component/Themes/FluentStyles.xaml" />
                 <ResourceDictionary Source="Xaml/Cursors.xaml" />
                 <ResourceDictionary Source="Classes/DesignerContextMenu.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/Xceed.Wpf.AvalonDock.Themes.Metro;component/Theme.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/OptimaxTools.Dock.Themes.Metro;component/Theme.xaml" />
                 <ResourceDictionary Source="Xaml/GlobalStyles.xaml" />
                 <ResourceDictionary Source="Xaml/GlobalTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>

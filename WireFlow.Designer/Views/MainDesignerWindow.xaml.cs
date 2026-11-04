@@ -23,7 +23,7 @@ using System.Windows.Shapes;
 using System.Xml;
 using Newtonsoft.Json.Serialization;
 using WireFlow.Views;
-using Xceed.Wpf.AvalonDock.Layout;
+using OptimaxTools.Dock.Layout;
 using Xceed.Wpf.Toolkit.PropertyGrid;
 using MaxServices.Core.Themes;
 using Formatting = Newtonsoft.Json.Formatting;

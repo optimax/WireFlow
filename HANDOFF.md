@@ -2,14 +2,14 @@
 
 ## Current objective
 
-Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, AvalonDock (Extended.Wpf.Toolkit) 3.6.0, the dark Properties pane, the Fluent themes in the Designer and the Browser, and `.wf` (SQLite) project files (three questions open in `TO-DO.md`). Next: "Remove Dependency on AvalonDock".
+Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, AvalonDock (Extended.Wpf.Toolkit) 3.6.0, the dark Properties pane, the Fluent themes in the Designer and the Browser, `.wf` (SQLite) project files (three questions open in `TO-DO.md`), and OptimaxTools.Dock, the fork of Dirkster.AvalonDock 5.0.1 that replaces Xceed's AvalonDock (one question open). All TO-DO items are processed.
 
 ## Work completed
 
 - All 7 projects are SDK-style, targeting `net10.0-windows`. They keep their assembly names, root namespaces, `Properties\AssemblyInfo.cs` files and WPF `Resource` items. The solution file is `WireFlow.slnx`.
 - NuGet packages are `PackageReference` items: Newtonsoft.Json 13.0.4, Extended.Wpf.Toolkit 3.6.0, Microsoft.Data.Sqlite 10.0.14, and Optimax's own MaxServices.Core 1.1.0 from `LocalPackages\`. `THIRD-PARTY-NOTICES.md` holds the third-party license texts.
-- The Designer and the Metro theme project take only the Xceed DLLs they use from Extended.Wpf.Toolkit (see "Known traps" in `implementation.md`).
-- `Xceed.Wpf.AvalonDock.Themes.Metro` is the Xceed 3.6.0 theme source (the last MS-PL source) with WireFlow's two brush colors. It is signed through `SignAssembly` / `AssemblyOriginatorKeyFile`.
+- The Designer takes only `Xceed.Wpf.Toolkit.dll` (the property grid) from Extended.Wpf.Toolkit (see "Known traps" in `implementation.md`).
+- Docking: `OptimaxTools.Dock`, `OptimaxTools.Dock.Core` and `OptimaxTools.Dock.Themes.Metro` are the renamed source of Dirkster.AvalonDock 5.0.1 (see the shared projects in `implementation.md`).
 - `Directory.Build.props` stops the SDK from generating the attributes the `AssemblyInfo.cs` files already declare.
 - `publish-locally.bat` publishes the 64-bit Designer, built in Release mode, framework-dependent, to `c:\Programs\Optimax\WireFlow`.
 - Outline Sync: `DesignerNavigator` raises `ElementsChanged` after it creates, duplicates, deletes, groups, ungroups or reorders elements. `MainDesignerWindow` rebuilds the outline when the event comes from the current designer.
@@ -23,7 +23,7 @@ Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, AvalonDock (E
 ## Files changed
 
 - All 7 `*.csproj` files — SDK-style. Newtonsoft.Json 13.0.4 in `WireFlow.Repository.Folder` and `WireFlow.Designer`; Extended.Wpf.Toolkit 3.6.0 in `WireFlow.Designer` and `Xceed.Wpf.AvalonDock.Themes.Metro`; `ApplicationIcon` in `WireFlow.Designer` and `WireFlow.Browser`.
-- `Xceed.Wpf.AvalonDock.Themes.Metro/` — `Theme.xaml`, `Brushes.xaml`, `MetroTheme.cs` from the 3.6.0 source; `AssemblyVersionInfo.cs` version 3.6; `Properties/AssemblyInfo.cs` signing attributes removed.
+- OptimaxTools.Dock: `OptimaxTools.Dock/`, `OptimaxTools.Dock.Core/`, `OptimaxTools.Dock.Themes.Metro/` (new: the renamed upstream source, project files, `LICENSE`, identity attributes in `Properties/AssemblyInfo.cs`; `ToggleDockingManager.cs` writes WPF's `Dock` enum in full; the theme's `Brushes.xaml` and `Theme.xaml` carry WireFlow's changes); `Xceed.Wpf.AvalonDock.Themes.Metro/` (deleted); `WireFlow.slnx`; `WireFlow.Designer/WireFlow.Designer.csproj` (the fork instead of Xceed's AvalonDock); `App.xaml` (the fork's Metro theme); `DesignerNavigatorDocument.cs`, `MainDesignerWindow.xaml.cs` (`using OptimaxTools.Dock.Layout`); `MainDesignerWindow.xaml`, `Xaml/GlobalStyles.xaml`, `Classes/DesignerContextMenu.xaml` (the `dock` XAML namespace).
 - `Directory.Build.props`, `publish-locally.bat`, `implementation.md`, `HANDOFF.md`, `THIRD-PARTY-NOTICES.md` — new.
 - `Browser/App.config`, `WireFlow.Designer/app.config`, the three `packages.config` files — deleted.
 - `WireFlow.Designer/Classes/DesignerNavigator.cs` — `ElementsChanged` event and `OnElementsChanged()`, raised by `CreateShape` (both overloads), `DuplicateSelectedElements`, `DeleteSelectedElements`, `GroupSelected`, `UngroupSelected`, `ObjectSendBackward`, `ObjectBringForward`, `ObjectSendToBack`, `ObjectBringToFront`.
@@ -48,6 +48,7 @@ Debug and Release: 0 errors, 0 warnings, with Extended.Wpf.Toolkit 3.6.0. Visual
 - Off-screen `RenderTargetBitmap` renders of the real `MainDesignerWindow`, with and without a selected element, show the Properties pane dark throughout: list, category headers, editors, filter box.
 - Off-screen renders of the real window in the Dark, Light and Classic themes, each switched to after the window was built (as the menu does), show the menus, panes, pane titles, Outline, Properties and the area around the page in the theme's colors. The Ctrl+Tab navigator window of AvalonDock keeps its white background; it was not checked.
 - `.wf` files: a script ran 34 checks of `SqliteRepository` against copies of `Data/WIREFLOW` and `Data/Test`, all passing: the conversion keeps every file's JSON byte for byte and leaves the folder; a second open does not convert again; `SaveProject` archives and promotes as the folder storage does; masters and parts read their saved version; rename, delete, images; the Browser mode refuses `.project` files; other files are refused; the file is not held open. Off-screen renders show the real Designer converting and showing `Data/WIREFLOW`, and the Browser showing the resulting `.wf`.
+- OptimaxTools.Dock: off-screen renders of the real Designer in Dark and Light show the docked panes, pane titles, the document tab, the Outline, the Properties pane and the page as with Xceed's AvalonDock; the pane buttons are upstream's newer icons. Docking, floating, auto-hiding and the Ctrl+Tab window were not exercised.
 - Off-screen renders of the real Browser window with a project open, in Dark, Light and Classic, show the menu, toolbar, page title and the area around the page in the theme's colors.
 - Not tested: interactive use. That includes drawing a shape and watching the Outline update, docking, editing values in the property grid, opening a project in the Browser, and following links.
 
@@ -63,4 +64,4 @@ None found.
 
 ## Recommended next step
 
-The "Remove Dependency on AvalonDock" TO-DO item. Check the Designer and the Browser interactively, `.wf` files included (open a `.project`, edit, save, reopen): View → Theme in each theme, docking, floating and auto-hiding panes, editing in the property grid, and following links in the Browser.
+Answer the open questions in `TO-DO.md`. Check the Designer and the Browser interactively, `.wf` files and OptimaxTools.Dock included (open a `.project`, edit, save, reopen; dock, float and auto-hide panes, Ctrl+Tab): View → Theme in each theme, docking, floating and auto-hiding panes, editing in the property grid, and following links in the Browser.

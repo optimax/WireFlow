@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The AvalonDock.Themes.Metro component of Dirkster.AvalonDock 5.0.1 (MS-PL, see LICENSE), renamed:
+       OptimaxTools.Dock.Themes, with WireFlow's changes -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>OptimaxTools.Dock.Themes</RootNamespace>
+    <AssemblyName>OptimaxTools.Dock.Themes.Metro</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\OptimaxTools.Dock\sn.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="**\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OptimaxTools.Dock\OptimaxTools.Dock.csproj" />
+  </ItemGroup>
+
+</Project>

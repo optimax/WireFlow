@@ -6,7 +6,7 @@ WireFlow is a tool for building wireframes and clickable prototypes: pages are d
 
 | Product | Project | Role |
 |---|---|---|
-| WireFlow Designer | `WireFlow.Designer` | WPF editor with a docking UI (AvalonDock): pages, layouts (master pages), parts, images, outline, properties. |
+| WireFlow Designer | `WireFlow.Designer` | WPF editor with a docking UI (OptimaxTools.Dock): pages, layouts (master pages), parts, images, outline, properties. |
 | WireFlow Browser | `WireFlow.Browser` | WPF viewer: opens a `.wf` project, shows its `Home` page and follows `Href` clicks with back/forward history. |
 
 Shared projects:
@@ -18,7 +18,8 @@ Shared projects:
 | `WireFlow.Repository.Sqlite` | `SqliteRepository`, the storage in use: a project in one SQLite database file (`.wf`). Converts folder projects (`.project`) into `.wf` files. |
 | `WireFlow.Repository.Folder` | `FlatFolderRepository`, the earlier storage: a project as a folder. Read when a folder project is converted; its `SerializeToJSON` and `DeserializeFromJSON` are the JSON settings of both storages. |
 | `WireFlow.Repository.Archive` | `ZipArchiveRepository`, an unimplemented stub. |
-| `Xceed.Wpf.AvalonDock.Themes.Metro` | Source copy of the Extended WPF Toolkit 3.6.0 AvalonDock Metro theme, used by the Designer, with two brush colors in `Brushes.xaml` changed for WireFlow and a themed background for the document pane in `Theme.xaml`. 3.6.0 is the last theme source Xceed published under MS-PL; the 3.8 theme differs from it only by one template moved into a keyed resource. Strong-named with `sn.snk`. |
+| `OptimaxTools.Dock`, `OptimaxTools.Dock.Core` | The docking layout system of the Designer: the `AvalonDock` and `AvalonDock.Core` components of Dirkster.AvalonDock 5.0.1, an MS-PL fork of Xceed's AvalonDock, renamed to the `OptimaxTools.Dock` namespaces. XAML namespace `http://schemas.optimax.com/wpf/xaml/dock` (prefix `dock`), also mapped into WPF's presentation namespace, as upstream does. Strong-named with WireFlow's `OptimaxTools.Dock\sn.snk`. |
+| `OptimaxTools.Dock.Themes.Metro` | The Metro theme of Dirkster.AvalonDock 5.0.1, renamed, used by the Designer, with WireFlow's two brush colors (`BaseColor5`, `BaseColor6`) in `Brushes.xaml`, and in `Theme.xaml` themed backgrounds for the document pane and the Ctrl+Tab navigator window, which upstream draws white. |
 
 ## Development environment
 
@@ -52,18 +53,19 @@ WireFlow itself is copyright Optimax Corporation.
 | Component | Version | License | Used by |
 |---|---|---|---|
 | Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer, Browser |
-| Extended.Wpf.Toolkit (Xceed AvalonDock, Xceed Toolkit) | 3.6.0 | MS-PL | Designer, Metro theme |
+| Extended.Wpf.Toolkit (only `Xceed.Wpf.Toolkit`, the property grid) | 3.6.0 | MS-PL | Designer |
+| Dirkster.AvalonDock source (as OptimaxTools.Dock, in this solution) | 5.0.1 | MS-PL | Designer |
 | Microsoft.Data.Sqlite (with Microsoft.Data.Sqlite.Core) | 10.0.14 | MIT | Repository.Sqlite |
 | SQLitePCLRaw (bundle_e_sqlite3, core, lib.e_sqlite3, provider.e_sqlite3) | 2.1.13 | Apache-2.0 | Microsoft.Data.Sqlite |
 | SQLite (`e_sqlite3.dll`, in SQLitePCLRaw.lib.e_sqlite3) | as built by SQLitePCLRaw 2.1.13 | Public domain | SQLitePCLRaw |
 
-Extended.Wpf.Toolkit is pinned to 3.6.0 on purpose: it is the last version that is MS-PL both in its package and in its published source, which matches the `Xceed.Wpf.AvalonDock.Themes.Metro` source in this solution. It ships only `lib/net40` DLLs, and NuGet lists it as unlisted, though it still restores. Do not upgrade it:
+Extended.Wpf.Toolkit is pinned to 3.6.0 on purpose: it is the last version that is MS-PL both in its package and in its published source, under which WireFlow took it. It ships only `lib/net40` DLLs, and NuGet lists it as unlisted, though it still restores. Do not upgrade it:
 
 - Versions 3.7.0–3.8.1 and 4.0.0 onwards, 5.1.2 included, are under the Xceed Community License: non-commercial use by fewer than 10 users only.
 - 3.8.2 declares MS-PL, but the `LICENSE.txt` inside its package is the Community License.
 - Xceed never published 3.7+ source under MS-PL: from the 3.7.0 commit on, the repository's `license.md` is the Community License.
 
-AvalonDock is to be replaced by an OptimaxTools.Dock assembly in this solution (see `TO-DO.md`).
+Docking is OptimaxTools.Dock, from the source of Dirkster.AvalonDock 5.0.1 (MS-PL in its repository's `LICENSE` and its packages). Keep it close to upstream, so that later upstream fixes can be merged: change only what WireFlow needs, and mark each change with a `WireFlow:` comment.
 
 `THIRD-PARTY-NOTICES.md` holds the license texts. Update it with the exact texts whenever a package is added, removed or upgraded.
 
@@ -86,7 +88,8 @@ JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element list
 
 ## Known traps
 
-- **Two `Xceed.Wpf.AvalonDock.Themes.Metro.dll`.** The Extended.Wpf.Toolkit package ships its own Metro theme DLL with the same assembly name as the project in this solution. The Designer and the Metro theme project therefore reference the package with `ExcludeAssets="all"` and `GeneratePathProperty="true"`, and take only the DLLs they use through `$(PkgExtended_Wpf_Toolkit)`. A NuGet "update" that re-adds every DLL of the package brings the clash back.
+- **Extended.Wpf.Toolkit also ships Xceed's AvalonDock DLLs.** The Designer references the package with `ExcludeAssets="all"` and `GeneratePathProperty="true"`, and takes only `Xceed.Wpf.Toolkit.dll` through `$(PkgExtended_Wpf_Toolkit)`. A NuGet "update" that re-adds every DLL of the package brings Xceed's AvalonDock back beside OptimaxTools.Dock.
+- **Inside the `OptimaxTools.*` namespaces, `Dock` is the namespace `OptimaxTools.Dock`, not WPF's `Dock` enum.** C# finds the namespace, a member of `OptimaxTools`, before the `using System.Windows.Controls` of the file, so `Dock.Top` does not compile there, and a file-level `using` alias does not help. Write `System.Windows.Controls.Dock.Top`, as the fork does, when merging upstream code.
 - **Scratch programs that host the Designer's window.** Creating `App` queues its `Startup` handler, which opens a real Designer window as soon as the dispatcher runs and applies the saved theme. `MainDesignerWindow` also writes its settings (`%APPDATA%\WireFlow\WireFlow.Designer.config`) when it closes. Remove the `Startup` handler, and keep a copy of the settings file to put back.
 - **Single-file `dotnet run app.cs` scripts default to `PublishAot=true`,** which disables dynamic code generation, unlike the apps. Add `#:property PublishAot=false` to scripts that load WireFlow documents, so that Newtonsoft.Json runs as it does in the apps.
 - **`dotnet publish` into an existing folder copies a file only when it is newer than the one there.** After a package downgrade, the publish succeeds but keeps the newer DLLs of the old version. Publish into an empty folder, as `publish-locally.bat` does.

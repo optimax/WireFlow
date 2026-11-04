@@ -4,7 +4,7 @@
     xmlns:tk="http://schemas.xceed.com/wpf/xaml/toolkit"
     xmlns:tkEditors="clr-namespace:Xceed.Wpf.Toolkit.PropertyGrid.Editors;assembly=Xceed.Wpf.Toolkit"
     xmlns:themes="clr-namespace:MaxServices.Core.Themes;assembly=MaxServices.Core"
-    xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
+    xmlns:dock="http://schemas.optimax.com/wpf/xaml/dock"
     xmlns:system="clr-namespace:System;assembly=mscorlib"
     xmlns:wireFlowCore="clr-namespace:WireFlow;assembly=WireFlow.Core"
     xmlns:wireFlow="clr-namespace:WireFlow"
@@ -134,32 +134,32 @@
         <StatusBar DockPanel.Dock="Bottom" Height="22" Background="{DynamicResource ToolbarPanelBackgroundBrush}"></StatusBar>
 
 
-        <xcad:DockingManager
+        <dock:DockingManager
             Name="DockingManager"
             AllowMixedOrientation="True"
             BorderThickness="0"
             Background="Transparent"
             >
 
-            <xcad:DockingManager.DocumentHeaderTemplate>
+            <dock:DockingManager.DocumentHeaderTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
                         <Image Source="{Binding IconSource}" Margin="0,0,5,0"/>
                         <TextBlock Text="{Binding Title}"  Margin="0,0,5,0" FontSize="15" Foreground="{DynamicResource LightLightColorBrush}"/>
                     </StackPanel>
                 </DataTemplate>
-            </xcad:DockingManager.DocumentHeaderTemplate>
+            </dock:DockingManager.DocumentHeaderTemplate>
 
 
-            <xcad:LayoutRoot x:Name="LayoutRoot">
+            <dock:LayoutRoot x:Name="LayoutRoot">
 
-                <xcad:LayoutPanel Orientation="Horizontal">
+                <dock:LayoutPanel Orientation="Horizontal">
 
-                    <xcad:LayoutAnchorablePaneGroup DockWidth="300"  x:Name="LeftPane" Orientation="Vertical">
+                    <dock:LayoutAnchorablePaneGroup DockWidth="300"  x:Name="LeftPane" Orientation="Vertical">
 
 
-                        <xcad:LayoutAnchorablePane DockHeight="*">
-                            <xcad:LayoutAnchorable ContentId="tools" Title="Tools" CanHide="False" CanClose="False">
+                        <dock:LayoutAnchorablePane DockHeight="*">
+                            <dock:LayoutAnchorable ContentId="tools" Title="Tools" CanHide="False" CanClose="False">
                                 <Grid>
                                     <ListBox Name="Tools" Padding="3" BorderThickness="0" SelectedItem="{Binding Path=SelectedDrawingTool,Mode=OneWay}" SelectedIndex="{Binding SelectedToolIndex}"
                                         ItemsSource="{Binding DrawingTools}">
@@ -172,21 +172,21 @@
                                         </ListBox.Resources>
                                     </ListBox>
                                 </Grid>
-                            </xcad:LayoutAnchorable>
+                            </dock:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable Title="History" ContentId="layouts" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="History" ContentId="layouts" CanHide="False" CanClose="False">
                                 <DockPanel>
                                     <ListBox BorderThickness="0"
 
                                              ItemTemplate="{StaticResource ListOfNamesDataTemplate}">
                                     </ListBox>
                                 </DockPanel>
-                            </xcad:LayoutAnchorable>
+                            </dock:LayoutAnchorable>
 
-                        </xcad:LayoutAnchorablePane>
+                        </dock:LayoutAnchorablePane>
 
-                        <xcad:LayoutAnchorablePane DockHeight="2*">
-                            <xcad:LayoutAnchorable Title="Pages" ContentId="pages" CanHide="False" CanClose="False">
+                        <dock:LayoutAnchorablePane DockHeight="2*">
+                            <dock:LayoutAnchorable Title="Pages" ContentId="pages" CanHide="False" CanClose="False">
 
 
                                 <DockPanel>
@@ -217,9 +217,9 @@
 
 
 
-                            </xcad:LayoutAnchorable>
+                            </dock:LayoutAnchorable>
 
-                            <xcad:LayoutAnchorable Title="Layouts" ContentId="layouts" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Layouts" ContentId="layouts" CanHide="False" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Orientation="Horizontal">
                                         <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}"
@@ -240,10 +240,10 @@
                                              MouseDoubleClick="ListBoxLayouts_MouseDoubleClick">
                                     </ListBox>
                                 </DockPanel>
-                            </xcad:LayoutAnchorable>
+                            </dock:LayoutAnchorable>
 
 
-                            <xcad:LayoutAnchorable Title="Parts" ContentId="parts" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Parts" ContentId="parts" CanHide="False" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
                                         <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
@@ -262,10 +262,10 @@
                                           MouseDoubleClick="ListBoxParts_MouseDoubleClick">
                                     </ListBox>
                                 </DockPanel>
-                            </xcad:LayoutAnchorable>
+                            </dock:LayoutAnchorable>
 
 
-                            <xcad:LayoutAnchorable Title="Images" ContentId="images" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Images" ContentId="images" CanHide="False" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
                                         <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
@@ -284,26 +284,26 @@
                                     </ListBox>
                                 </DockPanel>
 
-                            </xcad:LayoutAnchorable>
+                            </dock:LayoutAnchorable>
 
-                        </xcad:LayoutAnchorablePane>
+                        </dock:LayoutAnchorablePane>
 
-                    </xcad:LayoutAnchorablePaneGroup>
-
-
+                    </dock:LayoutAnchorablePaneGroup>
 
 
-                    <xcad:LayoutDocumentPaneGroup>
-                        <xcad:LayoutDocumentPane x:Name="DocumentPane" ShowHeader="True" PropertyChanged="DocumentPane_PropertyChanged">
+
+
+                    <dock:LayoutDocumentPaneGroup>
+                        <dock:LayoutDocumentPane x:Name="DocumentPane" ShowHeader="True" PropertyChanged="DocumentPane_PropertyChanged">
                             <!-- Designer Documents Inserted Here at Runtime -->
-                        </xcad:LayoutDocumentPane>
-                    </xcad:LayoutDocumentPaneGroup>
+                        </dock:LayoutDocumentPane>
+                    </dock:LayoutDocumentPaneGroup>
 
 
 
-                    <xcad:LayoutAnchorablePaneGroup DockWidth="300" x:Name="RightPane" Orientation="Vertical">
-                        <xcad:LayoutAnchorablePane>
-                            <xcad:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="False" CanClose="False">
+                    <dock:LayoutAnchorablePaneGroup DockWidth="300" x:Name="RightPane" Orientation="Vertical">
+                        <dock:LayoutAnchorablePane>
+                            <dock:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="False" CanClose="False">
 
                                 <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged">
                                     <TreeView.Resources>
@@ -340,10 +340,10 @@
 
                                 </TreeView>
 
-                            </xcad:LayoutAnchorable>
-                        </xcad:LayoutAnchorablePane>
-                        <xcad:LayoutAnchorablePane>
-                            <xcad:LayoutAnchorable ContentId="properties" Title="Properties" CanHide="False" CanClose="False" AutoHideWidth="240" >
+                            </dock:LayoutAnchorable>
+                        </dock:LayoutAnchorablePane>
+                        <dock:LayoutAnchorablePane>
+                            <dock:LayoutAnchorable ContentId="properties" Title="Properties" CanHide="False" CanClose="False" AutoHideWidth="240" >
                                 <tk:PropertyGrid
                                     Name="PropertyGrid"
                                     NameColumnWidth="160"
@@ -410,14 +410,14 @@
                                     </tk:PropertyGrid.PropertyContainerStyle>
 
                                 </tk:PropertyGrid>
-                            </xcad:LayoutAnchorable>
-                        </xcad:LayoutAnchorablePane>
+                            </dock:LayoutAnchorable>
+                        </dock:LayoutAnchorablePane>
 
-                    </xcad:LayoutAnchorablePaneGroup>
-                </xcad:LayoutPanel>
+                    </dock:LayoutAnchorablePaneGroup>
+                </dock:LayoutPanel>
 
-            </xcad:LayoutRoot>
-        </xcad:DockingManager>
+            </dock:LayoutRoot>
+        </dock:DockingManager>
 
 
 
