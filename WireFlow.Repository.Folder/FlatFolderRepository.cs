@@ -48,7 +48,7 @@ namespace WireFlow
         public string DocumentFileFilters { get; set; } = "WireFlow Project|*.project|All files|*";
         public string DefaultFileExt { get; set; } = "wireflow";
         public string DefaultIndexNode { get; set; } = "index";
-        public string DefaultBackground { get; set; } = "#333";
+        public string DefaultBackground { get; set; } = FlowProject.DEFAULT_BACKGROUND;
 
 
         public string ProjectFolderName { get; set; }

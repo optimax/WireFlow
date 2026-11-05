@@ -70,7 +70,7 @@ CREATE TABLE Images (
 
         public string DefaultFileExt { get; set; } = "wf";
         public string DefaultIndexNode { get; set; } = "index";
-        public string DefaultBackground { get; set; } = "#333";
+        public string DefaultBackground { get; set; } = FlowProject.DEFAULT_BACKGROUND;
 
         // Whether OpenProject converts a folder project (.project) into a .wf file; the Designer does, the Browser does not
         public bool ConvertFolderProjects { get; set; }
