@@ -14,9 +14,19 @@ Make the splitters more distinct by giving them visible (if understated) borders
 
 Done: the splitters between the Designer's panes are now a rail with a 1 px border on each side, inside their 5 px grab area, in the color PDFTools uses for its pane grips (`ChromeBorder`: dark gray on dark, light gray on light), so they follow the theme. They had no visible style before because OptimaxTools.Dock, as upstream AvalonDock, cleared the theme's splitter style; that is fixed. Checked in off-screen renders of the real Designer in Dark and Light. Not yet checked by hand: dragging the splitters.
 
-## Convert All Projects to WF
+## [QUESTION] Convert All Projects to WF
 
 Convert all existing project repos under Data to the new .`wf` format.
+
+Done: the five folder projects under `Data` are converted, each into a `.wf` beside its `.project`, as the Designer does when it opens one: `MarketMonitor/MarketMonitor.wf`, `OPTIMAX/Optimax.wf`, `Test/Test.wf`, `Test2/Test2.wf` and `WIREFLOW/WireFlow.wf`. Checked: every document, unsaved draft, archived revision and image in each `.wf` is byte for byte the file it came from, and the project and every page, layout and part read back through `SqliteRepository` the same as through the folder storage. Most of these folders hold little on disk: only `WIREFLOW` has a page (`Main`, with its unsaved edits and one archived project revision), `OPTIMAX` has its 7 images, and `MarketMonitor`, `Test` and `Test2` have their project settings only, so their `.wf` files are empty projects. `MarketMonitor.new`, a project file beside `MarketMonitor.project`, is not read by either storage and was left out. `AVG`, `ClearFunction` and `PULSE` are empty folders, with nothing to convert. `Data/FirstTest.wf`, which I did not make, is left as it is and not committed.
+
+**Question 1: `Data/OPTIMAX.zip` holds a fuller OPTIMAX project from 2016 (8 pages, 2 layouts, 7 parts), but in an earlier format still: its project file is `Optimax.wireflow`, and its elements are written as `"Type": "text"` rather than with `$type` tags, so neither storage can load them. Converting it would mean writing a migration from that format to today's element model, which is a task of its own. I left the zip as it is. Should it be migrated?**
+
+**Question 2: the folder projects are still there beside their `.wf` files, since the conversion leaves them as they are. Should I remove them from `Data` (the `.project` files and their folders, keeping only the `.wf` files), or keep them until the folder storage is dropped? I am keeping them.**
+
+## BUG: Page No Longer Shows
+
+The background of a page is no longer distinct from the overall application background and page boundaries cannot be seen.
 
 ## [DONE] Convert to WPF Fluent Themes
 
