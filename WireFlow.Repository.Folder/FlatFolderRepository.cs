@@ -96,12 +96,8 @@ namespace WireFlow
         {
             try
             {
-                string s = JsonConvert.SerializeObject(obj, Formatting.Indented, new JsonSerializerSettings()
-                {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    DefaultValueHandling = DefaultValueHandling.Ignore,
-                    TypeNameHandling = TypeNameHandling.Auto
-                });
+                // The format of FlowJson: no .NET type names, every value written
+                string s = JsonConvert.SerializeObject(obj, FlowJson.Settings);
                 return s;
             }
             catch (Exception ex)
@@ -116,10 +112,8 @@ namespace WireFlow
         {
             try
             {
-                T result = JsonConvert.DeserializeObject<T>(s, new JsonSerializerSettings()
-                {
-                    TypeNameHandling = TypeNameHandling.Auto
-                });
+                // Elements get their class from their Type, through FlowJson's converter
+                T result = JsonConvert.DeserializeObject<T>(s, FlowJson.Settings);
                 return result;
 
             }
@@ -479,7 +473,8 @@ namespace WireFlow
             if (!File.Exists(fileName))
                 return null;
             string s = File.ReadAllText(fileName);
-            FlowElementBase part = DeserializeFromJSON<FlowElementBase>(s, partName + "|" + fileName);
+            // A part is a FlowPart; its root names no class of its own
+            FlowElementBase part = DeserializeFromJSON<FlowPart>(s, partName + "|" + fileName);
             return part;
         }
 

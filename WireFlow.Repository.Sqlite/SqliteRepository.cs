@@ -24,8 +24,9 @@ namespace WireFlow
         // PRAGMA application_id: "WFLW", marks the file as WireFlow's
         public const int APPLICATION_ID = 0x57464C57;
 
-        // PRAGMA user_version: the file format; a higher number is a format of a later WireFlow
-        public const int FORMAT_VERSION = 1;
+        // PRAGMA user_version: the file format. 2 is the JSON of FlowJson, without .NET type names; the programs open
+        // format 2 only. Format 1 files, with $type tags, were upgraded once by Documents\upgrade-wf-to-format-2.cs.
+        public const int FORMAT_VERSION = 2;
 
         public const string PROJECT_KIND = "project";
         public const string PAGE_KIND = "page";
@@ -149,7 +150,7 @@ CREATE TABLE Images (
                 {
                     if (!IsWireFlowFile(connection))
                     {
-                        Debug.WriteLine($"{projectFileName} is not a WireFlow file of format {FORMAT_VERSION} or earlier");
+                        Debug.WriteLine($"{projectFileName} is not a WireFlow file of format {FORMAT_VERSION}");
                         return null;
                     }
                     string json = ExecuteScalar(connection, null, "SELECT Json FROM Project WHERE Id = 1") as string;
@@ -198,8 +199,8 @@ CREATE TABLE Images (
 
         public FlowElementBase GetPart(string partName)
         {
-            // The saved version, as the folder's .part file
-            return ReadDocument<FlowElementBase>(PART_KIND, partName, "Saved");
+            // The saved version, as the folder's .part file; a part is a FlowPart, whose root names no class of its own
+            return ReadDocument<FlowPart>(PART_KIND, partName, "Saved");
         }
 
 
@@ -400,17 +401,17 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
 
         /// <summary>
         /// Writes the folder project of a .project file into a new .wf file: its settings, pages, layouts and parts with their
-        /// unsaved edits (.new), their archived revisions, and its images. Documents keep their JSON as it is in the files.
-        /// The folder is left as it is.
+        /// unsaved edits (.new), their archived revisions, and its images. Each document is written in the current JSON
+        /// (see CurrentJson). The folder is left as it is.
         /// </summary>
         public static void ConvertFolderProject(string projectFileName, string wfFileName)
         {
-            string projectJson = File.ReadAllText(projectFileName);
-            if (FlatFolderRepository.DeserializeFromJSON<FlowProject>(projectJson, projectFileName) == null)
+            var project = FlatFolderRepository.DeserializeFromJSON<FlowProject>(File.ReadAllText(projectFileName), projectFileName);
+            if (project == null)
                 throw new InvalidDataException($"{projectFileName} is not a WireFlow project.");
             string folder = Path.GetDirectoryName(projectFileName);
 
-            CreateDatabase(wfFileName, projectJson, (connection, transaction) =>
+            CreateDatabase(wfFileName, FlatFolderRepository.SerializeToJSON(project), (connection, transaction) =>
             {
                 ConvertDocuments(connection, transaction, PAGE_KIND, Path.Combine(folder, FlatFolderRepository.PAGES_FOLDER),
                     FlatFolderRepository.PAGE_EXTENSION);
@@ -449,7 +450,7 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                 ExecuteNonQuery(connection, transaction,
                     $"INSERT INTO Documents (Kind, Name, {column}) VALUES ($kind, $name, $json) " +
                     $"ON CONFLICT (Kind, Name) DO UPDATE SET {column} = excluded.{column}",
-                    ("$kind", kind), ("$name", Path.GetFileNameWithoutExtension(file)), ("$json", File.ReadAllText(file)));
+                    ("$kind", kind), ("$name", Path.GetFileNameWithoutExtension(file)), ("$json", CurrentJson(kind, file)));
             }
         }
 
@@ -466,8 +467,24 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                 ExecuteNonQuery(connection, transaction,
                     "INSERT OR REPLACE INTO Archive (Kind, Name, RevisionNo, Json) VALUES ($kind, $name, $revisionNo, $json)",
                     ("$kind", kind), ("$name", fileName.Substring(0, dot)), ("$revisionNo", revisionNo),
-                    ("$json", File.ReadAllText(file)));
+                    ("$json", CurrentJson(kind, file)));
             }
+        }
+
+
+        // A document of a folder project, read and written again in the current JSON. Elements there carry their Type as
+        // well, which is all the current JSON needs. A file that cannot be read keeps its JSON, so that nothing is lost.
+        private static string CurrentJson(string kind, string file)
+        {
+            string json = File.ReadAllText(file);
+            object document;
+            if (kind == PROJECT_KIND)
+                document = FlatFolderRepository.DeserializeFromJSON<FlowProject>(json, file);
+            else if (kind == PART_KIND)
+                document = FlatFolderRepository.DeserializeFromJSON<FlowPart>(json, file);
+            else
+                document = FlatFolderRepository.DeserializeFromJSON<FlowPage>(json, file);
+            return document == null ? json : FlatFolderRepository.SerializeToJSON(document) ?? json;
         }
 
 
@@ -531,7 +548,7 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
         {
             long applicationId = (long)ExecuteScalar(connection, null, "PRAGMA application_id");
             long formatVersion = (long)ExecuteScalar(connection, null, "PRAGMA user_version");
-            return applicationId == APPLICATION_ID && formatVersion >= 1 && formatVersion <= FORMAT_VERSION;
+            return applicationId == APPLICATION_ID && formatVersion == FORMAT_VERSION;
         }
 
 

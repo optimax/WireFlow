@@ -725,7 +725,7 @@ namespace WireFlow
             try
             {
                 project = Engine.OpenProject(fileName);
-                reason = "It is not a WireFlow project, or it was made by a later version of WireFlow.";
+                reason = "It is not a WireFlow project, or it was made by another version of WireFlow.";
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidDataException)
             {

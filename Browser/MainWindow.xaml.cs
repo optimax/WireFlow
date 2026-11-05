@@ -510,7 +510,7 @@ namespace WireFlow
                 string name = System.IO.Path.GetFileName(fileName);
                 MessageBox.Show(SqliteRepository.IsFolderProject(fileName)
                         ? $"WireFlow Browser opens .wf files. Open \"{name}\" once in WireFlow Designer, which converts it into a .wf file."
-                        : $"\"{name}\" is not a WireFlow project, or it was made by a later version of WireFlow.",
+                        : $"\"{name}\" is not a WireFlow project, or it was made by another version of WireFlow.",
                     "WireFlow Browser", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }

@@ -72,7 +72,7 @@ Docking is OptimaxTools.Dock, from the source of Dirkster.AvalonDock 5.0.1 (MS-P
 
 ## Project file format
 
-A project is one SQLite database file, `<name>.wf`, written by `SqliteRepository`. `PRAGMA application_id` is `0x57464C57` ("WFLW") and `PRAGMA user_version` the format number, now 1; a file with another application id, or a higher format number, is not opened. Format 1 has four tables:
+A project is one SQLite database file, `<name>.wf`, written by `SqliteRepository`. `PRAGMA application_id` is `0x57464C57` ("WFLW") and `PRAGMA user_version` the format number, now 2; a file with another application id or another format number is not opened. The programs read format 2 only: the format 1 files, whose JSON named .NET classes, were upgraded once with `Documents\upgrade-wf-to-format-2.cs`, which can upgrade any other format 1 file left (`dotnet run upgrade-wf-to-format-2.cs -- <file.wf> ...`). The format has four tables:
 
 - `Project` — one row: the `FlowProject` JSON (size, background, home page, `RevisionNo`).
 - `Documents` — one row per page, layout and part (`Kind` `page`, `layout` or `part`, and `Name`): `Saved`, the JSON of the saved version, and `Draft`, the JSON of the unsaved edits. `SavePage`, `SaveLayout` and `SavePart` write the draft. `SaveProject`, in one transaction, raises `RevisionNo`, archives the project and the saved version of each document that has a draft under the new revision, and makes the drafts the saved versions.
@@ -83,7 +83,13 @@ Names compare ignoring case, as file names did. Each document stays one JSON val
 
 Each operation opens the file and closes it again: pooling is off, so the file is not held open between operations, and the Browser can view a project the Designer is editing. A new or converted file is built under a temporary name (`<name>.wf.tmp`) and then moved into place.
 
-JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element lists carry `$type` tags. Unknown keys are dropped on load and are therefore lost on the next save.
+JSON is written and read by Newtonsoft.Json with `FlowJson.Settings` (in `WireFlow.Repository.Folder`, used through `FlatFolderRepository.SerializeToJSON` and `DeserializeFromJSON`), and names no .NET types:
+
+- An element's `Type` is its kind, and chooses its class when it is read (`FlowElementConverter`): `group` is `FlowGroup`, `part` (a part reference) `FlowPart`, `image` `FlowImage`, and `box`, `text`, `rect` and any other kind `FlowElement`. A new kind of element with a class of its own needs its kind added to `FlowElementConverter.Create`. A part document is read as `FlowPart`, a page or layout as `FlowPage`, the project as `FlowProject`.
+- Enums are written by name; NaN, an automatic size, as `null`.
+- Every value is written, defaults included, so reading never depends on the defaults in the code: changing `FlowElement.Defaults` or a constructor changes new elements only.
+- `Type` and `Name` come first in each object.
+- Unknown keys are dropped on load and are therefore lost on the next save.
 
 **Folder projects.** The earlier storage, `FlatFolderRepository`, keeps a project as a folder: `<name>.project` (the `FlowProject` JSON); `pages/*.page`, `layouts/*.master` and `parts/*.part`, with unsaved edits in `*.new` files beside them; `pages.archive/` and the other `*.archive/` folders, holding `<name>.<revision>` files; and `images/`. When the Designer opens a `.project`, `SqliteRepository` converts it into `<name>.wf` beside it, copying the JSON of every file as it is, and opens that; the folder is left as it is. If that `.wf` file already exists, it is opened, not replaced. The Browser opens `.wf` files only and says so when given a `.project`. The sample projects in `Data` are `.wf` files only. `optimax-old.wf` is a 2016 project migrated once from an earlier format still (`Optimax.wireflow`, elements named only by `Type`, without `$type` tags), which no storage reads.
 
@@ -97,10 +103,9 @@ JSON is written by Newtonsoft.Json with `TypeNameHandling.Auto`, so element list
 - **Visual Studio's design-time builds share `obj/` with command-line builds.** A command-line build while the solution is open in Visual Studio can fail with CS2001 (a missing `*.g.cs`); building again succeeds.
 - **Line endings.** The repository has `core.autocrlf=true` and no `.gitattributes`: the index holds LF, the working tree CRLF. Git Bash `sed -i` rewrites a CRLF file as LF; run `unix2dos` on it afterwards.
 - **Microsoft.Data.Sqlite 9.x brings SQLitePCLRaw 2.1.10,** whose `lib.e_sqlite3` NuGet flags with a high-severity advisory (NU1903, GHSA-2m69-gcr7-jv3q). Microsoft.Data.Sqlite 10.0.14 brings 2.1.13, which is not flagged. Keep the NuGet audit warnings visible when upgrading it.
-- **A part saved by `SavePart` cannot be read back by `GetPart`,** in either storage: the part is serialized without a root `$type` tag, and `GetPart` deserializes it into the abstract `FlowElementBase`, which fails and returns null.
 - **`DesignerPanel` lives in Core, but the `DesignerBackgroundBrush` and `PageFrameBrush` resources exist only in the Designer.** It refers to them with `SetResourceReference`, which leaves them unset where they are missing, so the Browser can host it; the Browser sets `Background` and `PageFrameBrush` from the palette itself.
 - **The Designer's Outline view is a snapshot.** `MainDesignerWindow.PopulateOutlineTree` rebuilds it on navigation, on a tab switch, and when the current `DesignerNavigator` raises `ElementsChanged`. A new `DesignerNavigator` operation that adds, removes or reorders elements must call `OnElementsChanged()`, or the Outline goes stale.
 - **The Xceed `PropertyGrid` template hard-codes light colors.** Its property list uses `x:Static` system brushes, its filter box `White`, and its category headers an `Expander` style with `#FFF0F0F0`, so no resource or implicit style reaches them, and each category's `GroupItem` gets an explicit style from the template's `CategoryGroupStyleSelector`. `MainDesignerWindow.PropertyGridLoadedHandler` sets local values on those template parts and swaps in a `CategoryGroupStyleSelector` whose `ItemGroupStyle` is `PropertyCategoryStyle` from the grid's resources.
 - **A WPF `ListBox` reports a cleared selection as `SelectedIndex` -1.** Code that indexes `Items` with it must check the range.
 - **.NET Framework's `System.Drawing.Icon` skips PNG-compressed icon images,** such as the 256 px images of the application icons, so Windows PowerShell cannot load them that way. Check a built exe with the shell's `PrivateExtractIcons` instead.
-- **Pages without `$type` tags,** such as the 2016 ones that became `Data/optimax-old.wf`, cannot be deserialized into the abstract `FlowElementBase`. Each element's `Type` names its kind (`box`, `text`, `rect`: `FlowElement`; `group`: `FlowGroup`; `image`: `FlowImage`; `part`: `FlowPart`), so the tag can be derived from it, as the migration did; Newtonsoft.Json reads `$type` only as an object's first property.
+- **An element without a `Type` is read as a `FlowElement`,** and shown as an unknown object: the kind lives only in `Type`.
