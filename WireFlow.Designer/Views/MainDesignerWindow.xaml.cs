@@ -279,6 +279,8 @@ namespace WireFlow
 
             PropertyGrid.PropertyValueChanged += PropertyGridOnPropertyValueChanged;
             PropertyGrid.Loaded += PropertyGridLoadedHandler;
+            Tools.ItemContainerGenerator.StatusChanged += ToolsContainersChangedHandler;
+            AppTheme.Changed += ToolsContainersChangedHandler;
             RecentFileList.MenuClick += (s, e) => OpenProjectFile(e.Filepath);
 
             this.SourceInitialized += (x, y) =>
@@ -287,6 +289,29 @@ namespace WireFlow
                 AppTheme.ApplyTitleBar(this);
             };
 
+        }
+
+
+        private static readonly Thickness ToolsItemPadding = new Thickness(8, 3, 8, 3);
+
+        /// <summary>
+        /// Makes the Tools rows as compact as menu items. Fluent pads list items by 12 px, which makes a row 45 px tall; the
+        /// local padding makes it 27 px, as a Fluent menu item. Classic pads them by 4,1 px, already compact, so it keeps its own.
+        /// A local value overrides the theme's padding but keeps its template.
+        /// </summary>
+        private void ToolsContainersChangedHandler(object sender, EventArgs e)
+        {
+            if (Tools.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                return;
+            bool classic = AppTheme.Choice == ThemeChoice.Classic;
+            foreach (var item in Tools.Items)
+                if (Tools.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem container)
+                {
+                    if (classic)
+                        container.ClearValue(PaddingProperty);
+                    else
+                        container.Padding = ToolsItemPadding;
+                }
         }
 
 
