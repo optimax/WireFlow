@@ -108,16 +108,59 @@ namespace WireFlow
             TranslateTransform tt = new TranslateTransform();
             group.Children.Add(tt);
 
-            // Only the Designer defines this brush, and changes it with the theme; hosts like the Browser set Background themselves.
+            // Only the Designer defines these brushes, and changes them with the theme; hosts like the Browser set them themselves.
             SetResourceReference(BackgroundProperty, "DesignerBackgroundBrush");
+            SetResourceReference(PageFrameBrushProperty, "PageFrameBrush");
 
             Canvas.RenderTransform = group;
             Canvas.RenderTransformOrigin = new Point(0.0, 0.0);
+
+            // The frame follows the page as it is zoomed, panned and resized
+            st.Changed += (s, e) => InvalidateVisual();
+            tt.Changed += (s, e) => InvalidateVisual();
+            Canvas.SizeChanged += (s, e) => InvalidateVisual();
 
             Focusable = true;
         }
 
 
+
+        #endregion
+
+
+
+
+        #region Page Frame
+
+        public static readonly DependencyProperty PageFrameBrushProperty = DependencyProperty.Register(nameof(PageFrameBrush), typeof(Brush),
+            typeof(DesignerPanel), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+        /// <summary>
+        /// The 1 px frame drawn around the page, outside it, so that the page shows against the area around it whatever their colors.
+        /// </summary>
+        public Brush PageFrameBrush
+        {
+            get { return (Brush)GetValue(PageFrameBrushProperty); }
+            set { SetValue(PageFrameBrushProperty, value); }
+        }
+
+        protected override void OnRender(DrawingContext dc)
+        {
+            base.OnRender(dc);
+            var brush = PageFrameBrush;
+            if (brush == null || Canvas.ActualWidth <= 0 || Canvas.ActualHeight <= 0 || !IsAncestorOf(Canvas))
+                return;
+
+            // The page's bounds after zoom and pan, and a frame 1 device pixel wide just outside them
+            Rect page = Canvas.TransformToAncestor(this).TransformBounds(new Rect(Canvas.RenderSize));
+            var dpi = VisualTreeHelper.GetDpi(this);
+            double width = 1.0 / dpi.DpiScaleX, height = 1.0 / dpi.DpiScaleY;
+            Rect frame = new Rect(page.X - width / 2, page.Y - height / 2, page.Width + width, page.Height + height);
+            var guidelines = new GuidelineSet(new[] { frame.Left - width / 2, frame.Right + width / 2 }, new[] { frame.Top - height / 2, frame.Bottom + height / 2 });
+            dc.PushGuidelineSet(guidelines);
+            dc.DrawRectangle(null, new Pen(brush, width), frame);
+            dc.Pop();
+        }
 
         #endregion
 

@@ -108,7 +108,7 @@
                 <TextBlock Foreground="{DynamicResource {x:Static themes:Palette.Text}}" FontSize="24" TextAlignment="Center" Background="{DynamicResource {x:Static themes:Palette.SectionCaption}}" Text="{Binding NodeTitle}"></TextBlock>
             </Grid>
 
-            <wireFlow:DesignerPanel x:Name="Viewer" ClipToBounds="True" Background="{DynamicResource {x:Static themes:Palette.PreviewBackground}}"/>
+            <wireFlow:DesignerPanel x:Name="Viewer" ClipToBounds="True" Background="{DynamicResource {x:Static themes:Palette.PreviewBackground}}" PageFrameBrush="{DynamicResource {x:Static themes:Palette.PageFrame}}"/>
 
         </DockPanel>
 

@@ -24,9 +24,11 @@ Done: the five folder projects under `Data` are converted, each into a `.wf` bes
 
 **Question 2: the folder projects are still there beside their `.wf` files, since the conversion leaves them as they are. Should I remove them from `Data` (the `.project` files and their folders, keeping only the `.wf` files), or keep them until the folder storage is dropped? I am keeping them.**
 
-## BUG: Page No Longer Shows
+## [DONE] BUG: Page No Longer Shows
 
 The background of a page is no longer distinct from the overall application background and page boundaries cannot be seen.
+
+Done: the cause was the Dark theme. The area around the page became the palette's preview color, `#333333`, which is the background of the sample pages (`#333`), and nothing drew the page's edge; before the themes that area was `#222222`. The Designer and the Browser now draw a 1 px frame just outside the page in the palette's page-frame color, as PDFTools frames its pages (`#5A5A5A` in Dark, `#B8BCC2` in Light), so the page's boundary shows whatever its color and the theme's. The frame follows the page as it is zoomed and panned. The area around the page keeps the theme's preview color, as in PDFTools. Checked in off-screen renders of the real Designer in Dark and Light and of the Browser in Dark. Not yet checked by hand: zooming and panning.
 
 ## [DONE] Convert to WPF Fluent Themes
 

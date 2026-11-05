@@ -20,6 +20,7 @@ namespace WireFlow
             ("LightLightColorBrush", Palette.Text),
             ("LightColorBrush", Palette.SecondaryText),
             ("DesignerBackgroundBrush", Palette.PreviewBackground),
+            ("PageFrameBrush", Palette.PageFrame),
 
             // Metro's 3 and 4 are its blue accents, which stay as they are
             ("AvalonDock_ThemeMetro_BaseColor1", Palette.PaneBackground),
