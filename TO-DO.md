@@ -30,9 +30,28 @@ A2: Remove the folders and keep only the `.wf` files.
 
 Done, as answered: `Data/optimax-old.wf` is the 2016 project, migrated once: each element got the `$type` tag of its kind (`box`, `text` and `rect` are `FlowElement`, `group` is `FlowGroup`, `image` is `FlowImage`, `part` is a part reference), `type` became `Type`, the trailing commas are gone, and each part got a `FlowPart` tag at its root, so that it can be read back. All 8 pages, 2 layouts, 7 parts (every element counted) and 7 images are in it, and the Designer shows its home page as the 2016 site, with its layout, parts, images and text. The `.cdr` drawings in the zip are not part of the project and were left out. `Data` now holds only `.wf` files: `MarketMonitor.wf`, `Optimax.wf`, `Test.wf`, `Test2.wf` and `WireFlow.wf` moved up from their folders, `optimax-old.wf`, and your `FirstTest.wf`. The folders (with `drawings/`, `test.json`, `test-page.json`, `test.xaml`, `wpfcolors.png`, `index.png` and `new-page.png`), the three empty ones, and `OPTIMAX.zip` are removed; they remain in the git history before this commit.
 
-## XML vs JSON
+## [DONE] XML vs JSON
 
 Weigh the advantages and disadvantages of converting current JSON data — how the project data is stored inside WF — into XML.
+
+Done, as an analysis; nothing is changed. Today each page, layout and part is one JSON value in a row of the `.wf` file, written by Newtonsoft.Json, with a `$type` tag on each element naming its .NET class (`"WireFlow.FlowElement, WireFlow.Types"`).
+
+For XML:
+
+- Element kinds become element names (`<Box>`, `<Text>`, `<Group>`), rather than .NET class names in `$type`. That would untie the files from the code: today, renaming a class or an assembly makes every saved file unreadable.
+- A schema (XSD) can describe and validate the format, and XML allows comments.
+- It reads like XAML, which WPF developers know.
+
+Against XML:
+
+- The SQLite inside a `.wf` has built-in JSON functions (`json_extract`, `json_each`, and a binary JSONB form), so a query can look inside documents, for example to find every element whose `Href` leads to a page that no longer exists, or to index links. SQLite has nothing similar for XML.
+- The serializers fit worse. Newtonsoft.Json handles the model's polymorphic lists (`IList<FlowElementBase>`) and WPF value types as they are. `XmlSerializer` needs every subclass declared with `[XmlInclude]` and public setters throughout, and `DataContractSerializer` its own attributes on every class, so the model would change.
+- It is about twice as large and slower to read, which matters little at WireFlow's sizes but is not nothing.
+- Every existing file would have to be converted, both storages and the conversion code rewritten, and the format checked again. The 2016 OPTIMAX migration showed what a format change costs.
+- Loading XAML-like markup with `XamlReader` would be tempting and unsafe, since it can create any type named in the file.
+- Users never see the format: a `.wf` is a SQLite database, so readability by hand counts for little.
+
+Recommendation: keep JSON. Its one real weakness is the .NET class names in `$type`, and that can be fixed within JSON: each element already has a `Type` (`box`, `text`, `rect`, `group`, `part`, `image`) that names its kind, so a small Newtonsoft.Json converter could choose the class from `Type` and stop writing `$type`, with the next format number (`PRAGMA user_version` 2) and a one-time upgrade of older files when they are opened. That would give the decoupling XML would bring, without its costs. If you want it, add it as a TO-DO item.
 
 ## Remove Dependency on Wpf.Toolkit
 
