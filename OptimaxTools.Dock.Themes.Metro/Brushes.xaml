@@ -17,4 +17,7 @@
 
 	<SolidColorBrush x:Key="AvalonDock_ThemeMetro_BaseColor7" Color="#EEEEEE" />
 
+	<!-- WireFlow: the border of the splitters' rail -->
+	<SolidColorBrush x:Key="AvalonDock_ThemeMetro_SplitterBorder" Color="#CCCCCC" />
+
 </ResourceDictionary>

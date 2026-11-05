@@ -27,6 +27,7 @@ namespace WireFlow
             ("AvalonDock_ThemeMetro_BaseColor5", Palette.MutedText),
             ("AvalonDock_ThemeMetro_BaseColor6", Palette.FaintText),
             ("AvalonDock_ThemeMetro_BaseColor7", Palette.PaneHeader),
+            ("AvalonDock_ThemeMetro_SplitterBorder", Palette.ChromeBorder),
         };
 
         private static bool _subscribed;

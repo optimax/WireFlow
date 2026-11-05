@@ -271,12 +271,15 @@ namespace OptimaxTools.Dock.Controls
 				if (Orientation == Orientation.Horizontal)
 				{
 					splitter.Cursor = Cursors.SizeWE;
-					splitter.Style = _model.Root?.Manager?.GridSplitterVerticalStyle;
+					// WireFlow: only a style that is set; a null Style would hide the theme's implicit splitter style
+					if (_model.Root?.Manager?.GridSplitterVerticalStyle is Style verticalStyle)
+						splitter.Style = verticalStyle;
 				}
 				else
 				{
 					splitter.Cursor = Cursors.SizeNS;
-					splitter.Style = _model.Root?.Manager?.GridSplitterHorizontalStyle;
+					if (_model.Root?.Manager?.GridSplitterHorizontalStyle is Style horizontalStyle)
+						splitter.Style = horizontalStyle;
 				}
 
 				Children.Insert(iChild, splitter);

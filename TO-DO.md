@@ -8,9 +8,15 @@ Title: TO-DO
 >
 > ---
 
-## Splitter Styles
+## [DONE] Splitter Styles
 
 Make the splitters more distinct by giving them visible (if understated) borders.
+
+Done: the splitters between the Designer's panes are now a rail with a 1 px border on each side, inside their 5 px grab area, in the color PDFTools uses for its pane grips (`ChromeBorder`: dark gray on dark, light gray on light), so they follow the theme. They had no visible style before because OptimaxTools.Dock, as upstream AvalonDock, cleared the theme's splitter style; that is fixed. Checked in off-screen renders of the real Designer in Dark and Light. Not yet checked by hand: dragging the splitters.
+
+## Convert All Projects to WF
+
+Convert all existing project repos under Data to the new .`wf` format.
 
 ## [DONE] Convert to WPF Fluent Themes
 

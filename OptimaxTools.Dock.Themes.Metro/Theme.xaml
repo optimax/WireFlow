@@ -1028,7 +1028,8 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type avalonDockControls:LayoutGridResizerControl}">
-					<Border Margin="2" Background="{TemplateBinding Background}" />
+					<!-- WireFlow: a rail with faint borders inside the 5 px grab area, rather than a 1 px line in the panes' own color -->
+					<Border Margin="1" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource AvalonDock_ThemeMetro_SplitterBorder}" BorderThickness="1" SnapsToDevicePixels="True" />
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
