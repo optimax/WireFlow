@@ -2,7 +2,7 @@
 
 ## Current objective
 
-Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, AvalonDock (Extended.Wpf.Toolkit) 3.6.0, the dark Properties pane, the Fluent themes in the Designer and the Browser, `.wf` (SQLite) project files, OptimaxTools.Dock, the fork of Dirkster.AvalonDock 5.0.1 that replaces Xceed's AvalonDock, and splitters with visible borders, the sample projects under `Data` converted to `.wf` files (two questions open in `TO-DO.md`), and a frame around the page in both programs. All TO-DO items are processed.
+Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, AvalonDock (Extended.Wpf.Toolkit) 3.6.0, the dark Properties pane, the Fluent themes in the Designer and the Browser, `.wf` (SQLite) project files, OptimaxTools.Dock, the fork of Dirkster.AvalonDock 5.0.1 that replaces Xceed's AvalonDock, and splitters with visible borders, the sample projects in `Data` as `.wf` files only, the 2016 OPTIMAX project migrated into `Data/optimax-old.wf`, a frame around the page in both programs, a gray default page background, and compact Tools rows. Next: "XML vs JSON" in `TO-DO.md`.
 
 ## Work completed
 
@@ -37,7 +37,7 @@ Processing `TO-DO.md` top to bottom. Done: the `.slnx` conversion, AvalonDock (E
 - Browser themes: `Browser/BrowserSettings.cs` (new); `Browser/App.xaml` (Fluent and Core's styles); `Browser/MainWindow.xaml` (View → Theme, palette brushes, menu row `Auto`); `Browser/MainWindow.xaml.cs` (settings, theme applied before `InitializeComponent`, `ThemeMenuItem_Click`, `UpdateThemeMenu`, title bar); `Browser/WireFlow.Browser.csproj` (MaxServices.Core and Newtonsoft.Json in, Infragistics out); `Browser/Themes/MetroDark/` — deleted.
 - `.wf` files: `WireFlow.Repository.Sqlite/` (new: `SqliteRepository.cs`, `Properties/AssemblyInfo.cs`, the `.csproj`); `WireFlow.slnx`; `WireFlow.Designer/WireFlow.Designer.csproj` and `Browser/WireFlow.Browser.csproj` (reference it instead of the folder storage); `WireFlow.Designer/App.xaml.cs` (`SqliteRepository` with `ConvertFolderProjects`); `MainDesignerWindow.xaml.cs` (`NewProject` takes the name from the repository, `OpenProject` lists the `.wf` in the recent files, `OpenProjectFile` reports a failed open, `DeleteSelectedPart` calls `DeletePart`); `Browser/MainWindow.xaml.cs` (`SqliteRepository`, `OpenDocumentFile` reports a `.project` or a failed open).
 - `WireFlow.Designer/Designer.ico`, `Browser/Browser.ico`, `Documents/make-icons.ps1` — new.
-- `Data/MarketMonitor/MarketMonitor.wf`, `Data/OPTIMAX/Optimax.wf`, `Data/Test/Test.wf`, `Data/Test2/Test2.wf`, `Data/WIREFLOW/WireFlow.wf` — new, converted from the folder projects beside them.
+- `Data/MarketMonitor.wf`, `Data/Optimax.wf`, `Data/Test.wf`, `Data/Test2.wf`, `Data/WireFlow.wf` — converted from the folder projects, which are removed with `Data/OPTIMAX.zip` and the empty folders; `Data/optimax-old.wf` — new, migrated from that zip.
 - Tools list: `WireFlow.Designer/Views/MainDesignerWindow.xaml.cs` (constructor; `ToolsItemPadding` and `ToolsContainersChangedHandler`, new).
 - Default page background: `WireFlow.Types/RepositoryTypes/FlowProject.cs` (`DEFAULT_BACKGROUND`, the constructor); `WireFlow.Repository.Sqlite/SqliteRepository.cs`, `WireFlow.Repository.Folder/FlatFolderRepository.cs` (`DefaultBackground`); `WireFlow.Core/Constants.cs` (`DEFAULT_BACKGROUND`, was `#111`).
 - Page frame: `WireFlow.Core/DesignerPanel.cs` (constructor; `PageFrameBrush` and `OnRender`, new); `WireFlow.Designer/Classes/DesignerTheme.cs` (`PageFrameBrush` maps to `PageFrame`); `Browser/MainWindow.xaml` (the viewer's `PageFrameBrush`).
@@ -60,6 +60,7 @@ Debug and Release: 0 errors, 0 warnings, with Extended.Wpf.Toolkit 3.6.0. Visual
 - OptimaxTools.Dock: off-screen renders of the real Designer in Dark and Light show the docked panes, pane titles, the document tab, the Outline, the Properties pane and the page as with Xceed's AvalonDock; the pane buttons are upstream's newer icons. Docking, floating, auto-hiding and the Ctrl+Tab window were not exercised.
 - Page frame: in off-screen renders of the real Designer, the frame lies just outside the page: `#5A5A5A` on the `#333333` around a `#333` page in Dark, `#B8BCC2` on `#CCCCCC` in Light; the real Browser in Dark shows it as well. Zooming and panning were not exercised.
 - Splitters: in off-screen renders of the real Designer, all four splitters between panes carry the theme's style; pixels across them read gap, border, fill, border, gap: `#202020 #3A3A3A #282828 #3A3A3A #202020` in Dark and `#F3F4F6 #D9DCE1 #F3F4F5 #D9DCE1 #F3F4F6` in Light, crisp both vertically and horizontally. Dragging them and the auto-hide window's resizer were not exercised.
+- `optimax-old.wf`: the migration script checked every page, layout and part (element counts against the 2016 files) and read each back through `SqliteRepository`; an off-screen render of the real Designer shows its home page with layout, parts, images and text.
 - `Data` conversion: a script converted the five folder projects and checked each `.wf` against its folder, all passing: every document, draft, archived revision and image byte for byte, and every page, layout and part read back through `SqliteRepository` as through `FlatFolderRepository`.
 - Off-screen renders of the real Browser window with a project open, in Dark, Light and Classic, show the menu, toolbar, page title and the area around the page in the theme's colors.
 - Not tested: interactive use. That includes drawing a shape and watching the Outline update, docking, editing values in the property grid, opening a project in the Browser, and following links.
@@ -68,7 +69,7 @@ Debug and Release: 0 errors, 0 warnings, with Extended.Wpf.Toolkit 3.6.0. Visual
 
 - `packages/` is in `.gitignore`, but files in it are still tracked. The build does not use that folder.
 - A part saved in the Designer cannot be read back (`GetPart` returns null), in both storages; see "Known traps" in `implementation.md`.
-- The sample projects in `Data/` have `.wf` files beside their folders, which are kept. Most hold little: only `WIREFLOW` has a page. `Data/OPTIMAX.zip` is in the 2016 format, which no storage reads.
+- The sample projects in `Data/` hold little: of the converted ones only `WireFlow.wf` has a page. `optimax-old.wf`, the migrated 2016 site, is the one with real content.
 
 ## Known regressions
 
