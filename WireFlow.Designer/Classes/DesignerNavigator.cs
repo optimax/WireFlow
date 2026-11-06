@@ -135,6 +135,10 @@ namespace WireFlow
 
 
 
+        /// <summary>The elements selected, the first one first.</summary>
+        public IReadOnlyList<FrameworkElement> SelectedElements => selectedElements;
+
+
         public FrameworkElement CurrentElement
         {
             get { return currentElement; }
@@ -875,8 +879,11 @@ namespace WireFlow
                 (adorner as ResizingAdorner).ResizeCompleted -= OnElementResized;
                 aLayer?.Remove(adorner);
             }
+            // The selection changed even when the current element stays, as the Outline's highlights must know
             if (CurrentElement == clickedElement)
                 CurrentElement = selectedElements.FirstOrDefault();
+            else
+                OnSelectionChanged(CurrentElement);
         }
 
 

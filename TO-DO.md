@@ -20,9 +20,11 @@ Changing the size of the page does not "stick" The page reverts to its default.
 
 Fixed. Saving a page stored its elements but never its size, so the next time the page was shown it went back to its layout's or the project's size. Now the Width and Height you give the page (the canvas in Properties, with nothing selected) are saved with the page, and with a layout too. A page whose size you leave alone still stores none of its own, so it keeps following its layout's or the project's size.
 
-## Outline Highlight
+## [DONE] Outline Highlight
 
 There should be a highlight in the Outline when an object is selected in the Designer.
+
+Done. Every element selected in the Designer is highlighted in the Outline, several at once when you select several. The highlight is a soft band behind the entry in the theme's text color, so it shows in Dark, Light and Classic. It follows the selection as it changes, and stays when the Outline is rebuilt (after drawing, deleting, grouping). Clicking an entry in the Outline still selects that element in the Designer. The Outline does not scroll to a highlighted entry that is out of view.
 
 
 ## [DONE] Fix JSON

@@ -574,6 +574,32 @@ namespace WireFlow
             //TODO: This is likely where we can create a wrapper around the element to only show the correct properties.
 
             OnPropertyChanged(nameof(CurrentElement));
+            if (sender == CurrentDesigner)
+                UpdateOutlineHighlight();
+        }
+
+
+        /// <summary>Highlights in the Outline the elements selected in the current designer.</summary>
+        private void UpdateOutlineHighlight()
+        {
+            var selected = CurrentDesigner?.SelectedElements;
+            foreach (var proxy in OutlineProxies(LayerOutline))
+                proxy.IsHighlighted = selected != null && selected.Contains(proxy.UIElement);
+        }
+
+
+        // The Outline's entries and theirs, depth first
+        private static IEnumerable<UIElementProxy> OutlineProxies(IEnumerable<UIElementProxy> proxies)
+        {
+            if (proxies == null)
+                yield break;
+            foreach (var proxy in proxies)
+            {
+                yield return proxy;
+                if (proxy is UICanvasProxy canvas)
+                    foreach (var child in OutlineProxies(canvas.Elements))
+                        yield return child;
+            }
         }
 
 
@@ -1251,6 +1277,7 @@ namespace WireFlow
             }
             LayerOutline = new ObservableCollection<UIElementProxy>();
             OutlinePopulate(CurrentDesigner.Designer.Canvas);
+            UpdateOutlineHighlight();
         }
 
 

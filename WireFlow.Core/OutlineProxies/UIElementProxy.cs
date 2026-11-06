@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -6,12 +7,29 @@ using System.Windows.Media.Imaging;
 
 namespace WireFlow
 {
-    public class UIElementProxy
+    public class UIElementProxy : INotifyPropertyChanged
     {
         private static readonly ImageSource _imageSource = RetrieveImageBitmap("element.png");
 
+        private bool isHighlighted;
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public FrameworkElement UIElement { get; set; }
+
+        /// <summary>Whether the element is selected in the Designer, which the Outline shows as a highlight.</summary>
+        public bool IsHighlighted
+        {
+            get => isHighlighted;
+            set
+            {
+                if (isHighlighted == value)
+                    return;
+                isHighlighted = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHighlighted)));
+            }
+        }
 
         public string Type { get; set; }
         public string Name { get; set; }

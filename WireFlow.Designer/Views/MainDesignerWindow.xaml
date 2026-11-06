@@ -312,27 +312,44 @@
                                             <EventSetter Event="Selected" Handler="TreeViewItem_Selected"/>
                                         </Style>
 
+                                        <!-- An element selected in the Designer is highlighted: the theme's text color, faint, behind its entry -->
                                         <HierarchicalDataTemplate DataType="{x:Type wireFlowCore:UICanvasProxy}" ItemsSource="{Binding Elements}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
-                                                <TextBlock>
-                                                    <Run Text="{Binding Path=Type,Mode=OneWay}"/>
-                                                    <Run Text=":"/>
-                                                    <Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
-                                                </TextBlock>
-                                                <TextBlock Foreground="Gray">
-                                                    <Run Text=" ["/><Run Text="{Binding Path=Elements.Count,Mode=OneWay}"/><Run Text="]"/>
-                                                </TextBlock>
-                                            </StackPanel>
+                                            <Grid>
+                                                <Border x:Name="Highlight" Background="{DynamicResource LightLightColorBrush}" CornerRadius="2" Margin="-2,0" Opacity="0"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Path=Type,Mode=OneWay}"/>
+                                                        <Run Text=":"/>
+                                                        <Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Foreground="Gray">
+                                                        <Run Text=" ["/><Run Text="{Binding Path=Elements.Count,Mode=OneWay}"/><Run Text="]"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                            <HierarchicalDataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                    <Setter TargetName="Highlight" Property="Opacity" Value="0.22"/>
+                                                </DataTrigger>
+                                            </HierarchicalDataTemplate.Triggers>
                                         </HierarchicalDataTemplate>
 
                                         <HierarchicalDataTemplate DataType="{x:Type wireFlowCore:UIElementProxy}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
-                                                <TextBlock>
-                                                    <Run Text="{Binding Path=Type,Mode=OneWay}"/><Run Text=": "/><Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
-                                                </TextBlock>
-                                            </StackPanel>
+                                            <Grid>
+                                                <Border x:Name="Highlight" Background="{DynamicResource LightLightColorBrush}" CornerRadius="2" Margin="-2,0" Opacity="0"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Path=Type,Mode=OneWay}"/><Run Text=": "/><Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                            <HierarchicalDataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                    <Setter TargetName="Highlight" Property="Opacity" Value="0.22"/>
+                                                </DataTrigger>
+                                            </HierarchicalDataTemplate.Triggers>
                                         </HierarchicalDataTemplate>
 
                                     </TreeView.Resources>
