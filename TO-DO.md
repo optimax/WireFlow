@@ -36,11 +36,15 @@ Done. `OptimaxTools.Wpf.PropertyGrid` is a new project in the solution, and Exte
 
 Its rows are compact in every theme, and an invalid value shows a red frame with the reason in a tooltip. `PropertyValueChanged` now fires only for an edit made in the grid, so the old "fires on every mouse click" problem is gone. Editors are chosen through `PropertyEditors.Register`, as with Delphi's `RegisterPropertyEditor`, which "Extend PropertyGrid" builds on. The summary pane at the bottom of Xceed's grid is not there; a property's description shows as the tooltip of its name.
 
-## Extend PropertyGrid
+## [DONE] Extend PropertyGrid
 
 Extend PropertyGrid so that custom property editors can be registered, as in Delphi Object Inspector. In the Designer, wire up any color properties to the color picker from Optimax shared library.
 
 The custom editors would be invoked by a button at the right end of the property value, like in Delphi.
+
+Done. A `PropertyEditor` registered through `PropertyEditors.Register` can now have a dialog (`HasDialog` and `ShowDialog`, like Delphi's `paDialog`). Its row then shows a "…" button at the right end of the value, and Ctrl+Enter in the value does the same. In the Designer every brush and color property (Background, Foreground, BorderBrush and so on) opens the color dialog; OK sets a solid brush of the chosen color.
+
+The Optimax shared library (MaxServices.Core 1.1.0) has no color picker of its own. The dialog is the one MarkdownTools (MaxPad) and PDFTools use, built on PixiEditor.ColorPicker 3.4.2.3 (MIT), copied into the Designer as `Views\ColorPickerDialog.cs`. It has the square of shades, the RGB, HSV and HSL sliders with alpha, the opacity in percent, and the web color as `#AARRGGBB`. Its license and those of its two dependencies are in `THIRD-PARTY-NOTICES.md`. If you'd rather have the dialog in Optimax.Shared.Lib, so that all the programs share one copy, it can move there as it is.
 
 ## StackPanel
 

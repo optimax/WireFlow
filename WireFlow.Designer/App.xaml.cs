@@ -13,6 +13,8 @@ namespace WireFlow
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            // Brushes and colors in the property grid open the color dialog
+            ColorPropertyEditor.Register();
 
             // Opening a folder project (.project) converts it into a .wf file beside it
             Repository = new SqliteRepository() { ConvertFolderProjects = true };

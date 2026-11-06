@@ -51,6 +51,8 @@ The Designer and the Browser have the themes of Optimax's other programs (PDFToo
 - `PropertyItem` is one property. Text goes through the property's `TypeConverter` in the invariant culture, as in XAML (`Auto`, `1,2,3,4`, `#FFFF0000`); empty text is null for a reference type other than string. A value that cannot be set leaves the property and sets `Error`, which the row shows as a red frame and a tooltip. While listed, each item watches its property (`AddValueChanged`), so a change made elsewhere shows; the watch ends when the selection changes.
 - `PropertyValueChanged` is raised for a value set in the grid only, and only when it changed. Xceed's was raised for any change of a watched property, so it fired on every click; the Designer sets `IsModified` from it.
 - `PropertyEditors` chooses each property's editor, as Delphi's `RegisterPropertyEditor` does: a registration names a property type (which also matches derived types), optionally narrowed to a type of object and a property name; the most specific matching registration wins, and the latest of equals. Without one: read-only text for a read-only property; a check box for a Boolean; a swatch with text for a brush or a color; a list of the system's fonts for a font family; a list for an enum, a font weight, style or stretch, or a converter's closed list of values; text otherwise. A `PropertyEditor` creates one control per row shown.
+- An editor with a dialog (`HasDialog`, as Delphi's `paDialog`) gets a "…" button at the right end of the value, which, as Ctrl+Enter in the value, calls its `ShowDialog`; a value typed but not yet set is set first. The editor sets the value chosen with `PropertyItem.SetValue`, which raises `PropertyValueChanged`. A read-only property has no button.
+- The Designer registers `ColorPropertyEditor` (in `App.Application_Startup`) for every `Brush`, `Color` and `Color?` property: the grid's swatch and text, and a dialog, `Views\ColorPickerDialog`, the color dialog of Optimax's other programs (MarkdownTools' MaxPad, PDFTools) on PixiEditor.ColorPicker. A brush property gets a solid brush; a gradient or image brush starts the dialog from white. MaxServices.Core has no color dialog, so the Designer has its own copy.
 - The template gives `TextBox`, `CheckBox`, `ComboBox` and `ComboBoxItem` implicit styles of its own, inside the grid only: compact (22 px rows; Fluent's controls are 32 px tall) and in the grid's `Background` and `Foreground`, in every theme. Highlights and lines are the grid's `Foreground` at a low opacity, so they suit light and dark alike. The Designer sets `Background`, `Foreground` and `CategoryBackground` from its theme brushes.
 
 ## Publishing
@@ -64,6 +66,8 @@ WireFlow itself is copyright Optimax Corporation.
 | Component | Version | License | Used by |
 |---|---|---|---|
 | Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer, Browser |
+| PixiEditor.ColorPicker (with PixiEditor.ColorPicker.Models 1.0.11) | 3.4.2.3 | MIT | Designer (the color dialog) |
+| Microsoft.Xaml.Behaviors.Wpf | 1.1.31 | MIT | PixiEditor.ColorPicker |
 | Dirkster.AvalonDock source (as OptimaxTools.Dock, in this solution) | 5.0.1 | MS-PL | Designer |
 | Microsoft.Data.Sqlite (with Microsoft.Data.Sqlite.Core) | 10.0.14 | MIT | Repository.Sqlite |
 | SQLitePCLRaw (bundle_e_sqlite3, core, lib.e_sqlite3, provider.e_sqlite3) | 2.1.13 | Apache-2.0 | Microsoft.Data.Sqlite |

@@ -41,6 +41,8 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- The System, Light, Dark and Classic themes of Optimax's programs, from LocalPackages -->
     <PackageReference Include="MaxServices.Core" Version="1.1.0" />
+    <!-- The color dialog's pickers, as in PDFTools and MarkdownTools -->
+    <PackageReference Include="PixiEditor.ColorPicker" Version="3.4.2.3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,11 +16,24 @@ namespace OptimaxTools.Wpf
     /// Edits a property in its row of a PropertyGrid. PropertyEditors chooses the editor of each property; register an editor
     /// there for a type of property, or for one property of one type of object, as with Delphi's RegisterPropertyEditor.
     /// The row's implicit styles make TextBox, CheckBox and ComboBox editors compact and give them the grid's colors.
+    /// An editor with a dialog, as Delphi's paDialog, gets a "..." button at the right end of the value, which, as
+    /// Ctrl+Enter in the value, calls ShowDialog.
     /// </summary>
     public abstract class PropertyEditor
     {
         /// <summary>The control that shows and edits the property in its row; one is created for each row shown.</summary>
         public abstract FrameworkElement CreateEditor(PropertyItem item);
+
+        /// <summary>Whether the editor has a dialog for the property (see ShowDialog).</summary>
+        public virtual bool HasDialog(PropertyItem item) => false;
+
+        /// <summary>
+        /// Shows the editor's dialog for the property, owned by the grid's window, and sets the value chosen there (with
+        /// PropertyItem.SetValue, which raises the grid's PropertyValueChanged).
+        /// </summary>
+        public virtual void ShowDialog(PropertyItem item, Window owner)
+        {
+        }
     }
 
 
@@ -324,9 +337,22 @@ namespace OptimaxTools.Wpf
 
 
 
-    /// <summary>Shows the editor of the item of its row, created when the row is.</summary>
+    /// <summary>
+    /// Shows the editor of the item of its row, created when the row is, with a "..." button at its right when the editor
+    /// has a dialog for the property.
+    /// </summary>
     public class PropertyEditorHost : Decorator
     {
+        /// <summary>The style of the "..." button; the grid's template sets it.</summary>
+        public static readonly DependencyProperty DialogButtonStyleProperty = DependencyProperty.Register(nameof(DialogButtonStyle),
+            typeof(Style), typeof(PropertyEditorHost), new PropertyMetadata(null));
+
+        public Style DialogButtonStyle
+        {
+            get => (Style)GetValue(DialogButtonStyleProperty);
+            set => SetValue(DialogButtonStyleProperty, value);
+        }
+
         public static readonly DependencyProperty ItemProperty = DependencyProperty.Register(nameof(Item), typeof(PropertyItem),
             typeof(PropertyEditorHost), new PropertyMetadata(null, (d, e) => ((PropertyEditorHost)d).ItemChanged()));
 
@@ -339,7 +365,49 @@ namespace OptimaxTools.Wpf
         private void ItemChanged()
         {
             var item = Item;
-            Child = item?.Editor.CreateEditor(item);
+            if (item == null)
+            {
+                Child = null;
+                return;
+            }
+            var editor = item.Editor.CreateEditor(item);
+            if (item.IsReadOnly || !item.Editor.HasDialog(item))
+            {
+                Child = editor;
+                return;
+            }
+            var button = new Button { Content = "\u2026", Focusable = false, ToolTip = "Edit " + item.DisplayName + " (Ctrl+Enter)" };
+            button.SetBinding(StyleProperty, new Binding(nameof(DialogButtonStyle)) { Source = this });
+            button.Click += (sender, e) => ShowDialog();
+            var panel = new DockPanel();
+            DockPanel.SetDock(button, System.Windows.Controls.Dock.Right);
+            panel.Children.Add(button);
+            panel.Children.Add(editor);
+            Child = panel;
+        }
+
+
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+            var item = Item;
+            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control && item != null && !item.IsReadOnly && item.Editor.HasDialog(item))
+            {
+                ShowDialog();
+                e.Handled = true;
+            }
+        }
+
+
+        // A value typed but not yet set is set first, so that the dialog starts from it
+        private void ShowDialog()
+        {
+            var item = Item;
+            if (item == null)
+                return;
+            if (Keyboard.FocusedElement is TextBox box && IsAncestorOf(box))
+                box.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+            item.Editor.ShowDialog(item, Window.GetWindow(this));
         }
     }
 
