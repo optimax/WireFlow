@@ -9,7 +9,14 @@ namespace WireFlow
     /// </summary>
     public class DesignerNavigatorDocument: LayoutDocument
     {
+        public const string PageKind = "page";
+        public const string LayoutKind = "layout";
+        public const string PartKind = "part";
+
         public DesignerNavigator Navigator { get; }
+
+        /// <summary>What the tab edits: PageKind, LayoutKind or PartKind; a page and a layout may have the same name.</summary>
+        public string Kind { get; set; }
 
 
         public DesignerNavigatorDocument(DesignerNavigator navigator)

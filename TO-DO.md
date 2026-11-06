@@ -8,9 +8,11 @@ Title: TO-DO
 >
 > ---
 
-## BUG: Page Multiple Times
+## [DONE] BUG: Page Multiple Times
 
 The same page can be opened multiple times, in separate tabs. Selecting a page that's already open should switch to that tab.
+
+Fixed. Opening a page, layout or part that is already open switches to its tab instead of opening a second one. That covers a double-click in Pages, Layouts or Parts, a click in Pages in Navigate mode, and a link followed in Navigate mode; the tab you were in stays on its own page. Names compare ignoring case. A page and a layout with the same name are still told apart. A tab dragged out into a floating window is not found, as before.
 
 ## BUG: Changing the Size of a Page
 

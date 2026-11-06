@@ -972,9 +972,14 @@ namespace WireFlow
 
         private DesignerNavigatorDocument NewPageTab(string href, string background, Action<DesignerNavigator> onLoaded)
         {
+            // A page already open is shown in its tab rather than opened again
+            var open = FindTab(DesignerNavigatorDocument.PageKind, href);
+            if (open != null)
+                return ShowTab(open);
+
             var navigator = new DesignerNavigator(Engine, background);
 
-            var doc = new DesignerNavigatorDocument(navigator);
+            var doc = new DesignerNavigatorDocument(navigator) { Kind = DesignerNavigatorDocument.PageKind };
             DocumentPane.Children.Add(doc);
             navigator.NavigatorDocument = doc;
             navigator.Navigating += NavigatorNavigatingHandler;
@@ -1002,9 +1007,14 @@ namespace WireFlow
 
         private DesignerNavigatorDocument NewLayoutTab(string href, string background, Action<DesignerNavigator> onLoaded)
         {
+            // A layout already open is shown in its tab rather than opened again
+            var open = FindTab(DesignerNavigatorDocument.LayoutKind, href);
+            if (open != null)
+                return ShowTab(open);
+
             var navigator = new DesignerNavigator(Engine, background);
 
-            var doc = new DesignerNavigatorDocument(navigator);
+            var doc = new DesignerNavigatorDocument(navigator) { Kind = DesignerNavigatorDocument.LayoutKind };
             DocumentPane.Children.Add(doc);
             navigator.NavigatorDocument = doc;
             navigator.Navigating += NavigatorNavigatingHandler;
@@ -1027,9 +1037,14 @@ namespace WireFlow
 
         private DesignerNavigatorDocument NewPartTab(string href, string background, Action<DesignerNavigator> onLoaded)
         {
+            // A part already open is shown in its tab rather than opened again
+            var open = FindTab(DesignerNavigatorDocument.PartKind, href);
+            if (open != null)
+                return ShowTab(open);
+
             var navigator = new DesignerNavigator(Engine, background);
 
-            var doc = new DesignerNavigatorDocument(navigator);
+            var doc = new DesignerNavigatorDocument(navigator) { Kind = DesignerNavigatorDocument.PartKind };
             DocumentPane.Children.Add(doc);
             navigator.NavigatorDocument = doc;
             navigator.Navigating += NavigatorNavigatingHandler;
@@ -1050,13 +1065,28 @@ namespace WireFlow
 
 
 
+        // A link followed in Navigate mode; NavigateToPage shows a page open in another tab there
         private void NavigatorNavigatingHandler(DesignerNavigator nav, string href)
         {
-
-
-            //TODO: See if the page already open in another tab, if so switch to it?
-
             NavigateToPage(nav, href);
+        }
+
+
+        /// <summary>The tab that shows the document of a kind and name, if one does; names compare ignoring case.</summary>
+        private DesignerNavigatorDocument FindTab(string kind, string href)
+        {
+            if (string.IsNullOrWhiteSpace(href))
+                return null;
+            return DocumentPane.Children.OfType<DesignerNavigatorDocument>()
+                .FirstOrDefault(d => d.Kind == kind && string.Equals(d.Navigator.PageName, href, StringComparison.OrdinalIgnoreCase));
+        }
+
+
+        /// <summary>Makes an open tab the current one (DocumentTabChangeHandler then selects its page and outline).</summary>
+        private DesignerNavigatorDocument ShowTab(DesignerNavigatorDocument doc)
+        {
+            DocumentPane.SelectedContentIndex = DocumentPane.Children.IndexOf(doc);
+            return doc;
         }
 
 
@@ -1091,6 +1121,13 @@ namespace WireFlow
         {
             if (navigatingTo != null)
                 return;
+            // A page open in another tab is shown there rather than opened in this one as well
+            var open = FindTab(DesignerNavigatorDocument.PageKind, href);
+            if (open != null && open.Navigator != designer)
+            {
+                ShowTab(open);
+                return;
+            }
             navigatingTo = href;
             try
             {
