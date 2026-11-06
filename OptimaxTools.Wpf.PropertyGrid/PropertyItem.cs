@@ -179,6 +179,32 @@ namespace OptimaxTools.Wpf
         }
 
 
+        /// <summary>
+        /// Sets another property of the item's object, for an editor that edits several at once, and raises the grid's
+        /// PropertyValueChanged, with this item, when its value changed. Returns whether it was set: false if the object
+        /// has no such writable property or refused the value.
+        /// </summary>
+        public bool SetComponentProperty(string propertyName, object value)
+        {
+            var descriptor = TypeDescriptor.GetProperties(Component)[propertyName];
+            if (descriptor == null || descriptor.IsReadOnly)
+                return false;
+            object oldValue = descriptor.GetValue(Component);
+            try
+            {
+                descriptor.SetValue(Component, value);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            object newValue = descriptor.GetValue(Component);
+            if (!Equals(oldValue, newValue))
+                grid.OnPropertyValueChanged(this, oldValue, newValue);
+            return true;
+        }
+
+
         /// <summary>Tells the editor to show the property's current value.</summary>
         public void Refresh()
         {

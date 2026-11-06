@@ -80,11 +80,26 @@ Done. Tools has a new **Stack Panel** tool, after a separator below Image.
 
 Assumption: "stack the selection" (turning selected elements into a panel, as Group does) is not there; say if you want it.
 
-## Text Component/Tool
+## [QUESTION] Text Component/Tool
 
 Make the `Text` component (Tool) transparent background by default, text centered horizontally and vertically in it. 
 
 Explain: How to accomplish the alignment of text within its frame? My preference would be to use the same 9-point chooser as PDFTools is using. Register it as property editor for TextAlignment fields in the PropertyGrid.
+
+Done. A new Text element is transparent and its text is centered, across and down. Its whole frame can still be clicked to select it.
+
+**How the alignment within the frame works**
+
+- **Across:** a text is a WPF `TextBlock` as wide as its frame, so `TextAlignment` (Left, Center, Right) already places its lines across it.
+- **Down:** `TextBlock` has no vertical alignment of its own, and it seals the methods that measure and draw it, so nothing can be drawn differently. Instead, the text gets `TextVerticalAlignment` (Top, Center, Bottom). Centered or at the bottom, the text measures its lines with its own font and wrapping, and moves them down by setting its top padding to the room they leave: half of it when centered, all of it at the bottom. It does this again whenever the text, the font, the wrapping or the frame's size changes.
+- **Saving:** it is saved in the text's `VerticalAlignment`, which was saved before but never used. Earlier texts have `Stretch` there, which counts as Top, so they look as they did.
+- **The chooser:** it is the 9-point chooser of PDFTools, MaxServices.Core's `PagePositionControl`, from the package the Designer already uses. It is registered as the property editor of `TextAlignment` for texts and boxes, and shows in that row with its label ("Center", "Top-Left" …).
+  - For a text, it sets `TextAlignment` and `TextVerticalAlignment`.
+  - For a box, it sets `TextAlignment`, `TextHorizontalAlignment` and `TextVerticalAlignment`.
+  - Justify shows as left. Other `TextAlignment` properties keep their drop-down list.
+- **Background:** a text's background is still not restored from the file, as before; it shows transparent. The sample projects have texts saved as White (`optimax-old.wf`) and as the old tool's gray (`WireFlow.wf`); showing them would change how those pages look.
+
+**Should texts show the background saved for them?**
 
 ## Tools|Options
 

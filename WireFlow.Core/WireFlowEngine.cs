@@ -667,7 +667,7 @@ namespace WireFlow
                 FontStretch = block.FontStretch,
                 FontWeight = block.FontWeight.ToOpenTypeWeight(),
                 HorizontalAlignment = block.HorizontalAlignment,
-                VerticalAlignment = block.VerticalAlignment,
+                VerticalAlignment = (block as WireFlowTextBlock)?.TextVerticalAlignment ?? block.VerticalAlignment,
                 LineHeight = block.LineHeight,
                 Text = block.Text,
                 TextAlignment = block.TextAlignment,
@@ -1256,7 +1256,10 @@ namespace WireFlow
                 FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight),
                 FontStretch = element.FontStretch,
                 Foreground = ColorUtils.StringToBrush(element.Color),
-                VerticalAlignment = element.VerticalAlignment,
+                // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
+                TextVerticalAlignment = element.VerticalAlignment,
+                // Its saved Fill is not shown, as before; transparent, so that its whole frame can be clicked
+                Background = Brushes.Transparent,
                 HorizontalAlignment = element.HorizontalAlignment,
                 TextAlignment = element.TextAlignment,
                 TextWrapping = element.TextWrapping,

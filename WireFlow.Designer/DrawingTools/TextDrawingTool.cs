@@ -16,10 +16,13 @@ namespace WireFlow
 
         public override FrameworkElement CreateElement()
         {
+            // Transparent, so the text lies on what is under it, yet the whole frame can be clicked; centered in the frame
             var result = new WireFlowTextBlock()
             {
                 Foreground = ColorUtils.StringToBrush("Black"),
-                Background = ColorUtils.StringToBrush("#dddddd"),
+                Background = Brushes.Transparent,
+                TextAlignment = TextAlignment.Center,
+                TextVerticalAlignment = VerticalAlignment.Center,
                 Text = "Text Block",
                 FontSize = 14,
                 FontFamily = new FontFamily("Segoe UI"),

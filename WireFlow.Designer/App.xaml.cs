@@ -15,6 +15,8 @@ namespace WireFlow
         {
             // Brushes and colors in the property grid open the color dialog
             ColorPropertyEditor.Register();
+            // The TextAlignment of texts and boxes is chosen as a position in the frame, as in PDFTools
+            TextPositionPropertyEditor.Register();
 
             // Opening a folder project (.project) converts it into a .wf file beside it
             Repository = new SqliteRepository() { ConvertFolderProjects = true };
