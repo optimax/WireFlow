@@ -14,9 +14,11 @@ The same page can be opened multiple times, in separate tabs. Selecting a page t
 
 Fixed. Opening a page, layout or part that is already open switches to its tab instead of opening a second one. That covers a double-click in Pages, Layouts or Parts, a click in Pages in Navigate mode, and a link followed in Navigate mode; the tab you were in stays on its own page. Names compare ignoring case. A page and a layout with the same name are still told apart. A tab dragged out into a floating window is not found, as before.
 
-## BUG: Changing the Size of a Page
+## [DONE] BUG: Changing the Size of a Page
 
 Changing the size of the page does not "stick" The page reverts to its default.
+
+Fixed. Saving a page stored its elements but never its size, so the next time the page was shown it went back to its layout's or the project's size. Now the Width and Height you give the page (the canvas in Properties, with nothing selected) are saved with the page, and with a layout too. A page whose size you leave alone still stores none of its own, so it keeps following its layout's or the project's size.
 
 ## Outline Highlight
 

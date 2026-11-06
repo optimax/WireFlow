@@ -381,9 +381,37 @@ namespace WireFlow
                 return null;
             Debug.WriteLine("CALLED: "+MethodBase.GetCurrentMethod());
 
+            // The size given to the page in the Designer is the page's own when it has one or the size differs from the one
+            // it inherits; a page without one keeps following its layout or the project
+            var inherited = InheritedPageSize(page);
+            page.Width = !double.IsNaN(page.Width) || canvas.Width != inherited.Width ? canvas.Width : double.NaN;
+            page.Height = !double.IsNaN(page.Height) || canvas.Height != inherited.Height ? canvas.Height : double.NaN;
+
             var layout = UserLayout(canvas);
 
             return SerializeLayout(page, layout);
+        }
+
+
+        /// <summary>
+        /// The size a page or layout without one of its own is shown at, as RenderPage gives it: the size of its nearest
+        /// layout that has one, else the project's.
+        /// </summary>
+        public Size InheritedPageSize(FlowPage page)
+        {
+            double width = double.NaN, height = double.NaN;
+            var master = Repository.GetMasterPage(page?.Master);
+            // A layout that names itself or an earlier one as its layout ends the search
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page?.Name ?? "" };
+            while (master != null && seen.Add(master.Name ?? "") && (double.IsNaN(width) || double.IsNaN(height)))
+            {
+                if (double.IsNaN(width))
+                    width = master.Width;
+                if (double.IsNaN(height))
+                    height = master.Height;
+                master = Repository.GetMasterPage(master.Master);
+            }
+            return new Size(double.IsNaN(width) ? Project.Width : width, double.IsNaN(height) ? Project.Height : height);
         }
 
 
