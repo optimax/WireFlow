@@ -332,9 +332,23 @@ namespace WireFlow
             KeyBinding keyBinding = new KeyBinding(ReloadFromFileCmd, Key.F5, ModifierKeys.None);
             InputBindings.Add(keyBinding);
             ApplyConfigSettings();
+            // Once the window shows, so that it is there while the project loads and behind any message about it
+            Dispatcher.BeginInvoke(new Action(ReopenPreviousProject), System.Windows.Threading.DispatcherPriority.ContextIdle);
 
             //TODO: Select default tool upon window loaded
             //SelectTool(TOOL_SELECT);
+        }
+
+
+
+        // Tools > Options > Files: the project open when the Designer was last closed, if it is still there
+        private void ReopenPreviousProject()
+        {
+            if (!Config.ReopenPreviousProject || !string.IsNullOrWhiteSpace(FileName))
+                return;
+            string previous = Config.PreviousProject;
+            if (!string.IsNullOrWhiteSpace(previous) && File.Exists(previous))
+                OpenProjectFile(previous);
         }
 
 
@@ -448,7 +462,21 @@ namespace WireFlow
                 Config.Width = this.Width;
                 Config.Height = this.Height;
             }
+            // The project to reopen at startup, when Tools > Options says so
+            Config.PreviousProject = string.IsNullOrWhiteSpace(FileName) ? null : FileName;
+        }
 
+
+
+        // Tools > Options...: the dialog shows the settings as they are; OK applies and saves them
+        private void OptionsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new DesignerOptionsDialog(Config) { Owner = this };
+            dialog.ShowDialog();
+            if (dialog.Answer != OptimaxTools.Options.OptionsAnswer.Ok)
+                return;
+            Config.ReopenPreviousProject = dialog.ReopenPreviousProject;
+            PersistConfigSettings();
         }
 
 

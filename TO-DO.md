@@ -101,9 +101,17 @@ Done. A new Text element is transparent and its text is centered, across and dow
 
 **Should texts show the background saved for them?**
 
-## Tools|Options
+## [DONE] Tools|Options
 
 Create an Options dialog like MarkdownTools have. The first option to set (and implement) is "Reopen previous project on startup."
+
+Done. The Designer has a new **Tools** menu with **Options…**. The dialog is the one MaxPad, MaxWrite and the PDF Workshop use, from the same package (`OptimaxTools.Options` 1.0.0, copied into WireFlow's `LocalPackages` as MaxServices.Core is), so it looks the same: groups on the left, the chosen group's options on the right, OK and Cancel, in the Designer's theme.
+
+- **Files → Reopen the previous project at startup** (off until you turn it on). The project open when you close the Designer opens again, on its home page, the next time it starts. If you closed the project before quitting, nothing reopens; a project that has been moved or deleted is skipped without a message.
+- The setting is kept in the Designer's settings file (`%APPDATA%\WireFlow\WireFlow.Designer.config`), as `ReopenPreviousProject`, with the project in `PreviousProject`.
+- There is no "Edit Settings File" button: the Designer rewrites that file as it closes, so edits made to it while the Designer runs would be lost.
+
+Adding further options is now a line or two each (see "Options" in `implementation.md`). The theme is still in View → Theme only; say if you want it in Options as well, as the PDF Workshop has it.
 
 ## Create Tool Glyphs
 

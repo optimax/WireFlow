@@ -104,6 +104,10 @@
                 </MenuItem>
             </MenuItem>
 
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Options..." Click="OptionsMenuItem_Click"/>
+            </MenuItem>
+
             <MenuItem Header="_Debug">
                 <MenuItem Header="Debugger Breakpoint!" Command="{Binding DebugBreakpointCmd}"/>
                 <Separator/>

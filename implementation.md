@@ -67,6 +67,14 @@ A stack panel (kind `stack`, `FlowStack` with a `Direction`, `Vertical` or `Hori
 
 In the Designer, the Stack Panel tool draws one, in a faint translucent gray so that an empty panel shows; an element drawn starting inside a panel becomes its last child (the innermost panel, where they are nested), and is selected through it, as a group's elements are. Ungroup releases the children where they are.
 
+## Options
+
+Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' programs: `OptimaxTools.Options` 1.0.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` as MaxServices.Core is. It has no look of its own, so it takes the theme's controls; `Views\DesignerOptionsDialog` derives from it, gives it the theme's colors, and adds the groups of options and their options. OK sets the dialog's results, which `MainDesignerWindow.OptionsMenuItem_Click` puts in `ConfigSettings` and saves; the dialog changes nothing itself. A new option is a setting in `ConfigSettings`, a control in the dialog's constructor, read in its `Apply`, and applied by the window.
+
+- Files → Reopen the previous project at startup (`ConfigSettings.ReopenPreviousProject`, off by default): `SaveConfigSettings` keeps the project open as the settings are saved, as the Designer closes, in `PreviousProject` (null when none is open), and `Window_Loaded` opens it again once the window shows, if it is still there.
+
+The settings file is not offered for editing from the dialog (no Edit Settings File button): the Designer writes it as it closes, so edits made to it while the Designer runs would be lost.
+
 ## Publishing
 
 `publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published. The script empties the folder first (see "Known traps"), and stops if it cannot, for example while the published Designer is running.
