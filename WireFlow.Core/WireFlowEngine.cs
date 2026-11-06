@@ -1258,8 +1258,8 @@ namespace WireFlow
                 Foreground = ColorUtils.StringToBrush(element.Color),
                 // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
                 TextVerticalAlignment = element.VerticalAlignment,
-                // Its saved Fill is not shown, as before; transparent, so that its whole frame can be clicked
-                Background = Brushes.Transparent,
+                // Its saved Fill; transparent without one (WireFlowTextBlock keeps it a brush, so that its whole frame can be clicked)
+                Background = TextBackground(element.Fill),
                 HorizontalAlignment = element.HorizontalAlignment,
                 TextAlignment = element.TextAlignment,
                 TextWrapping = element.TextWrapping,
@@ -1271,6 +1271,23 @@ namespace WireFlow
             panel.Children.Add(block);
 
             return block;
+        }
+
+
+        // A text's background: its saved Fill, or transparent when it has none or one that is not a color
+        // (ColorUtils.StringToBrush makes an empty Fill black)
+        private static Brush TextBackground(string fill)
+        {
+            if (string.IsNullOrWhiteSpace(fill))
+                return Brushes.Transparent;
+            try
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(fill));
+            }
+            catch (Exception ex) when (ex is FormatException || ex is NotSupportedException)
+            {
+                return Brushes.Transparent;
+            }
         }
 
 

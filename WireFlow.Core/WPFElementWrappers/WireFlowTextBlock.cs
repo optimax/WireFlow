@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace WireFlow
 {
@@ -8,7 +9,8 @@ namespace WireFlow
     /// The text element: a TextBlock in a frame of its own size, with its lines aligned across the frame by TextAlignment and
     /// down it by TextVerticalAlignment, which TextBlock itself does not have. TextBlock seals its measure and render, so
     /// the lines are moved down by the top padding: centered or at the bottom, the top padding is the bottom one (the
-    /// padding a text is given is even) and the room the lines leave.
+    /// padding a text is given is even) and the room the lines leave. Its Background is never null: none (cleared in the
+    /// property grid, say) is Transparent, so that the whole frame can still be clicked.
     /// </summary>
     public class WireFlowTextBlock : TextBlock
     {
@@ -79,6 +81,8 @@ namespace WireFlow
                          FontStretchProperty, TextWrappingProperty, LineHeightProperty, LineStackingStrategyProperty, PaddingProperty,
                          WidthProperty, HeightProperty })
                 property.OverrideMetadata(typeof(WireFlowTextBlock), new FrameworkPropertyMetadata(LinesChanged));
+            BackgroundProperty.OverrideMetadata(typeof(WireFlowTextBlock),
+                new FrameworkPropertyMetadata(Brushes.Transparent, null, (sender, value) => value ?? Brushes.Transparent));
         }
 
 

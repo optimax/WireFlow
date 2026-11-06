@@ -80,7 +80,7 @@ Done. Tools has a new **Stack Panel** tool, after a separator below Image.
 
 Assumption: "stack the selection" (turning selected elements into a panel, as Group does) is not there; say if you want it.
 
-## [QUESTION] Text Component/Tool
+## [DONE] Text Component/Tool
 
 Make the `Text` component (Tool) transparent background by default, text centered horizontally and vertically in it. 
 
@@ -97,9 +97,20 @@ Done. A new Text element is transparent and its text is centered, across and dow
   - For a text, it sets `TextAlignment` and `TextVerticalAlignment`.
   - For a box, it sets `TextAlignment`, `TextHorizontalAlignment` and `TextVerticalAlignment`.
   - Justify shows as left. Other `TextAlignment` properties keep their drop-down list.
-- **Background:** a text's background is still not restored from the file, as before; it shows transparent. The sample projects have texts saved as White (`optimax-old.wf`) and as the old tool's gray (`WireFlow.wf`); showing them would change how those pages look.
+- **Background:** at first a text's background was still not restored from the file; it showed transparent. The sample projects have texts saved as White (`optimax-old.wf`) and as the old tool's gray (`WireFlow.wf`); showing them would change how those pages look.
 
-**Should texts show the background saved for them?**
+Should texts show the background saved for them?
+
+Answer: Yes, show saved backgrounds. Make sure that it is possible to set text background to transparent, though.
+
+Done. A text now shows the background saved for it, in the Designer and in the Browser. In the samples, `optimax-old.wf`'s texts show their white and `WireFlow.wf`'s the old tool's gray. A text saved without a background, or with one that is not a plain color, stays transparent; before, an empty one would have come out black.
+
+To make a text's background transparent, in Properties, Background:
+- clear the value: a text never has "no" background, so clearing it makes it Transparent;
+- or type `Transparent`;
+- or open the color dialog ("…") and set the opacity to 0 %.
+
+A transparent text can still be selected by clicking anywhere in its frame, not only on its letters. New texts from the Text tool start transparent, as before.
 
 ## [DONE] Tools|Options
 
