@@ -3,6 +3,7 @@
   <Project Path="OptimaxTools.Dock/OptimaxTools.Dock.csproj" />
   <Project Path="OptimaxTools.Dock.Core/OptimaxTools.Dock.Core.csproj" />
   <Project Path="OptimaxTools.Dock.Themes.Metro/OptimaxTools.Dock.Themes.Metro.csproj" />
+  <Project Path="OptimaxTools.Wpf.PropertyGrid/OptimaxTools.Wpf.PropertyGrid.csproj" />
   <Project Path="WireFlow.Core/WireFlow.Core.csproj" />
   <Project Path="WireFlow.Designer/WireFlow.Designer.csproj" />
   <Project Path="WireFlow.Repository.Archive/WireFlow.Repository.Archive.csproj" />

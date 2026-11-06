@@ -41,11 +41,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- The System, Light, Dark and Classic themes of Optimax's programs, from LocalPackages -->
     <PackageReference Include="MaxServices.Core" Version="1.1.0" />
-    <!-- Only the PropertyGrid's DLL: docking is OptimaxTools.Dock, in this solution, and the package's own Xceed.Wpf.AvalonDock*.dll stay out. -->
-    <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" NoWarn="NU1701" />
-    <Reference Include="Xceed.Wpf.Toolkit">
-      <HintPath>$(PkgExtended_Wpf_Toolkit)\lib\net40\Xceed.Wpf.Toolkit.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -54,6 +49,7 @@
     <ProjectReference Include="..\WireFlow.Types\WireFlow.Types.csproj" />
     <ProjectReference Include="..\OptimaxTools.Dock\OptimaxTools.Dock.csproj" />
     <ProjectReference Include="..\OptimaxTools.Dock.Themes.Metro\OptimaxTools.Dock.Themes.Metro.csproj" />
+    <ProjectReference Include="..\OptimaxTools.Wpf.PropertyGrid\OptimaxTools.Wpf.PropertyGrid.csproj" />
   </ItemGroup>
 
 </Project>

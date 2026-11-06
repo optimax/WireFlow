@@ -23,9 +23,18 @@ Done. `.wf` files are now format 2 (`PRAGMA user_version` 2), and the programs o
 - All 7 files in `Data`, your `FirstTest.wf` included, were upgraded once by `Documents\upgrade-wf-to-format-2.cs`. It checks that each document reads back the same before it changes a file, and can upgrade any other format 1 file you have: `dotnet run upgrade-wf-to-format-2.cs -- <file.wf> ...`. The programs refuse a format 1 file, saying that it is not a WireFlow project or was made by another version of WireFlow (it said "a later version").
 - The format is described under "Project file format" in `implementation.md`.
 
-## Remove Dependency on Wpf.Toolkit
+## [DONE] Remove Dependency on Wpf.Toolkit
 
 Implement property grid as `OptimaxTools.Wpf.PropertyGrid`. Remove the dependency on Extended.Wpf.Toolkit. 
+
+Done. `OptimaxTools.Wpf.PropertyGrid` is a new project in the solution, and Extended.Wpf.Toolkit is gone from the Designer and the third-party notices. The grid keeps what the Designer used of Xceed's: categories or alphabetical order, the filter box, the header with the object's type and name, a name column you can drag wider, and editors chosen by type:
+
+- check boxes for Booleans;
+- lists for enums, font weights, styles and stretches, and font families;
+- a color swatch with text for brushes and colors;
+- text through each property's converter for everything else, so `Auto`, `1,2,3,4` and `#FF0000` work as in XAML.
+
+Its rows are compact in every theme, and an invalid value shows a red frame with the reason in a tooltip. `PropertyValueChanged` now fires only for an edit made in the grid, so the old "fires on every mouse click" problem is gone. Editors are chosen through `PropertyEditors.Register`, as with Delphi's `RegisterPropertyEditor`, which "Extend PropertyGrid" builds on. The summary pane at the bottom of Xceed's grid is not there; a property's description shows as the tooltip of its name.
 
 ## Extend PropertyGrid
 
@@ -41,7 +50,7 @@ Create a `StackPanel` container component to be listed in Tools. It would align 
 
 Make the `Text` component (Tool) transparent background by default, text centered horizontally and vertically in it. 
 
-Explain: How to accomplish the alignment of text within its frame? My preference would be to use the same 9-point chooser as PDFTools is using.
+Explain: How to accomplish the alignment of text within its frame? My preference would be to use the same 9-point chooser as PDFTools is using. Register it as property editor for TextAlignment fields in the PropertyGrid.
 
 ## Tools|Options
 

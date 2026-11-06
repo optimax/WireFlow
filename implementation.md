@@ -18,6 +18,7 @@ Shared projects:
 | `WireFlow.Repository.Sqlite` | `SqliteRepository`, the storage in use: a project in one SQLite database file (`.wf`). Converts folder projects (`.project`) into `.wf` files. |
 | `WireFlow.Repository.Folder` | `FlatFolderRepository`, the earlier storage: a project as a folder. Read when a folder project is converted; its `SerializeToJSON` and `DeserializeFromJSON` are the JSON settings of both storages. |
 | `WireFlow.Repository.Archive` | `ZipArchiveRepository`, an unimplemented stub. |
+| `OptimaxTools.Wpf.PropertyGrid` | The Designer's property grid, WireFlow's own: `OptimaxTools.Wpf.PropertyGrid` (see "Property grid"). XAML namespace `http://schemas.optimax.com/wpf/xaml/propertygrid` (prefix `pg`). |
 | `OptimaxTools.Dock`, `OptimaxTools.Dock.Core` | The docking layout system of the Designer: the `AvalonDock` and `AvalonDock.Core` components of Dirkster.AvalonDock 5.0.1, an MS-PL fork of Xceed's AvalonDock, renamed to the `OptimaxTools.Dock` namespaces. XAML namespace `http://schemas.optimax.com/wpf/xaml/dock` (prefix `dock`), also mapped into WPF's presentation namespace, as upstream does. Strong-named with WireFlow's `OptimaxTools.Dock\sn.snk`. `LayoutGridControl` gives the splitters between panes the manager's splitter styles only when they are set; upstream set a null `Style`, which hid the theme's splitter style. |
 | `OptimaxTools.Dock.Themes.Metro` | The Metro theme of Dirkster.AvalonDock 5.0.1, renamed, used by the Designer, with WireFlow's two brush colors (`BaseColor5`, `BaseColor6`) in `Brushes.xaml`, and in `Theme.xaml` themed backgrounds for the document pane and the Ctrl+Tab navigator window, which upstream draws white, and splitters drawn as a rail with 1 px borders (`AvalonDock_ThemeMetro_SplitterBorder`) inside their 5 px grab area. |
 
@@ -43,6 +44,15 @@ The Designer and the Browser have the themes of Optimax's other programs (PDFToo
 - Fluent's menus and toolbars are taller than the old ones: give the rows that hold them `Auto` height rather than a fixed one.
 - Fluent pads list items by 12 px, 45 px rows. To make a list compact without losing the theme's item template, set the containers' `Padding` as a local value, as `MainDesignerWindow.ToolsContainersChangedHandler` does for the Tools list (27 px rows, as a Fluent menu item); Classic's own padding is already compact, so it is left there. An `ItemContainerStyle` would replace the theme's style, and one `BasedOn` it would keep the style of the theme current when it was loaded.
 
+## Property grid
+
+`OptimaxTools.Wpf.PropertyGrid` lists the browsable properties of `SelectedObject`'s type, as Xceed's grid did: by category (in the order of their names) or by name, with a filter box, a header naming the object's type and `Name`, and a name column whose width the grip between the columns sets. Rows are virtualized, grouped or not.
+
+- `PropertyItem` is one property. Text goes through the property's `TypeConverter` in the invariant culture, as in XAML (`Auto`, `1,2,3,4`, `#FFFF0000`); empty text is null for a reference type other than string. A value that cannot be set leaves the property and sets `Error`, which the row shows as a red frame and a tooltip. While listed, each item watches its property (`AddValueChanged`), so a change made elsewhere shows; the watch ends when the selection changes.
+- `PropertyValueChanged` is raised for a value set in the grid only, and only when it changed. Xceed's was raised for any change of a watched property, so it fired on every click; the Designer sets `IsModified` from it.
+- `PropertyEditors` chooses each property's editor, as Delphi's `RegisterPropertyEditor` does: a registration names a property type (which also matches derived types), optionally narrowed to a type of object and a property name; the most specific matching registration wins, and the latest of equals. Without one: read-only text for a read-only property; a check box for a Boolean; a swatch with text for a brush or a color; a list of the system's fonts for a font family; a list for an enum, a font weight, style or stretch, or a converter's closed list of values; text otherwise. A `PropertyEditor` creates one control per row shown.
+- The template gives `TextBox`, `CheckBox`, `ComboBox` and `ComboBoxItem` implicit styles of its own, inside the grid only: compact (22 px rows; Fluent's controls are 32 px tall) and in the grid's `Background` and `Foreground`, in every theme. Highlights and lines are the grid's `Foreground` at a low opacity, so they suit light and dark alike. The Designer sets `Background`, `Foreground` and `CategoryBackground` from its theme brushes.
+
 ## Publishing
 
 `publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published. The script empties the folder first (see "Known traps"), and stops if it cannot, for example while the published Designer is running.
@@ -54,17 +64,12 @@ WireFlow itself is copyright Optimax Corporation.
 | Component | Version | License | Used by |
 |---|---|---|---|
 | Newtonsoft.Json | 13.0.4 | MIT | Repository.Folder, Designer, Browser |
-| Extended.Wpf.Toolkit (only `Xceed.Wpf.Toolkit`, the property grid) | 3.6.0 | MS-PL | Designer |
 | Dirkster.AvalonDock source (as OptimaxTools.Dock, in this solution) | 5.0.1 | MS-PL | Designer |
 | Microsoft.Data.Sqlite (with Microsoft.Data.Sqlite.Core) | 10.0.14 | MIT | Repository.Sqlite |
 | SQLitePCLRaw (bundle_e_sqlite3, core, lib.e_sqlite3, provider.e_sqlite3) | 2.1.13 | Apache-2.0 | Microsoft.Data.Sqlite |
 | SQLite (`e_sqlite3.dll`, in SQLitePCLRaw.lib.e_sqlite3) | as built by SQLitePCLRaw 2.1.13 | Public domain | SQLitePCLRaw |
 
-Extended.Wpf.Toolkit is pinned to 3.6.0 on purpose: it is the last version that is MS-PL both in its package and in its published source, under which WireFlow took it. It ships only `lib/net40` DLLs, and NuGet lists it as unlisted, though it still restores. Do not upgrade it:
-
-- Versions 3.7.0–3.8.1 and 4.0.0 onwards, 5.1.2 included, are under the Xceed Community License: non-commercial use by fewer than 10 users only.
-- 3.8.2 declares MS-PL, but the `LICENSE.txt` inside its package is the Community License.
-- Xceed never published 3.7+ source under MS-PL: from the 3.7.0 commit on, the repository's `license.md` is the Community License.
+Extended.Wpf.Toolkit (Xceed's property grid) is no longer used. Do not bring it back: from 3.7.0 on, its versions are under the Xceed Community License (non-commercial use by fewer than 10 users), and 3.8.2's package declares MS-PL but holds the Community License.
 
 Docking is OptimaxTools.Dock, from the source of Dirkster.AvalonDock 5.0.1 (MS-PL in its repository's `LICENSE` and its packages). Keep it close to upstream, so that later upstream fixes can be merged: change only what WireFlow needs, and mark each change with a `WireFlow:` comment.
 
@@ -79,7 +84,7 @@ A project is one SQLite database file, `<name>.wf`, written by `SqliteRepository
 - `Archive` — earlier versions (`Kind`, which can also be `project`, `Name`, `RevisionNo`, JSON): the version that the save of that revision replaced.
 - `Images` — imported images (`Name`, the file name, and `Data`).
 
-Names compare ignoring case, as file names did. Each document stays one JSON value rather than a table per element type: the element model is open-ended (`$type` tags), and the programs read and write whole pages. As in the folder storage, a page is read with its draft, but a layout used as a master and a part are read in their saved version only. Renaming a layout or a part is not implemented, since pages and elements refer to them by name, and deleting or renaming a page or layout leaves its archived versions under the old name.
+Names compare ignoring case, as file names did. Each document stays one JSON value rather than a table per element type: the element model is open-ended (an element's `Type` names its kind), and the programs read and write whole pages. As in the folder storage, a page is read with its draft, but a layout used as a master and a part are read in their saved version only. Renaming a layout or a part is not implemented, since pages and elements refer to them by name, and deleting or renaming a page or layout leaves its archived versions under the old name.
 
 Each operation opens the file and closes it again: pooling is off, so the file is not held open between operations, and the Browser can view a project the Designer is editing. A new or converted file is built under a temporary name (`<name>.wf.tmp`) and then moved into place.
 
@@ -91,11 +96,10 @@ JSON is written and read by Newtonsoft.Json with `FlowJson.Settings` (in `WireFl
 - `Type` and `Name` come first in each object.
 - Unknown keys are dropped on load and are therefore lost on the next save.
 
-**Folder projects.** The earlier storage, `FlatFolderRepository`, keeps a project as a folder: `<name>.project` (the `FlowProject` JSON); `pages/*.page`, `layouts/*.master` and `parts/*.part`, with unsaved edits in `*.new` files beside them; `pages.archive/` and the other `*.archive/` folders, holding `<name>.<revision>` files; and `images/`. When the Designer opens a `.project`, `SqliteRepository` converts it into `<name>.wf` beside it, copying the JSON of every file as it is, and opens that; the folder is left as it is. If that `.wf` file already exists, it is opened, not replaced. The Browser opens `.wf` files only and says so when given a `.project`. The sample projects in `Data` are `.wf` files only. `optimax-old.wf` is a 2016 project migrated once from an earlier format still (`Optimax.wireflow`, elements named only by `Type`, without `$type` tags), which no storage reads.
+**Folder projects.** The earlier storage, `FlatFolderRepository`, keeps a project as a folder: `<name>.project` (the `FlowProject` JSON); `pages/*.page`, `layouts/*.master` and `parts/*.part`, with unsaved edits in `*.new` files beside them; `pages.archive/` and the other `*.archive/` folders, holding `<name>.<revision>` files; and `images/`. When the Designer opens a `.project`, `SqliteRepository` converts it into `<name>.wf` beside it, writing every document again in the current JSON, and opens that; the folder is left as it is. If that `.wf` file already exists, it is opened, not replaced. The Browser opens `.wf` files only and says so when given a `.project`. The sample projects in `Data` are `.wf` files only. `optimax-old.wf` is a 2016 project migrated once from an earlier format still (`Optimax.wireflow`, elements named only by `Type`, without `$type` tags), which no storage reads.
 
 ## Known traps
 
-- **Extended.Wpf.Toolkit also ships Xceed's AvalonDock DLLs.** The Designer references the package with `ExcludeAssets="all"` and `GeneratePathProperty="true"`, and takes only `Xceed.Wpf.Toolkit.dll` through `$(PkgExtended_Wpf_Toolkit)`. A NuGet "update" that re-adds every DLL of the package brings Xceed's AvalonDock back beside OptimaxTools.Dock.
 - **Inside the `OptimaxTools.*` namespaces, `Dock` is the namespace `OptimaxTools.Dock`, not WPF's `Dock` enum.** C# finds the namespace, a member of `OptimaxTools`, before the `using System.Windows.Controls` of the file, so `Dock.Top` does not compile there, and a file-level `using` alias does not help. Write `System.Windows.Controls.Dock.Top`, as the fork does, when merging upstream code.
 - **Scratch programs that host the Designer's window.** Creating `App` queues its `Startup` handler, which opens a real Designer window as soon as the dispatcher runs and applies the saved theme. `MainDesignerWindow` also writes its settings (`%APPDATA%\WireFlow\WireFlow.Designer.config`) when it closes. Remove the `Startup` handler, and keep a copy of the settings file to put back.
 - **Single-file `dotnet run app.cs` scripts default to `PublishAot=true`,** which disables dynamic code generation, unlike the apps. Add `#:property PublishAot=false` to scripts that load WireFlow documents, so that Newtonsoft.Json runs as it does in the apps.
@@ -105,7 +109,7 @@ JSON is written and read by Newtonsoft.Json with `FlowJson.Settings` (in `WireFl
 - **Microsoft.Data.Sqlite 9.x brings SQLitePCLRaw 2.1.10,** whose `lib.e_sqlite3` NuGet flags with a high-severity advisory (NU1903, GHSA-2m69-gcr7-jv3q). Microsoft.Data.Sqlite 10.0.14 brings 2.1.13, which is not flagged. Keep the NuGet audit warnings visible when upgrading it.
 - **`DesignerPanel` lives in Core, but the `DesignerBackgroundBrush` and `PageFrameBrush` resources exist only in the Designer.** It refers to them with `SetResourceReference`, which leaves them unset where they are missing, so the Browser can host it; the Browser sets `Background` and `PageFrameBrush` from the palette itself.
 - **The Designer's Outline view is a snapshot.** `MainDesignerWindow.PopulateOutlineTree` rebuilds it on navigation, on a tab switch, and when the current `DesignerNavigator` raises `ElementsChanged`. A new `DesignerNavigator` operation that adds, removes or reorders elements must call `OnElementsChanged()`, or the Outline goes stale.
-- **The Xceed `PropertyGrid` template hard-codes light colors.** Its property list uses `x:Static` system brushes, its filter box `White`, and its category headers an `Expander` style with `#FFF0F0F0`, so no resource or implicit style reaches them, and each category's `GroupItem` gets an explicit style from the template's `CategoryGroupStyleSelector`. `MainDesignerWindow.PropertyGridLoadedHandler` sets local values on those template parts and swaps in a `CategoryGroupStyleSelector` whose `ItemGroupStyle` is `PropertyCategoryStyle` from the grid's resources.
+- **A property grid editor gets the grid's implicit styles.** A `PropertyEditor` that creates a `TextBox`, `CheckBox` or `ComboBox` gets the grid's compact style, not the theme's; give a control a `Style` of its own to look otherwise.
 - **A WPF `ListBox` reports a cleared selection as `SelectedIndex` -1.** Code that indexes `Items` with it must check the range.
 - **.NET Framework's `System.Drawing.Icon` skips PNG-compressed icon images,** such as the 256 px images of the application icons, so Windows PowerShell cannot load them that way. Check a built exe with the shell's `PrivateExtractIcons` instead.
 - **An element without a `Type` is read as a `FlowElement`,** and shown as an unknown object: the kind lives only in `Type`.
