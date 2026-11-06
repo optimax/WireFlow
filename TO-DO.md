@@ -8,6 +8,19 @@ Title: TO-DO
 >
 > ---
 
+## BUG: Page Multiple Times
+
+The same page can be opened multiple times, in separate tabs. Selecting a page that's already open should switch to that tab.
+
+## BUG: Changing the Size of a Page
+
+Changing the size of the page does not "stick" The page reverts to its default.
+
+## Outline Highlight
+
+There should be a highlight in the Outline when an object is selected in the Designer.
+
+
 ## [DONE] Fix JSON
 
 Fix the problems with the current JSON data being saved. Decouple .NET class names from node types. Avoid special attributes, like `$type`. 
@@ -46,9 +59,20 @@ Done. A `PropertyEditor` registered through `PropertyEditors.Register` can now h
 
 The Optimax shared library (MaxServices.Core 1.1.0) has no color picker of its own. The dialog is the one MarkdownTools (MaxPad) and PDFTools use, built on PixiEditor.ColorPicker 3.4.2.3 (MIT), copied into the Designer as `Views\ColorPickerDialog.cs`. It has the square of shades, the RGB, HSV and HSL sliders with alpha, the opacity in percent, and the web color as `#AARRGGBB`. Its license and those of its two dependencies are in `THIRD-PARTY-NOTICES.md`. If you'd rather have the dialog in Optimax.Shared.Lib, so that all the programs share one copy, it can move there as it is.
 
-## StackPanel
+## [DONE] StackPanel
 
 Create a `StackPanel` container component to be listed in Tools. It would align its children either vertically, or horizontally, depending on a `Direction` property setting (`Vertical`, `Horizontal`) and stretch them in the direction orthogonal to its `Direction`. Just like a stack panel would.
+
+Done. Tools has a new **Stack Panel** tool, after a separator below Image.
+
+- **Drawing:** you draw the panel as you would a box. A new panel is a faint translucent gray, so that an empty one shows; change its Background in Properties.
+- **Adding children:** draw an element *starting inside* the panel, and it becomes the panel's last child. Nested panels work: the innermost one under the starting point takes the element.
+- **Layout:** each child keeps its own size in the panel's `Direction` (Properties, `Vertical` by default) and is stretched across the panel in the other direction. Children that don't fit are clipped.
+- **Editing:** a click on a child selects the panel, as with a group. Ungroup releases the children where they are.
+- **Saving:** a panel is saved as a new element kind, `stack`, with its `Direction`; the Browser shows it as well. The file format stays 2.
+- **Changing direction:** each child's size along the new direction is the stretched size it had. For example, a vertical panel's children are as wide as the panel when it turns horizontal.
+
+Assumption: "stack the selection" (turning selected elements into a panel, as Group does) is not there; say if you want it.
 
 ## Text Component/Tool
 

@@ -1,0 +1,58 @@
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+
+namespace WireFlow
+{
+    /// <summary>
+    /// A stack panel on a page: it places its children one after another in its Direction and stretches them across
+    /// itself, as WPF's StackPanel does (see StackLayout). It sets each child's position and its size across the panel,
+    /// so the children keep true positions and sizes, which the Designer and the saved page use as for any element.
+    /// </summary>
+    public class Stack : BaseElement
+    {
+        public static readonly DependencyProperty DirectionProperty = DependencyProperty.Register(nameof(Direction),
+            typeof(Orientation), typeof(Stack), new FrameworkPropertyMetadata(Orientation.Vertical, FrameworkPropertyMetadataOptions.AffectsArrange));
+
+        /// <summary>The direction in which the children follow one another.</summary>
+        public Orientation Direction
+        {
+            get => (Orientation)GetValue(DirectionProperty);
+            set => SetValue(DirectionProperty, value);
+        }
+
+
+        public Stack()
+        {
+            ClipToBounds = true;
+        }
+
+
+        // A child whose size changes changes the panel's measure; its arrangement follows from it
+        protected override Size MeasureOverride(Size constraint)
+        {
+            var size = base.MeasureOverride(constraint);
+            InvalidateArrange();
+            return size;
+        }
+
+
+        protected override Size ArrangeOverride(Size arrangeSize)
+        {
+            var children = InternalChildren.OfType<FrameworkElement>().ToList();
+            var panel = new Size(double.IsNaN(Width) ? arrangeSize.Width : Width, double.IsNaN(Height) ? arrangeSize.Height : Height);
+            var places = StackLayout.Arrange(panel, Direction, children.Select(c => new Size(c.Width, c.Height)).ToList());
+            for (int i = 0; i < children.Count; i++)
+            {
+                var child = children[i];
+                SetLeft(child, places[i].X);
+                SetTop(child, places[i].Y);
+                if (Direction == Orientation.Vertical)
+                    child.Width = places[i].Width;
+                else
+                    child.Height = places[i].Height;
+            }
+            return base.ArrangeOverride(arrangeSize);
+        }
+    }
+}

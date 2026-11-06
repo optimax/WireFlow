@@ -1118,17 +1118,42 @@ namespace WireFlow
             if (element == null)
                 return;
 
-            CurrentLayer.Children.Add(element);
-
             element.Width = Rubberband.Width;
             element.Height = Rubberband.Height;
-            Canvas.SetLeft(element, Canvas.GetLeft(Rubberband));
-            Canvas.SetTop(element, Canvas.GetTop(Rubberband));
-
-            SelectElement(element);
+            var start = new Point(Canvas.GetLeft(Rubberband), Canvas.GetTop(Rubberband));
+            // An element drawn starting inside a stack panel becomes its last child, which the panel places
+            Stack stack = FindStackAt(CurrentLayer, start);
+            if (stack != null)
+            {
+                stack.Children.Add(element);
+                SelectElementOrItsGroup(element);
+            }
+            else
+            {
+                CurrentLayer.Children.Add(element);
+                Canvas.SetLeft(element, start.X);
+                Canvas.SetTop(element, start.Y);
+                SelectElement(element);
+            }
 
             IsModified = true;
             OnElementsChanged();
+        }
+
+
+        /// <summary>
+        /// The innermost stack panel at a point of a layer or of a panel (in its coordinates), the topmost where panels
+        /// overlap; null if there is none.
+        /// </summary>
+        private static Stack FindStackAt(Panel container, Point point)
+        {
+            foreach (var stack in container.Children.OfType<Stack>().Reverse())
+            {
+                var bounds = new Rect(Canvas.GetLeft(stack), Canvas.GetTop(stack), stack.ActualWidth, stack.ActualHeight);
+                if (bounds.Contains(point))
+                    return FindStackAt(stack, new Point(point.X - bounds.X, point.Y - bounds.Y)) ?? stack;
+            }
+            return null;
         }
 
 

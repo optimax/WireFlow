@@ -473,6 +473,9 @@ namespace WireFlow
                 case "group":
                     element = ConvertGroup(uiElement);
                     break;
+                case "stack":
+                    element = ConvertStack(uiElement);
+                    break;
                 case "part":
                     element = ConvertPart(uiElement);
                     break;
@@ -501,6 +504,32 @@ namespace WireFlow
                 Transparency = 1 - group.Opacity,
             };
             foreach (var uiChild in group.Children.Cast<UIElement>())
+            {
+                FlowElementBase dataElement = ConvertUiElement(uiChild);
+                if (dataElement != null)
+                    result.Children.Add(dataElement);
+            }
+            return result;
+        }
+
+
+        FlowElementBase ConvertStack(UIElement element)
+        {
+            if (!(element is Stack stack))
+                return null;
+            var result = new FlowStack()
+            {
+                Type = "stack",
+                Name = string.IsNullOrWhiteSpace(stack.Name) ? null : stack.Name,
+                Left = stack.Left,
+                Top = stack.Top,
+                Height = stack.Height,
+                Width = stack.Width,
+                Direction = stack.Direction,
+                Fill = stack.Background?.ToString(),
+                Transparency = 1 - stack.Opacity,
+            };
+            foreach (var uiChild in stack.Children.Cast<UIElement>())
             {
                 FlowElementBase dataElement = ConvertUiElement(uiChild);
                 if (dataElement != null)
@@ -834,6 +863,9 @@ namespace WireFlow
                     case "group":
                         RenderGroup(element, canvas);
                         break;
+                    case "stack":
+                        RenderStack(element, canvas);
+                        break;
                     case "part":
                         RenderPartRef(element, canvas);
                         break;
@@ -1031,6 +1063,30 @@ namespace WireFlow
             element.Height = maxHeight;
             //
             canvas.Children.Add(group);
+        }
+
+
+        /// <summary>
+        /// A stack panel: its children one after another in its direction, stretched across it (see Stack)
+        /// </summary>
+        private void RenderStack(FlowElementBase baseElement, Panel canvas)
+        {
+            var element = baseElement as FlowStack;
+            if (element == null)
+                return;
+            var stack = new Stack()
+            {
+                Left = element.Left,
+                Top = element.Top,
+                Width = element.Width,
+                Height = element.Height,
+                Direction = element.Direction,
+                Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent")),
+                Opacity = 1 - element.Transparency,
+            };
+            canvas.Children.Add(stack);
+            foreach (var child in element.Children)
+                RenderElement(child, stack);
         }
 
 

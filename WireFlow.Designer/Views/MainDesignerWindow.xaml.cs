@@ -354,6 +354,10 @@ namespace WireFlow
             RegisterDrawingTool<TextDrawingTool>();
             RegisterDrawingTool<BoxDrawingTool>();
             RegisterDrawingTool<ImageDrawingTool>();
+
+            RegisterDrawingTool<SeparatorDrawingTool>();
+
+            RegisterDrawingTool<StackPanelDrawingTool>();
         }
 
 
@@ -1262,6 +1266,8 @@ namespace WireFlow
                     proxy = new UIPartProxy(element);
                 else if (element is Group)
                     proxy = new UIGroupProxy(element);
+                else if (element is Stack)
+                    proxy = new UIStackProxy(element);
                 else if (element is Box)
                     proxy = new UIBoxProxy(element);
                 else if (element is ImageBox)

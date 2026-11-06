@@ -55,6 +55,12 @@ The Designer and the Browser have the themes of Optimax's other programs (PDFToo
 - The Designer registers `ColorPropertyEditor` (in `App.Application_Startup`) for every `Brush`, `Color` and `Color?` property: the grid's swatch and text, and a dialog, `Views\ColorPickerDialog`, the color dialog of Optimax's other programs (MarkdownTools' MaxPad, PDFTools) on PixiEditor.ColorPicker. A brush property gets a solid brush; a gradient or image brush starts the dialog from white. MaxServices.Core has no color dialog, so the Designer has its own copy.
 - The template gives `TextBox`, `CheckBox`, `ComboBox` and `ComboBoxItem` implicit styles of its own, inside the grid only: compact (22 px rows; Fluent's controls are 32 px tall) and in the grid's `Background` and `Foreground`, in every theme. Highlights and lines are the grid's `Foreground` at a low opacity, so they suit light and dark alike. The Designer sets `Background`, `Foreground` and `CategoryBackground` from its theme brushes.
 
+## Stack panels
+
+A stack panel (kind `stack`, `FlowStack` with a `Direction`, `Vertical` or `Horizontal`, and `Children`; on the page the `Stack` panel of Core) places its children one after another from its top left corner in its direction, as WPF's `StackPanel` does: each child keeps its size in that direction and is stretched across the panel in the other. `StackLayout.Arrange` calculates the places apart from any control. `Stack` writes each child's `Canvas.Left`, `Canvas.Top` and size across the panel when it arranges them, rather than only arranging them there, so the children keep true positions and sizes, which selection, saving, ungrouping and the Browser use as for any element; a change of direction therefore starts from the sizes the other direction gave. The panel clips its children to itself.
+
+In the Designer, the Stack Panel tool draws one, in a faint translucent gray so that an empty panel shows; an element drawn starting inside a panel becomes its last child (the innermost panel, where they are nested), and is selected through it, as a group's elements are. Ungroup releases the children where they are.
+
 ## Publishing
 
 `publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published. The script empties the folder first (see "Known traps"), and stops if it cannot, for example while the published Designer is running.
@@ -94,7 +100,7 @@ Each operation opens the file and closes it again: pooling is off, so the file i
 
 JSON is written and read by Newtonsoft.Json with `FlowJson.Settings` (in `WireFlow.Repository.Folder`, used through `FlatFolderRepository.SerializeToJSON` and `DeserializeFromJSON`), and names no .NET types:
 
-- An element's `Type` is its kind, and chooses its class when it is read (`FlowElementConverter`): `group` is `FlowGroup`, `part` (a part reference) `FlowPart`, `image` `FlowImage`, and `box`, `text`, `rect` and any other kind `FlowElement`. A new kind of element with a class of its own needs its kind added to `FlowElementConverter.Create`. A part document is read as `FlowPart`, a page or layout as `FlowPage`, the project as `FlowProject`.
+- An element's `Type` is its kind, and chooses its class when it is read (`FlowElementConverter`): `group` is `FlowGroup`, `stack` (a stack panel) `FlowStack`, `part` (a part reference) `FlowPart`, `image` `FlowImage`, and `box`, `text`, `rect` and any other kind `FlowElement`. A new kind of element with a class of its own needs its kind added to `FlowElementConverter.Create`. A part document is read as `FlowPart`, a page or layout as `FlowPage`, the project as `FlowProject`.
 - Enums are written by name; NaN, an automatic size, as `null`.
 - Every value is written, defaults included, so reading never depends on the defaults in the code: changing `FlowElement.Defaults` or a constructor changes new elements only.
 - `Type` and `Name` come first in each object.
