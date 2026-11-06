@@ -167,10 +167,16 @@
                                     <ListBox Name="Tools" Padding="3" BorderThickness="0" SelectedItem="{Binding Path=SelectedDrawingTool,Mode=OneWay}" SelectedIndex="{Binding SelectedToolIndex}"
                                         ItemsSource="{Binding DrawingTools}">
                                         <ListBox.Resources>
+                                            <!-- The tool's glyph, drawn on its 24 x 24 grid in the row's text color, and its title -->
                                             <DataTemplate DataType="{x:Type wireFlow:DrawingTool}">
-                                                <Grid Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                                    <TextBlock Text="{Binding Title}" />
-                                                </Grid>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Viewbox Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <Path Width="24" Height="24" Data="{Binding GlyphGeometry}" StrokeThickness="{StaticResource ToolGlyphStrokeThickness}"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                              Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
+                                                    </Viewbox>
+                                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ListBox.Resources>
                                     </ListBox>

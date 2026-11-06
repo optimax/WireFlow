@@ -12,6 +12,7 @@ namespace WireFlow
     public class ImageDrawingTool : InteractiveDrawingTool
     {
         public override string Title => "Image";
+        public override string Glyph => "image";
         public override MouseDragMode DesignerMode => MouseDragMode.Draw;
 
         public override Cursor Cursor =>

@@ -11,6 +11,7 @@ namespace WireFlow
     public class StackPanelDrawingTool : InteractiveDrawingTool
     {
         public override string Title => "Stack Panel";
+        public override string Glyph => "stack-panel";
 
         public override MouseDragMode DesignerMode => MouseDragMode.Draw;
 

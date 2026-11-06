@@ -7,6 +7,7 @@ namespace WireFlow
     public class EllipseDrawingTool: InteractiveDrawingTool
     {
         public override string Title => "Ellipse";
+        public override string Glyph => "ellipse";
         public override MouseDragMode DesignerMode => MouseDragMode.Draw;
         public override Cursor Cursor =>
            cursor ?? (cursor = (Application.Current.Resources["PenEllipseCursor"] as FrameworkElement)?.Cursor);

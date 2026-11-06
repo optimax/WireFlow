@@ -8,6 +8,7 @@ namespace WireFlow
     public class BoxDrawingTool: InteractiveDrawingTool
     {
         public override string Title => "Box";
+        public override string Glyph => "box";
         public override MouseDragMode DesignerMode => MouseDragMode.Draw;
 
         public override Cursor Cursor =>

@@ -67,6 +67,12 @@ A stack panel (kind `stack`, `FlowStack` with a `Direction`, `Vertical` or `Hori
 
 In the Designer, the Stack Panel tool draws one, in a faint translucent gray so that an empty panel shows; an element drawn starting inside a panel becomes its last child (the innermost panel, where they are nested), and is selected through it, as a group's elements are. Ungroup releases the children where they are.
 
+## Tool glyphs
+
+Each tool in the Designer's Tools list has a glyph before its title. The SVGs in `WireFlow.Designer\Glyphs` are their source: line glyphs on a 24 x 24 grid, as PDFTools' toolbar icons (stroke `currentColor`, 1.7 wide, round caps and joins, no fill), made of `path`, `line`, `polyline`, `polygon`, `rect`, `circle` and `ellipse` only. `Documents\make-tool-glyphs.cs` converts them once into `WireFlow.Designer\Xaml\ToolGlyphs.xaml` (`dotnet run Documents\make-tool-glyphs.cs` from the root), a `Geometry` per glyph keyed `ToolGlyph.<file name>` and the stroke width as `ToolGlyphStrokeThickness`, merged into `App.xaml`. The Designer uses the XAML only and reads no SVG: change an SVG, or add one, and run the script again rather than editing the XAML. It checks that WPF reads each glyph and that it stays inside the grid.
+
+A tool names its glyph with `DrawingTool.Glyph` (the SVG's file name); `GlyphGeometry` finds it in the application's resources. The Tools list's template draws it 18 px square, in the row's own text color (`TextElement.Foreground`), so that it follows the theme and the selected row.
+
 ## Options
 
 Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' programs: `OptimaxTools.Options` 1.0.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` as MaxServices.Core is. It has no look of its own, so it takes the theme's controls; `Views\DesignerOptionsDialog` derives from it, gives it the theme's colors, and adds the groups of options and their options. OK sets the dialog's results, which `MainDesignerWindow.OptionsMenuItem_Click` puts in `ConfigSettings` and saves; the dialog changes nothing itself. A new option is a setting in `ConfigSettings`, a control in the dialog's constructor, read in its `Apply`, and applied by the window.

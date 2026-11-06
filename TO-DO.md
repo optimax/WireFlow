@@ -113,8 +113,14 @@ Done. The Designer has a new **Tools** menu with **Options…**. The dialog is t
 
 Adding further options is now a line or two each (see "Options" in `implementation.md`). The theme is still in View → Theme only; say if you want it in Options as well, as the PDF Workshop has it.
 
-## Create Tool Glyphs
+## [DONE] Create Tool Glyphs
 
 Create vector glyphs (first as SVGs, stored as authoritative source) to be displayed in front of each tool/component in Tools list.
+
+Done. Every tool in the Tools list has a glyph in front of its title: Select (the mouse pointer), Pan (four arrows), Navigate (a compass), Rectangle, Ellipse, Text (a capital T), Box (a frame holding lines of text), Image (hills under the sun) and Stack Panel (a frame divided into a stack).
+
+- **Source:** the SVGs in `WireFlow.Designer\Glyphs`, one per tool. They are line glyphs on a 24 x 24 grid, drawn as PDFTools' toolbar icons are: round strokes 1.7 wide, no fill, in `currentColor`.
+- **XAML:** as you asked, they were converted once into `WireFlow.Designer\Xaml\ToolGlyphs.xaml`, and the Designer uses that alone; it reads no SVG. The converter, `Documents\make-tool-glyphs.cs`, stays beside `make-icons.ps1`. To change a glyph or add one, edit or add the SVG and run `dotnet run Documents\make-tool-glyphs.cs` from the repository root; it checks that WPF reads each glyph and that it stays on its grid.
+- **Look:** each glyph is drawn 18 px square in its row's own text color, so it is white in Dark, black in Light and Classic, and follows a selected row.
 
 # END-OF-TO-DO

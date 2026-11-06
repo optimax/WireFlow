@@ -9,6 +9,7 @@ namespace WireFlow
     public class TextDrawingTool : InteractiveDrawingTool
     {
         public override string Title => "Text";
+        public override string Glyph => "text";
         public override MouseDragMode DesignerMode => MouseDragMode.Draw;
 
         public override Cursor Cursor =>

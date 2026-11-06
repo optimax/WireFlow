@@ -7,6 +7,7 @@ namespace WireFlow
     public class RectangleDrawingTool : InteractiveDrawingTool
     {
         public override string Title => "Rectangle";
+        public override string Glyph => "rectangle";
         public override MouseDragMode DesignerMode => MouseDragMode.Draw;
 
         public override Cursor Cursor =>
