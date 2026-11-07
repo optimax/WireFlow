@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace WireFlow
+﻿namespace WireFlow
 {
 
     public class FlowElement: FlowElementBase
@@ -8,21 +6,37 @@ namespace WireFlow
 
         public static FlowElement Defaults { get; set; }
 
-        public string Stroke { get; set; }
-        public double StrokeThickness { get; set; }
-        public double RadiusX { get; set; }
-        public double RadiusY { get; set; }
-        public string Text { get; set; }
-        public string Color { get; set; }
-        public string Font { get; set; }
-        public double FontSize { get; set; }
-        public FlowFontStretch FontStretch { get; set; }
-        public int FontWeight { get; set; }
-        public double LineHeight { get; set; }
-        public FlowVerticalAlignment VerticalAlignment { get; set; }
-        public FlowHorizontalAlignment HorizontalAlignment { get; set; }
-        public FlowTextAlignment TextAlignment { get; set; }
-        public FlowTextWrapping TextWrapping { get; set; }
+        private string stroke;
+        private double strokeThickness;
+        private double radiusX;
+        private double radiusY;
+        private string text;
+        private string color;
+        private string font;
+        private double fontSize;
+        private FlowFontStretch fontStretch;
+        private int fontWeight;
+        private double lineHeight;
+        private FlowVerticalAlignment verticalAlignment;
+        private FlowHorizontalAlignment horizontalAlignment;
+        private FlowTextAlignment textAlignment;
+        private FlowTextWrapping textWrapping;
+
+        public string Stroke { get => stroke; set => Set(ref stroke, value); }
+        public double StrokeThickness { get => strokeThickness; set => Set(ref strokeThickness, value); }
+        public double RadiusX { get => radiusX; set => Set(ref radiusX, value); }
+        public double RadiusY { get => radiusY; set => Set(ref radiusY, value); }
+        public string Text { get => text; set => Set(ref text, value); }
+        public string Color { get => color; set => Set(ref color, value); }
+        public string Font { get => font; set => Set(ref font, value); }
+        public double FontSize { get => fontSize; set => Set(ref fontSize, value); }
+        public FlowFontStretch FontStretch { get => fontStretch; set => Set(ref fontStretch, value); }
+        public int FontWeight { get => fontWeight; set => Set(ref fontWeight, value); }
+        public double LineHeight { get => lineHeight; set => Set(ref lineHeight, value); }
+        public FlowVerticalAlignment VerticalAlignment { get => verticalAlignment; set => Set(ref verticalAlignment, value); }
+        public FlowHorizontalAlignment HorizontalAlignment { get => horizontalAlignment; set => Set(ref horizontalAlignment, value); }
+        public FlowTextAlignment TextAlignment { get => textAlignment; set => Set(ref textAlignment, value); }
+        public FlowTextWrapping TextWrapping { get => textWrapping; set => Set(ref textWrapping, value); }
 
 
 

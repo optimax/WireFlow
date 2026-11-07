@@ -108,7 +108,7 @@ Plan, in phases; each one is committed on its own, with the Designer and the Bro
 4. Edits go through the DOM. Properties shows the selected element's node; drawing, moving, resizing, deleting, duplicating, grouping and ordering change nodes, and the view follows. This is also what Undo/Redo (the next task) will record.
 5. The Browser draws the DOM through the same view, read-only.
 
-Progress: phase 1 is done. The Flow* classes use no WPF type any more (the project no longer uses WPF); the files are unchanged: all 30 documents of the 7 sample projects read and write back the same JSON.
+Progress: phases 1 and 2 are done. The Flow* classes use no WPF type any more (the project no longer uses WPF); they tell of every change of their properties and children, and each node knows its parent. The files are unchanged: all 30 documents of the 7 sample projects read and write back the same JSON. Nothing changes in the Designer yet: phase 3 is next.
 
 Found while testing: drawn and saved again through WPF, as the Designer saves today, a page loses detail: a color name such as White comes back as #FFFFFFFF, a rectangle without a stroke gets a black one, and a group's automatic size becomes fixed numbers. Phase 3, in which saving writes the DOM and not the WPF tree, ends that.
 

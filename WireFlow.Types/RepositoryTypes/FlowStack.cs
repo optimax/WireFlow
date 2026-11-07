@@ -6,6 +6,8 @@ namespace WireFlow
     /// </summary>
     public class FlowStack : FlowGroup
     {
-        public FlowOrientation Direction { get; set; } = FlowOrientation.Vertical;
+        private FlowOrientation direction = FlowOrientation.Vertical;
+
+        public FlowOrientation Direction { get => direction; set => Set(ref direction, value); }
     }
 }

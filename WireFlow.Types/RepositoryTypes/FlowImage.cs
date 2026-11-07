@@ -2,8 +2,11 @@
 {
     public class FlowImage: FlowElementBase
     {
-        public string Image { get; set; }
-        public FlowStretch Stretch { get; set; }
+        private string image;
+        private FlowStretch stretch;
+
+        public string Image { get => image; set => Set(ref image, value); }
+        public FlowStretch Stretch { get => stretch; set => Set(ref stretch, value); }
 
         public FlowImage()
         {

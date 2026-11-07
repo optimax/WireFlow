@@ -2,17 +2,21 @@
 {
     public abstract class FlowElementBase: FlowBase
     {
-        public double Left { get; set; }
-        public double Top { get; set; }
+        private double left;
+        private double top;
+        private double width;
+        private double height;
+        private string href;
+        private string fill;
+        private double transparency;
 
-        public double Width { get; set; }
-        public double Height { get; set; }
-
-        public string Href { get; set; }
-
-
-        public string Fill { get; set; }
-        public double Transparency { get; set; }
+        public double Left { get => left; set => Set(ref left, value); }
+        public double Top { get => top; set => Set(ref top, value); }
+        public double Width { get => width; set => Set(ref width, value); }
+        public double Height { get => height; set => Set(ref height, value); }
+        public string Href { get => href; set => Set(ref href, value); }
+        public string Fill { get => fill; set => Set(ref fill, value); }
+        public double Transparency { get => transparency; set => Set(ref transparency, value); }
 
 
         protected FlowElementBase()
@@ -20,6 +24,5 @@
             Width = double.NaN;
             Height = double.NaN;
         }
-
     }
 }

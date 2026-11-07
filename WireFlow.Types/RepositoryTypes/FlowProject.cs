@@ -8,11 +8,17 @@
         /// </summary>
         public const string DEFAULT_BACKGROUND = "#555";
 
-        public long RevisionNo { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-        public string Background { get; set; }
-        public string Home { get; set; }
+        private long revisionNo;
+        private double width;
+        private double height;
+        private string background;
+        private string home;
+
+        public long RevisionNo { get => revisionNo; set => Set(ref revisionNo, value); }
+        public double Width { get => width; set => Set(ref width, value); }
+        public double Height { get => height; set => Set(ref height, value); }
+        public string Background { get => background; set => Set(ref background, value); }
+        public string Home { get => home; set => Set(ref home, value); }
 
         public FlowProject()
         {
@@ -21,7 +27,5 @@
             Background = DEFAULT_BACKGROUND;
             Home = "index";
         }
-
     }
-
 }
