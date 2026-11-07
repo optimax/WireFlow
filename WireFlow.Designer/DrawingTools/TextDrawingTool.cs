@@ -18,7 +18,7 @@ namespace WireFlow
         public override FrameworkElement CreateElement()
         {
             // Transparent, so the text lies on what is under it, yet the whole frame can be clicked; centered in the frame
-            var result = new WireFlowTextBlock()
+            var result = new WireFlowText()
             {
                 Foreground = ColorUtils.StringToBrush("Black"),
                 Background = Brushes.Transparent,

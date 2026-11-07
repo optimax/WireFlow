@@ -15,7 +15,7 @@ namespace WireFlow
 
         public override FrameworkElement CreateElement()
         {
-            var result = new Rectangle()
+            var result = new WireFlowRectangle()
             {
                 Stroke = ColorUtils.StringToBrush("Black"),
                 StrokeThickness = 3,

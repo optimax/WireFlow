@@ -1435,7 +1435,7 @@ namespace WireFlow
                     proxy = new UIBoxProxy(element);
                 else if (element is ImageBox)
                     proxy = new UIImageProxy(element);
-                else if (element is TextBlock)
+                else if (element is WireFlowText)
                     proxy = new UITextProxy(element);
                 else
                     proxy = new UIElementProxy(element);

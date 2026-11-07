@@ -34,7 +34,7 @@ namespace WireFlow
         public static void Register()
         {
             var editor = new TextPositionPropertyEditor();
-            PropertyEditors.Register(typeof(TextAlignment), typeof(WireFlowTextBlock), nameof(TextBlock.TextAlignment), editor);
+            PropertyEditors.Register(typeof(TextAlignment), typeof(WireFlowText), nameof(WireFlowText.TextAlignment), editor);
             PropertyEditors.Register(typeof(TextAlignment), typeof(Box), nameof(Box.TextAlignment), editor);
         }
 

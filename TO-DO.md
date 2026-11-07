@@ -72,11 +72,19 @@ Done. The TextAlignment row follows the other two as they change: set TextVertic
 - A text (not a box) now lists its TextVerticalAlignment under Appearance too, as a box does; before, only the chooser could set it.
 - Saved boxes keep their own TextAlignment when loaded, so existing pages look as they did.
 
-## All Tools Derive from BaseDesignerObject
+## [DONE] All Tools Derive from BaseDesignerObject
 
 Make all element tools, including Text, Rectangle, Ellipse, derive from BaseDesignerObject, exposing  (forwarding) the properties that make sense, so that all can support HRef property, in preparation for the next task.
 
-## Href on All Elements
+Done. Text, Rectangle and Ellipse are now BaseDesignerObjects, as Box and Image already were: each is a small control holding its WPF shape, and Properties shows the shape's properties that make sense (Fill, Stroke, StrokeThickness, RadiusX/RadiusY for a rectangle; Text, TextAlignment, TextVerticalAlignment, TextWrapping, TextPadding, LineHeight, Background, Foreground and the font for a text) and Href, under Navigation.
+
+Found and fixed on the way:
+
+- Ellipses were saved but never drawn again: a page with an ellipse showed a pink "unknown object" in its place after reload, and saving that page again turned it into a rectangle. Ellipses now load as ellipses.
+- Duplicate copies an element through XAML, which would also write its inner shape; it no longer does, so each copy builds its own shape, and changing the copy's properties changes what it shows (checked for texts, rectangles, ellipses and boxes).
+- A text's padding and a rectangle's saved alignments were lost on save; they are kept now.
+
+## [>>WORKING<<] Href on All Elements
 
 Ensure that a hyperlink target (Href) can be defined on any element (at least any that has a visual extent): Text, Rectangle, etc., not only on Image or Box.
 

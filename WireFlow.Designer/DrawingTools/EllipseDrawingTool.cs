@@ -14,7 +14,7 @@ namespace WireFlow
 
         public override FrameworkElement CreateElement()
         {
-            var result = new Ellipse()
+            var result = new WireFlowEllipse()
             {
                 Stroke = ColorUtils.StringToBrush("Black"),
                 StrokeThickness = 3,

@@ -528,14 +528,13 @@ namespace WireFlow
                 case "imagebox":
                     element = ConvertImageBox(uiElement);
                     break;
-                case "rectangle":
+                case "wireflowrectangle":
                     element = ConvertRectangle(uiElement);
                     break;
-                case "ellipse":
+                case "wireflowellipse":
                     element = ConvertEllipse(uiElement);
                     break;
-                case "wireflowtextblock":
-                case "textblock":
+                case "wireflowtext":
                     element = ConvertTextBlock(uiElement);
                     break;
                 case "group":
@@ -689,30 +688,33 @@ namespace WireFlow
 
         FlowElement ConvertTextBlock(UIElement element)
         {
-            TextBlock block = element as TextBlock;
-            if (block == null)
+            WireFlowText text = element as WireFlowText;
+            if (text == null)
                 return null;
             var result = new FlowElement()
             {
                 Type = "text",
-                Name = string.IsNullOrWhiteSpace(block.Name) ? null : block.Name,
-                Left = Canvas.GetLeft(block),
-                Top = Canvas.GetTop(block),
-                Height = block.Height,
-                Width = block.Width,
-                Color = block.Foreground?.ToString(),
-                Fill = block.Background?.ToString(),
-                Font = block.FontFamily?.ToString(),
-                FontSize = block.FontSize,
-                FontStretch = block.FontStretch,
-                FontWeight = block.FontWeight.ToOpenTypeWeight(),
-                HorizontalAlignment = block.HorizontalAlignment,
-                VerticalAlignment = (block as WireFlowTextBlock)?.TextVerticalAlignment ?? block.VerticalAlignment,
-                LineHeight = block.LineHeight,
-                Text = block.Text,
-                TextAlignment = block.TextAlignment,
-                TextWrapping = block.TextWrapping,
-                Transparency = 1 - block.Opacity,
+                Name = string.IsNullOrWhiteSpace(text.Name) ? null : text.Name,
+                Left = Canvas.GetLeft(text),
+                Top = Canvas.GetTop(text),
+                Height = text.Height,
+                Width = text.Width,
+                Color = text.Foreground?.ToString(),
+                Fill = text.Background?.ToString(),
+                Font = text.FontFamily?.ToString(),
+                FontSize = text.FontSize,
+                FontStretch = text.FontStretch,
+                FontWeight = text.FontWeight.ToOpenTypeWeight(),
+                HorizontalAlignment = text.HorizontalAlignment,
+                VerticalAlignment = text.TextVerticalAlignment,
+                LineHeight = text.LineHeight,
+                // A text's padding is saved as its StrokeThickness, which AddTextBlock reads
+                StrokeThickness = text.TextPadding.Left,
+                Text = text.Text,
+                TextAlignment = text.TextAlignment,
+                TextWrapping = text.TextWrapping,
+                Transparency = 1 - text.Opacity,
+                Href = text.Href,
             };
             return result;
         }
@@ -723,7 +725,9 @@ namespace WireFlow
 
         FlowElement ConvertRectangle(UIElement element)
         {
-            Rectangle box = element as Rectangle;
+            WireFlowRectangle box = element as WireFlowRectangle;
+            if (box == null)
+                return null;
             var result = new FlowElement()
             {
                 Type = "rect",
@@ -740,6 +744,7 @@ namespace WireFlow
                 Stroke = box.Stroke?.ToString(),
                 StrokeThickness = box.StrokeThickness,
                 Transparency = 1 - box.Opacity,
+                Href = box.Href,
             };
             return result;
         }
@@ -748,7 +753,9 @@ namespace WireFlow
 
         FlowElement ConvertEllipse(UIElement element)
         {
-            Ellipse box = element as Ellipse;
+            WireFlowEllipse box = element as WireFlowEllipse;
+            if (box == null)
+                return null;
             var result = new FlowElement()
             {
                 Type = "ellipse",
@@ -757,12 +764,13 @@ namespace WireFlow
                 Top = Canvas.GetTop(box),
                 Height = box.Height,
                 Width = box.Width,
-                Fill = box.Fill.ToString(),
+                Fill = box.Fill?.ToString(),
                 HorizontalAlignment = box.HorizontalAlignment,
                 VerticalAlignment = box.VerticalAlignment,
-                Stroke = box.Stroke.ToString(),
+                Stroke = box.Stroke?.ToString(),
                 StrokeThickness = box.StrokeThickness,
                 Transparency = 1 - box.Opacity,
+                Href = box.Href,
             };
             return result;
         }
@@ -923,6 +931,9 @@ namespace WireFlow
                     case "rect":
                         RenderRectangle(element, canvas);
                         break;
+                    case "ellipse":
+                        RenderEllipse(element, canvas);
+                        break;
                     case "text":
                         RenderText(element, canvas);
                         break;
@@ -965,6 +976,7 @@ namespace WireFlow
             var text = AddTextBlock(element as FlowElement, canvas);
             if (text == null)
                 return;
+            text.Href = element.Href;
             AddNavigation(element, text);
             text.Width = element.Width;
             text.Height = element.Height;
@@ -976,11 +988,24 @@ namespace WireFlow
         private void RenderRectangle(FlowElementBase element, Panel canvas)
         {
             var rect = AddRectangle(element as FlowElement, canvas);
+            rect.Href = element.Href;
             AddNavigation(element, rect);
             rect.Width = element.Width;
             rect.Height = element.Height;
             Canvas.SetLeft(rect, element.Left);
             Canvas.SetTop(rect, element.Top);
+        }
+
+
+        private void RenderEllipse(FlowElementBase element, Panel canvas)
+        {
+            var ellipse = AddEllipse(element as FlowElement, canvas);
+            ellipse.Href = element.Href;
+            AddNavigation(element, ellipse);
+            ellipse.Width = element.Width;
+            ellipse.Height = element.Height;
+            Canvas.SetLeft(ellipse, element.Left);
+            Canvas.SetTop(ellipse, element.Top);
         }
 
 
@@ -1281,12 +1306,12 @@ namespace WireFlow
         #region Graphics Primitives
 
 
-        private TextBlock AddTextBlock(FlowElement element, Panel panel)
+        private WireFlowText AddTextBlock(FlowElement element, Panel panel)
         {
             if (String.IsNullOrWhiteSpace(element.Text))
                 return null;
 
-            var block = new WireFlowTextBlock
+            var text = new WireFlowText
             {
                 Width = double.NaN,
                 Height = double.NaN,
@@ -1299,7 +1324,7 @@ namespace WireFlow
                 Foreground = ColorUtils.StringToBrush(element.Color),
                 // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
                 TextVerticalAlignment = element.VerticalAlignment,
-                // Its saved Fill; transparent without one (WireFlowTextBlock keeps it a brush, so that its whole frame can be clicked)
+                // Its saved Fill; transparent without one (WireFlowText keeps it a brush, so that its whole frame can be clicked)
                 Background = TextBackground(element.Fill),
                 HorizontalAlignment = element.HorizontalAlignment,
                 TextAlignment = element.TextAlignment,
@@ -1307,11 +1332,11 @@ namespace WireFlow
                 Text = element.Text,
                 LineHeight = element.LineHeight,
                 LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
-                Padding = new Thickness(element.StrokeThickness),
+                TextPadding = new Thickness(element.StrokeThickness),
             };
-            panel.Children.Add(block);
+            panel.Children.Add(text);
 
-            return block;
+            return text;
         }
 
 
@@ -1332,18 +1357,21 @@ namespace WireFlow
         }
 
 
-        private Rectangle AddRectangle(FlowElement element, Panel panel)
+        private WireFlowRectangle AddRectangle(FlowElement element, Panel panel)
         {
             Color fillColor = ColorUtils.StringToColor(element.Fill, "LightGray");
             SolidColorBrush fill = new SolidColorBrush(fillColor);
             Color strokeColor = ColorUtils.StringToColor(element.Stroke);
             SolidColorBrush stroke = new SolidColorBrush(strokeColor);
 
-            var rect = new Rectangle()
+            var rect = new WireFlowRectangle()
             {
                 Width = double.NaN,
                 Height = double.NaN,
 
+                // Kept, so that saving writes them again (a canvas ignores them)
+                HorizontalAlignment = element.HorizontalAlignment,
+                VerticalAlignment = element.VerticalAlignment,
                 Opacity = 1 - element.Transparency,
                 RadiusX = element.RadiusX,
                 RadiusY = element.RadiusY,
@@ -1353,6 +1381,26 @@ namespace WireFlow
             };
             panel.Children.Add(rect);
             return rect;
+        }
+
+
+        private WireFlowEllipse AddEllipse(FlowElement element, Panel panel)
+        {
+            var ellipse = new WireFlowEllipse()
+            {
+                Width = double.NaN,
+                Height = double.NaN,
+
+                // Kept, so that saving writes them again (a canvas ignores them)
+                HorizontalAlignment = element.HorizontalAlignment,
+                VerticalAlignment = element.VerticalAlignment,
+                Opacity = 1 - element.Transparency,
+                StrokeThickness = element.StrokeThickness,
+                Fill = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "LightGray")),
+                Stroke = new SolidColorBrush(ColorUtils.StringToColor(element.Stroke)),
+            };
+            panel.Children.Add(ellipse);
+            return ellipse;
         }
 
 

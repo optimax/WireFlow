@@ -25,5 +25,12 @@ namespace WireFlow
         [Category("Navigation")]
         public string Href { get; set; }
 
+
+        /// <summary>
+        /// The content is what the element's constructor builds, and its properties forward to it, so a copy made through
+        /// XAML (Duplicate) builds its own rather than taking a second one.
+        /// </summary>
+        public override bool ShouldSerializeContent() => false;
+
     }
 }
