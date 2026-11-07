@@ -386,6 +386,11 @@ namespace WireFlow
             var inherited = InheritedPageSize(page);
             page.Width = !double.IsNaN(page.Width) || canvas.Width != inherited.Width ? canvas.Width : double.NaN;
             page.Height = !double.IsNaN(page.Height) || canvas.Height != inherited.Height ? canvas.Height : double.NaN;
+            // Its background likewise: its own when it has one or it differs from the one it inherits; none (cleared in the
+            // property grid) makes it follow its layout or the project again
+            string background = (canvas.Background as SolidColorBrush)?.Color.ToString();
+            string inheritedBackground = BackgroundBrush(InheritedPageBackground(page)).Color.ToString();
+            page.Background = background != null && (page.Background != null || background != inheritedBackground) ? background : null;
 
             var layout = UserLayout(canvas);
 
@@ -412,6 +417,41 @@ namespace WireFlow
                 master = Repository.GetMasterPage(master.Master);
             }
             return new Size(double.IsNaN(width) ? Project.Width : width, double.IsNaN(height) ? Project.Height : height);
+        }
+
+
+
+        /// <summary>
+        /// The background a page or layout without one of its own is shown in, as RenderPage gives it: that of its nearest
+        /// layout that has one, else the project's.
+        /// </summary>
+        public string InheritedPageBackground(FlowPage page)
+        {
+            var master = Repository.GetMasterPage(page?.Master);
+            // A layout that names itself or an earlier one as its layout ends the search
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page?.Name ?? "" };
+            while (master != null && seen.Add(master.Name ?? ""))
+            {
+                if (!string.IsNullOrWhiteSpace(master.Background))
+                    return master.Background;
+                master = Repository.GetMasterPage(master.Master);
+            }
+            return Project.Background;
+        }
+
+
+        // A page's background color as a brush: the default background for none, or for one that is not a color
+        private static SolidColorBrush BackgroundBrush(string color)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(color))
+                    return new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
+            }
+            catch (Exception ex) when (ex is FormatException || ex is NotSupportedException)
+            {
+            }
+            return new SolidColorBrush((Color)ColorConverter.ConvertFromString(Constants.DEFAULT_BACKGROUND));
         }
 
 
@@ -752,6 +792,7 @@ namespace WireFlow
             }
             canvas.Width = !double.IsNaN(pageNode.Width) ? pageNode.Width : Project.Width;
             canvas.Height = !double.IsNaN(pageNode.Height) ? pageNode.Height : Project.Height;
+            canvas.Background = BackgroundBrush(!string.IsNullOrWhiteSpace(pageNode.Background) ? pageNode.Background : InheritedPageBackground(pageNode));
 
             layerNo = 0;
 
