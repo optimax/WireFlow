@@ -364,5 +364,13 @@ namespace WireFlow
     public class DesignerCanvas : Canvas
     {
         public string AbsoluteId => this.GetHashCode().ToString();
+
+        /// <summary>Not listed in Properties, as for the panels on the page (BaseElement): it would take the page's children.</summary>
+        [Browsable(false)]
+        public new bool IsItemsHost
+        {
+            get => base.IsItemsHost;
+            set => base.IsItemsHost = value;
+        }
     }
 }

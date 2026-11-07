@@ -26,4 +26,56 @@ Done. Pages, Layouts, Parts, Images and History now have the Tools palette's row
 
 History is still empty: nothing fills it yet. Its rows will be as compact when something does.
 
-# END-OF-TO-DO
+## [DONE] BUG: StackPanel Crashes App
+
+Place a StackPanel on a page. Check its `IsItemsHost` property. Click on the panel — the app crashes.
+
+Fixed. `IsItemsHost` is a WPF panel property that hands the panel's children to a list control (an `ItemsControl`). A page element is in none, so once it was checked WPF refused every access to the panel's children ("A panel with IsItemsHost="true" is not nested in an ItemsControl"), and a click, which reads them, crashed the Designer. It means nothing for a wireframe, so Properties no longer lists it: not for stack panels, nor for groups, layers, parts and the page itself, which are panels too and crashed the same way.
+
+## Ctrl+S
+
+Make it a shortcut for File|Save.
+
+## Esc Cancel Specialized Tool
+
+Pressing Esc should revert the tools selection to Select. 
+
+## Reopen Previous
+
+"Reopen previous project on startup" option should ensure that not only the project re-opens, but all the tabs within that project that were open get re-opened.
+
+## Text Alignment Custom Editor
+
+Text Alignment Custom Editor should not be embedded into the property grid directly. It should be invoked via `...` button and shown in a popup like any other property. Only the value should be shown in the property grid directly.
+
+## TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
+
+TextAlignment needs to be in sync with TextHorizonalAlignment and TextVerticalAlignment. When changing one of TextHorizonalAlignment, or TextVerticalAlignment, TextAlignment's highlight remains where it was. In custom editor shown only on demand, it should not be a problem, but the value should be in sync with the other two.
+
+## All Tools Derive from BaseDesignerObject
+
+Make all element tools, including Text, Rectangle, Ellipse, derive from BaseDesignerObject, exposing  (forwarding) the properties that make sense, so that all can support HRef property, in preparation for the next task.
+
+## Href on All Elements
+
+Ensure that a hyperlink target (Href) can be defined on any element (at least any that has a visual extent): Text, Rectangle, etc., not only on Image or Box.
+
+## Convert to a DOM (Both)
+
+This applies to both the Designer and Browser. 
+
+Currently, the WPF element tree itself is the Designer’s working model. The Flow* data model only exists while a page is being loaded or saved. Redesign the flow so that the DOM becomes the source of truth and the ultimate authority about the model, independent of its presentation. Treat WPF as a presentation layer only, one of possibly many. The saved data is another "presentation". Make sure that WPF-specific details do not spill into other layers or services.
+
+## Support Undo/Redo
+
+Redesign the app, so that unlimited Undo/Redo is supported. Undo history must be kept since the last save.
+
+## Avoid Rebuilding Entire Outline
+
+Avoid rebuilding the entire outline on every change. Rebuild/update only the elements of the outline that are affected by the change. Make outline virtualizing, so that when the tree gets long and complicated, it renders fast.
+
+
+
+
+## END-OF-TO-DO
+
