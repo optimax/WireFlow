@@ -32,9 +32,11 @@ Place a StackPanel on a page. Check its `IsItemsHost` property. Click on the pan
 
 Fixed. `IsItemsHost` is a WPF panel property that hands the panel's children to a list control (an `ItemsControl`). A page element is in none, so once it was checked WPF refused every access to the panel's children ("A panel with IsItemsHost="true" is not nested in an ItemsControl"), and a click, which reads them, crashed the Designer. It means nothing for a wireframe, so Properties no longer lists it: not for stack panels, nor for groups, layers, parts and the page itself, which are panels too and crashed the same way.
 
-## Ctrl+S
+## [DONE] Ctrl+S
 
 Make it a shortcut for File|Save.
+
+Done. Ctrl+S is File → Save, and the menu shows it. As the menu does, it saves every modified page, layout and part, and the project; a project not saved yet asks for a file name first.
 
 ## Esc Cancel Specialized Tool
 

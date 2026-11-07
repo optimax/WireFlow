@@ -343,6 +343,8 @@ namespace WireFlow
         {
             KeyBinding keyBinding = new KeyBinding(ReloadFromFileCmd, Key.F5, ModifierKeys.None);
             InputBindings.Add(keyBinding);
+            // File > Save
+            InputBindings.Add(new KeyBinding(SaveFileCmd, Key.S, ModifierKeys.Control));
             ApplyConfigSettings();
             // Once the window shows, so that it is there while the project loads and behind any message about it
             Dispatcher.BeginInvoke(new Action(ReopenPreviousProject), System.Windows.Threading.DispatcherPriority.ContextIdle);
