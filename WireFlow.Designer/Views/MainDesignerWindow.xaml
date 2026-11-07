@@ -185,8 +185,7 @@
 
                             <dock:LayoutAnchorable Title="History" ContentId="layouts" CanHide="False" CanClose="False">
                                 <DockPanel>
-                                    <ListBox BorderThickness="0"
-
+                                    <ListBox x:Name="ListBoxHistory" BorderThickness="0"
                                              ItemTemplate="{StaticResource ListOfNamesDataTemplate}">
                                     </ListBox>
                                 </DockPanel>

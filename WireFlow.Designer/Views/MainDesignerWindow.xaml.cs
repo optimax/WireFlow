@@ -278,8 +278,16 @@ namespace WireFlow
             SetupCommands();
 
             PropertyGrid.PropertyValueChanged += PropertyGridOnPropertyValueChanged;
-            Tools.ItemContainerGenerator.StatusChanged += ToolsContainersChangedHandler;
-            AppTheme.Changed += ToolsContainersChangedHandler;
+            foreach (var list in CompactLists)
+            {
+                var compacted = list;
+                compacted.ItemContainerGenerator.StatusChanged += (s, e) => CompactRows(compacted);
+            }
+            AppTheme.Changed += (s, e) =>
+            {
+                foreach (var list in CompactLists)
+                    CompactRows(list);
+            };
             RecentFileList.MenuClick += (s, e) => OpenProjectFile(e.Filepath);
 
             this.SourceInitialized += (x, y) =>
@@ -291,25 +299,29 @@ namespace WireFlow
         }
 
 
-        private static readonly Thickness ToolsItemPadding = new Thickness(8, 3, 8, 3);
+        private static readonly Thickness CompactItemPadding = new Thickness(8, 3, 8, 3);
+
+        // The lists whose rows are as compact as menu items: Tools, Pages, Layouts, Parts, Images and History
+        private ListBox[] CompactLists => new ListBox[] { Tools, ListBoxPages, ListBoxLayouts, ListBoxParts, ListBoxImages, ListBoxHistory };
 
         /// <summary>
-        /// Makes the Tools rows as compact as menu items. Fluent pads list items by 12 px, which makes a row 45 px tall; the
+        /// Makes a list's rows as compact as menu items. Fluent pads list items by 12 px, which makes a row 45 px tall; the
         /// local padding makes it 27 px, as a Fluent menu item. Classic pads them by 4,1 px, already compact, so it keeps its own.
-        /// A local value overrides the theme's padding but keeps its template.
+        /// A local value overrides the theme's padding but keeps its template. It runs as the list makes its rows (for new
+        /// items, and as it scrolls) and when the theme changes.
         /// </summary>
-        private void ToolsContainersChangedHandler(object sender, EventArgs e)
+        private static void CompactRows(ListBox list)
         {
-            if (Tools.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+            if (list.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
                 return;
             bool classic = AppTheme.Choice == ThemeChoice.Classic;
-            foreach (var item in Tools.Items)
-                if (Tools.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem container)
+            foreach (var item in list.Items)
+                if (list.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem container)
                 {
                     if (classic)
                         container.ClearValue(PaddingProperty);
                     else
-                        container.Padding = ToolsItemPadding;
+                        container.Padding = CompactItemPadding;
                 }
         }
 
