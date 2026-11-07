@@ -593,7 +593,7 @@ namespace WireFlow
                 Top = stack.Top,
                 Height = stack.Height,
                 Width = stack.Width,
-                Direction = stack.Direction,
+                Direction = stack.Direction.ToFlow(),
                 Fill = stack.Background?.ToString(),
                 Transparency = 1 - stack.Opacity,
                 Href = stack.Href,
@@ -667,17 +667,17 @@ namespace WireFlow
                 Font = box.FontFamily.ToString(),
                 FontSize = box.FontSize,
                 FontWeight = box.FontWeight.ToOpenTypeWeight(),
-                FontStretch = box.FontStretch,
-                HorizontalAlignment = box.TextHorizontalAlignment,
-                VerticalAlignment = box.TextVerticalAlignment,
+                FontStretch = box.FontStretch.ToFlow(),
+                HorizontalAlignment = box.TextHorizontalAlignment.ToFlow(),
+                VerticalAlignment = box.TextVerticalAlignment.ToFlow(),
                 LineHeight = box.LineHeight,
                 RadiusX = box.BorderRadiusX,
                 RadiusY = box.BorderRadiusY,
                 Stroke = box.BorderColor.ToString(),
                 StrokeThickness = box.BorderWidth,
                 Text = box.Text,
-                TextAlignment = box.TextAlignment,
-                TextWrapping = box.TextWrapping,
+                TextAlignment = box.TextAlignment.ToFlow(),
+                TextWrapping = box.TextWrapping.ToFlow(),
                 Transparency = 1 - box.Opacity,
                 Href = box.Href,
                 //Href
@@ -706,16 +706,16 @@ namespace WireFlow
                 Fill = text.Background?.ToString(),
                 Font = text.FontFamily?.ToString(),
                 FontSize = text.FontSize,
-                FontStretch = text.FontStretch,
+                FontStretch = text.FontStretch.ToFlow(),
                 FontWeight = text.FontWeight.ToOpenTypeWeight(),
-                HorizontalAlignment = text.HorizontalAlignment,
-                VerticalAlignment = text.TextVerticalAlignment,
+                HorizontalAlignment = text.HorizontalAlignment.ToFlow(),
+                VerticalAlignment = text.TextVerticalAlignment.ToFlow(),
                 LineHeight = text.LineHeight,
                 // A text's padding is saved as its StrokeThickness, which AddTextBlock reads
                 StrokeThickness = text.TextPadding.Left,
                 Text = text.Text,
-                TextAlignment = text.TextAlignment,
-                TextWrapping = text.TextWrapping,
+                TextAlignment = text.TextAlignment.ToFlow(),
+                TextWrapping = text.TextWrapping.ToFlow(),
                 Transparency = 1 - text.Opacity,
                 Href = text.Href,
             };
@@ -740,8 +740,8 @@ namespace WireFlow
                 Height = box.Height,
                 Width = box.Width,
                 Fill = box.Fill?.ToString(),
-                HorizontalAlignment = box.HorizontalAlignment,
-                VerticalAlignment = box.VerticalAlignment,
+                HorizontalAlignment = box.HorizontalAlignment.ToFlow(),
+                VerticalAlignment = box.VerticalAlignment.ToFlow(),
                 RadiusX = box.RadiusX,
                 RadiusY = box.RadiusY,
                 Stroke = box.Stroke?.ToString(),
@@ -768,8 +768,8 @@ namespace WireFlow
                 Height = box.Height,
                 Width = box.Width,
                 Fill = box.Fill?.ToString(),
-                HorizontalAlignment = box.HorizontalAlignment,
-                VerticalAlignment = box.VerticalAlignment,
+                HorizontalAlignment = box.HorizontalAlignment.ToFlow(),
+                VerticalAlignment = box.VerticalAlignment.ToFlow(),
                 Stroke = box.Stroke?.ToString(),
                 StrokeThickness = box.StrokeThickness,
                 Transparency = 1 - box.Opacity,
@@ -1051,12 +1051,12 @@ namespace WireFlow
                 Foreground = ColorUtils.StringToBrush(element.Color),
                 FontFamily = new FontFamily(element.Font),
                 FontSize = element.FontSize,
-                FontStretch = element.FontStretch,
+                FontStretch = element.FontStretch.ToWpf(),
                 FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight),
-                TextVerticalAlignment = element.VerticalAlignment,
-                TextHorizontalAlignment = element.HorizontalAlignment,
-                TextAlignment = element.TextAlignment,
-                TextWrapping = element.TextWrapping,
+                TextVerticalAlignment = element.VerticalAlignment.ToWpf(),
+                TextHorizontalAlignment = element.HorizontalAlignment.ToWpf(),
+                TextAlignment = element.TextAlignment.ToWpf(),
+                TextWrapping = element.TextWrapping.ToWpf(),
                 TextPadding = new Thickness(element.StrokeThickness),
                 LineHeight = element.LineHeight,
                 LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
@@ -1181,7 +1181,7 @@ namespace WireFlow
                 Top = element.Top,
                 Width = element.Width,
                 Height = element.Height,
-                Direction = element.Direction,
+                Direction = element.Direction.ToWpf(),
                 Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent")),
                 Opacity = 1 - element.Transparency,
                 Href = element.Href,
@@ -1329,15 +1329,15 @@ namespace WireFlow
                 FontFamily = new FontFamily(element.Font),
                 FontSize = element.FontSize,
                 FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight),
-                FontStretch = element.FontStretch,
+                FontStretch = element.FontStretch.ToWpf(),
                 Foreground = ColorUtils.StringToBrush(element.Color),
                 // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
-                TextVerticalAlignment = element.VerticalAlignment,
+                TextVerticalAlignment = element.VerticalAlignment.ToWpf(),
                 // Its saved Fill; transparent without one (WireFlowText keeps it a brush, so that its whole frame can be clicked)
                 Background = TextBackground(element.Fill),
-                HorizontalAlignment = element.HorizontalAlignment,
-                TextAlignment = element.TextAlignment,
-                TextWrapping = element.TextWrapping,
+                HorizontalAlignment = element.HorizontalAlignment.ToWpf(),
+                TextAlignment = element.TextAlignment.ToWpf(),
+                TextWrapping = element.TextWrapping.ToWpf(),
                 Text = element.Text,
                 LineHeight = element.LineHeight,
                 LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
@@ -1379,8 +1379,8 @@ namespace WireFlow
                 Height = double.NaN,
 
                 // Kept, so that saving writes them again (a canvas ignores them)
-                HorizontalAlignment = element.HorizontalAlignment,
-                VerticalAlignment = element.VerticalAlignment,
+                HorizontalAlignment = element.HorizontalAlignment.ToWpf(),
+                VerticalAlignment = element.VerticalAlignment.ToWpf(),
                 Opacity = 1 - element.Transparency,
                 RadiusX = element.RadiusX,
                 RadiusY = element.RadiusY,
@@ -1401,8 +1401,8 @@ namespace WireFlow
                 Height = double.NaN,
 
                 // Kept, so that saving writes them again (a canvas ignores them)
-                HorizontalAlignment = element.HorizontalAlignment,
-                VerticalAlignment = element.VerticalAlignment,
+                HorizontalAlignment = element.HorizontalAlignment.ToWpf(),
+                VerticalAlignment = element.VerticalAlignment.ToWpf(),
                 Opacity = 1 - element.Transparency,
                 StrokeThickness = element.StrokeThickness,
                 Fill = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "LightGray")),
@@ -1454,9 +1454,9 @@ namespace WireFlow
             };
 
 
-            if (element.Stretch != Stretch.None)
+            if (element.Stretch != FlowStretch.None)
             {
-                imageBox.Stretch = element.Stretch;
+                imageBox.Stretch = element.Stretch.ToWpf();
                 if (Double.IsNaN(element.Width))
                     imageBox.Width = panel.Width;
                 if (Double.IsNaN(element.Height))

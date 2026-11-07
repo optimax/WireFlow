@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
     <RootNamespace>WireFlow</RootNamespace>
     <AssemblyName>WireFlow.Types</AssemblyName>
   </PropertyGroup>

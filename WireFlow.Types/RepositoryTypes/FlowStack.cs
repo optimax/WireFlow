@@ -1,5 +1,3 @@
-using System.Windows.Controls;
-
 namespace WireFlow
 {
     /// <summary>
@@ -8,6 +6,6 @@ namespace WireFlow
     /// </summary>
     public class FlowStack : FlowGroup
     {
-        public Orientation Direction { get; set; } = Orientation.Vertical;
+        public FlowOrientation Direction { get; set; } = FlowOrientation.Vertical;
     }
 }

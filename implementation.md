@@ -13,7 +13,7 @@ Shared projects:
 
 | Project | Role |
 |---|---|
-| `WireFlow.Types` | Data model (`FlowProject`, `FlowPage`, `FlowLayer`, `FlowElement`, `FlowImage`, `FlowGroup`, `FlowPart`) and the `IFlowRepository` interface. Uses WPF value types such as `FontStretch` and `Stretch`. |
+| `WireFlow.Types` | The DOM, the data model (`FlowProject`, `FlowPage`, `FlowLayer`, `FlowElement`, `FlowImage`, `FlowGroup`, `FlowStack`, `FlowPart`), and the `IFlowRepository` interface. It uses no WPF type (the project does not use WPF): alignments, text wrapping, font stretch, image stretch and a stack panel's direction are its own values (`FlowValues.cs`), with WPF's names and numbers, which are what the files hold. Core's `WpfValues` converts them for the WPF presentation (`ToWpf`, `ToFlow`). |
 | `WireFlow.Core` | `WireFlowEngine` (renders the model to WPF controls and serializes them back), `DesignerPanel`, outline wrappers, grids. |
 | `WireFlow.Repository.Sqlite` | `SqliteRepository`, the storage in use: a project in one SQLite database file (`.wf`). Converts folder projects (`.project`) into `.wf` files. |
 | `WireFlow.Repository.Folder` | `FlatFolderRepository`, the earlier storage: a project as a folder. Read when a folder project is converted; its `SerializeToJSON` and `DeserializeFromJSON` are the JSON settings of both storages. |

@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Media;
 
 namespace WireFlow
 {
@@ -18,13 +16,13 @@ namespace WireFlow
         public string Color { get; set; }
         public string Font { get; set; }
         public double FontSize { get; set; }
-        public FontStretch FontStretch { get; set; }
+        public FlowFontStretch FontStretch { get; set; }
         public int FontWeight { get; set; }
         public double LineHeight { get; set; }
-        public VerticalAlignment VerticalAlignment { get; set; }
-        public HorizontalAlignment HorizontalAlignment { get; set; }
-        public TextAlignment TextAlignment { get; set; }
-        public TextWrapping TextWrapping { get; set; }
+        public FlowVerticalAlignment VerticalAlignment { get; set; }
+        public FlowHorizontalAlignment HorizontalAlignment { get; set; }
+        public FlowTextAlignment TextAlignment { get; set; }
+        public FlowTextWrapping TextWrapping { get; set; }
 
 
 
@@ -34,12 +32,12 @@ namespace WireFlow
             {
                 Height = double.NaN,
                 Width = double.NaN,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = FlowHorizontalAlignment.Center,
+                VerticalAlignment = FlowVerticalAlignment.Center,
+                TextAlignment = FlowTextAlignment.Center,
+                TextWrapping = FlowTextWrapping.Wrap,
                 FontWeight = 400,
-                FontStretch = FontStretches.Normal,
+                FontStretch = FlowFontStretch.Normal,
                 Font = "Segoe UI",
                 Color = "Black",
                 FontSize = 12,
