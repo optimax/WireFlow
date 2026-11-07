@@ -357,14 +357,54 @@ namespace WireFlow
 
 
 
-        // Tools > Options > Files: the project open when the Designer was last closed, if it is still there
+        // Tools > Options > Files: the project open when the Designer was last closed, if it is still there, with the tabs
+        // that were open, those whose page, layout or part is still there, and the one in front; without any, its home page
         private void ReopenPreviousProject()
         {
             if (!Config.ReopenPreviousProject || !string.IsNullOrWhiteSpace(FileName))
                 return;
             string previous = Config.PreviousProject;
-            if (!string.IsNullOrWhiteSpace(previous) && File.Exists(previous))
-                OpenProjectFile(previous);
+            if (string.IsNullOrWhiteSpace(previous) || !File.Exists(previous))
+                return;
+            var tabs = (Config.PreviousTabs ?? new List<TabSetting>()).Where(t => t != null).ToList();
+            int front = Config.PreviousTab;
+            OpenProjectFile(previous, openHomePage: false);
+            if (string.IsNullOrWhiteSpace(FileName))
+                return;
+            DesignerNavigatorDocument frontDoc = null, firstDoc = null;
+            for (int i = 0; i < tabs.Count; i++)
+            {
+                var doc = OpenTab(tabs[i].Kind, tabs[i].Name);
+                firstDoc ??= doc;
+                if (i == front)
+                    frontDoc = doc;
+            }
+            if (firstDoc == null)
+            {
+                OpenTab(DesignerNavigatorDocument.PageKind, Engine.Project.Home);
+                return;
+            }
+            if (frontDoc != null)
+                ShowTab(frontDoc);
+        }
+
+
+
+        // A tab for a page, layout or part of the project, if the project has it (names compare ignoring case)
+        private DesignerNavigatorDocument OpenTab(string kind, string name)
+        {
+            bool Has(IEnumerable<string> names) => !string.IsNullOrWhiteSpace(name) && names != null && names.Contains(name, StringComparer.OrdinalIgnoreCase);
+            switch (kind)
+            {
+                case DesignerNavigatorDocument.PageKind:
+                    return Has(Pages) ? NewPageTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
+                case DesignerNavigatorDocument.LayoutKind:
+                    return Has(Layouts) ? NewLayoutTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
+                case DesignerNavigatorDocument.PartKind:
+                    return Has(Parts) ? NewPartTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
+                default:
+                    return null;
+            }
         }
 
 
@@ -488,8 +528,12 @@ namespace WireFlow
                 Config.Width = this.Width;
                 Config.Height = this.Height;
             }
-            // The project to reopen at startup, when Tools > Options says so
+            // The project to reopen at startup, when Tools > Options says so, and its tabs in the main pane
             Config.PreviousProject = string.IsNullOrWhiteSpace(FileName) ? null : FileName;
+            var tabs = Config.PreviousProject == null ? new List<DesignerNavigatorDocument>()
+                : DocumentPane.Children.OfType<DesignerNavigatorDocument>().Where(d => d.Kind != null && !string.IsNullOrWhiteSpace(d.Navigator?.PageName)).ToList();
+            Config.PreviousTabs = tabs.Select(d => new TabSetting { Kind = d.Kind, Name = d.Navigator.PageName }).ToList();
+            Config.PreviousTab = tabs.IndexOf(DocumentPane.SelectedContent as DesignerNavigatorDocument);
         }
 
 
@@ -755,7 +799,8 @@ namespace WireFlow
 
 
 
-        void OpenProjectFile(string fileName)
+        // openHomePage: false when the caller opens the tabs itself (ReopenPreviousProject)
+        void OpenProjectFile(string fileName, bool openHomePage = true)
         {
             if (string.IsNullOrWhiteSpace(fileName))
                 return;
@@ -798,7 +843,7 @@ namespace WireFlow
 
 
             var index = projectPages.IndexOf(homePage);
-            if (index >= 0)
+            if (openHomePage && index >= 0)
             {
                 NewPageTab(homePage, project.Background, OnNavigatorLoaded);
                 //CurrentPageName = homePage;

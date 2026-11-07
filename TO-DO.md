@@ -44,9 +44,15 @@ Pressing Esc should revert the tools selection to Select.
 
 Done. Esc chooses the Select tool again, from any other tool, wherever the keyboard is in the window: the page, the Tools list, Properties. On the page it also still does what it did: it ends a drag and clears the selection.
 
-## Reopen Previous
+## [DONE] Reopen Previous
 
 "Reopen previous project on startup" option should ensure that not only the project re-opens, but all the tabs within that project that were open get re-opened.
+
+Done. With the option on, the Designer reopens the project with the tabs that were open when you closed it: pages, layouts and parts, in the same order, with the same tab in front.
+
+- A tab whose page, layout or part has since been deleted or renamed is skipped.
+- If none is left (or you had closed them all), the home page opens, as before.
+- Tabs dragged out into a floating window are not remembered.
 
 ## Text Alignment Custom Editor
 
