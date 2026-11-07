@@ -461,14 +461,18 @@ namespace WireFlow
 
 
 
+        // Follows the innermost link around the element clicked, its own first, then that of a group, stack panel or part
+        // it is in, as the Browser does
         private void DesignerNavigateClickHandler(DesignerPanel designer, Point mousePos, FrameworkElement element)
         {
-            var box = element as BaseDesignerObject;
-            if (box == null)
-                return;
-            string currentPage = PageName;
-            string href = box.Href;
-            if (string.IsNullOrWhiteSpace(href))
+            string href = null;
+            for (DependencyObject current = element; current != null && !(current is Layer); current = LogicalTreeHelper.GetParent(current))
+                if (current is ILinkable link && !string.IsNullOrWhiteSpace(link.Href))
+                {
+                    href = link.Href;
+                    break;
+                }
+            if (href == null)
                 return;
             //TODO: Instead of navigating to page directly, ask the main window to do it, which in turn may call NavigateToPage, but then it may switch to an already open tab.
             OnNavigating(href);

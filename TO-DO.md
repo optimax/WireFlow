@@ -84,9 +84,15 @@ Found and fixed on the way:
 - Duplicate copies an element through XAML, which would also write its inner shape; it no longer does, so each copy builds its own shape, and changing the copy's properties changes what it shows (checked for texts, rectangles, ellipses and boxes).
 - A text's padding and a rectangle's saved alignments were lost on save; they are kept now.
 
-## [>>WORKING<<] Href on All Elements
+## [DONE] Href on All Elements
 
 Ensure that a hyperlink target (Href) can be defined on any element (at least any that has a visual extent): Text, Rectangle, etc., not only on Image or Box.
+
+Done. Every element with an extent now has Href, under Properties → Navigation: Text, Rectangle, Ellipse, Box and Image (from the task above), and also groups, stack panels and part references. Layers have none.
+
+- A click follows the innermost link around what you clicked: an element's own link first, else that of the group, stack panel or part it is in. So you can link a whole group (say, a card) and still give one element inside it a different link.
+- The Browser and the Designer's Navigate tool behave alike.
+- Links are saved with the page; existing files need no conversion.
 
 ## Convert to a DOM (Both)
 

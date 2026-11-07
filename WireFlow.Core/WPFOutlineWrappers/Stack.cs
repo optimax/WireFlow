@@ -9,7 +9,7 @@ namespace WireFlow
     /// itself, as WPF's StackPanel does (see StackLayout). It sets each child's position and its size across the panel,
     /// so the children keep true positions and sizes, which the Designer and the saved page use as for any element.
     /// </summary>
-    public class Stack : BaseElement
+    public class Stack : BaseElement, ILinkable
     {
         public static readonly DependencyProperty DirectionProperty = DependencyProperty.Register(nameof(Direction),
             typeof(Orientation), typeof(Stack), new FrameworkPropertyMetadata(Orientation.Vertical, FrameworkPropertyMetadataOptions.AffectsArrange));
@@ -20,6 +20,10 @@ namespace WireFlow
             get => (Orientation)GetValue(DirectionProperty);
             set => SetValue(DirectionProperty, value);
         }
+
+
+        [System.ComponentModel.Category("Navigation")]
+        public string Href { get; set; }
 
 
         public Stack()

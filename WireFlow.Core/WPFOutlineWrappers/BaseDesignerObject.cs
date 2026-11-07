@@ -8,7 +8,7 @@ using System.Windows.Controls;
 
 namespace WireFlow
 {
-    public class BaseDesignerObject: UserControl
+    public class BaseDesignerObject: UserControl, ILinkable
     {
         public double Left
         {

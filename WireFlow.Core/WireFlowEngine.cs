@@ -569,6 +569,7 @@ namespace WireFlow
                 Height = group.Height,
                 Width = group.Width,
                 Transparency = 1 - group.Opacity,
+                Href = group.Href,
             };
             foreach (var uiChild in group.Children.Cast<UIElement>())
             {
@@ -595,6 +596,7 @@ namespace WireFlow
                 Direction = stack.Direction,
                 Fill = stack.Background?.ToString(),
                 Transparency = 1 - stack.Opacity,
+                Href = stack.Href,
             };
             foreach (var uiChild in stack.Children.Cast<UIElement>())
             {
@@ -620,6 +622,7 @@ namespace WireFlow
                 Height = part.Height,
                 Width = part.Width,
                 Transparency = 1 - part.Opacity,
+                Href = part.Href,
             };
             return result;
         }
@@ -1094,9 +1097,11 @@ namespace WireFlow
                 Height = element.Height,
                 TemplateName = element.Name,
                 Left = element.Left,
-                Top = element.Top
+                Top = element.Top,
+                Href = element.Href,
             };
             canvas.Children.Add(partCanvas);
+            AddNavigation(element, partCanvas);
 
             var partName = element.Name;
             var part = Repository.GetPart(partName);
@@ -1128,7 +1133,9 @@ namespace WireFlow
             {
                 Left = element.Left,
                 Top = element.Top,
+                Href = element.Href,
             };
+            AddNavigation(element, group);
             //
             double minX = Double.PositiveInfinity;
             double minY = Double.PositiveInfinity;
@@ -1177,8 +1184,10 @@ namespace WireFlow
                 Direction = element.Direction,
                 Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent")),
                 Opacity = 1 - element.Transparency,
+                Href = element.Href,
             };
             canvas.Children.Add(stack);
+            AddNavigation(element, stack);
             foreach (var child in element.Children)
                 RenderElement(child, stack);
         }
