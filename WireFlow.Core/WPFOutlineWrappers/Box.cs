@@ -40,10 +40,24 @@ namespace WireFlow
         }
 
         [Category("Appearance")]
+        /// <summary>
+        /// Where the text lies across the box. Its lines follow it (TextAlignment), so that the two stay in sync, but for
+        /// Stretch, which leaves them as they are; setting TextAlignment afterwards, as loading does, keeps that one.
+        /// </summary>
         public HorizontalAlignment TextHorizontalAlignment
         {
             get { return textBlock.HorizontalAlignment; }
-            set { textBlock.HorizontalAlignment = value; }
+            set
+            {
+                textBlock.HorizontalAlignment = value;
+                if (value != HorizontalAlignment.Stretch)
+                    textBlock.TextAlignment = value switch
+                    {
+                        HorizontalAlignment.Center => TextAlignment.Center,
+                        HorizontalAlignment.Right => TextAlignment.Right,
+                        _ => TextAlignment.Left
+                    };
+            }
         }
 
         [Category("Appearance")]

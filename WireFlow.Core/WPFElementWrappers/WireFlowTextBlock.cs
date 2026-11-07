@@ -49,8 +49,11 @@ namespace WireFlow
             }
         }
 
-        /// <summary>The Designer sets it, with TextAlignment, through the position chooser of the TextAlignment row.</summary>
-        [Browsable(false)]
+        /// <summary>
+        /// Where the lines lie down the frame (Stretch is Top). The Designer also sets it, with TextAlignment, through the
+        /// position dialog of the TextAlignment row, which shows the two together.
+        /// </summary>
+        [Category("Appearance")]
         public VerticalAlignment TextVerticalAlignment
         {
             get => (VerticalAlignment)GetValue(TextVerticalAlignmentProperty);

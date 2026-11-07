@@ -54,13 +54,23 @@ Done. With the option on, the Designer reopens the project with the tabs that we
 - If none is left (or you had closed them all), the home page opens, as before.
 - Tabs dragged out into a floating window are not remembered.
 
-## Text Alignment Custom Editor
+## [DONE] Text Alignment Custom Editor
 
 Text Alignment Custom Editor should not be embedded into the property grid directly. It should be invoked via `...` button and shown in a popup like any other property. Only the value should be shown in the property grid directly.
 
-## TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
+Done. The TextAlignment row of a text or a box now shows only the value: where the text lies in its frame, named as the 9-point chooser names it (Top-Left, Top, Top-Right, Left, Center, Right, Bottom-Left, Bottom, Bottom-Right). Its `...` button opens the chooser in a small dialog, as Background opens the color dialog; Ctrl+Enter or a double click on the value open it too. The dialog is laid out as PDFTools shows the chooser in Add Margins and Resize Pages: the chooser in a "Text position" group, its label at the right, then OK (Enter) and Cancel (Esc). OK moves the text; Cancel leaves it.
+
+- Justified text shows as, for example, "Top-Left (justified)", and stays justified unless you choose another position.
+
+## [DONE] TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
 
 TextAlignment needs to be in sync with TextHorizonalAlignment and TextVerticalAlignment. When changing one of TextHorizonalAlignment, or TextVerticalAlignment, TextAlignment's highlight remains where it was. In custom editor shown only on demand, it should not be a problem, but the value should be in sync with the other two.
+
+Done. The TextAlignment row follows the other two as they change: set TextVerticalAlignment to Bottom, and it reads Bottom-Left at once; the dialog always opens at the current position.
+
+- On a box, changing TextHorizontalAlignment now moves the lines with the text (TextAlignment follows: Left, Center or Right), so the two no longer disagree. Stretch leaves TextAlignment as it is.
+- A text (not a box) now lists its TextVerticalAlignment under Appearance too, as a box does; before, only the chooser could set it.
+- Saved boxes keep their own TextAlignment when loaded, so existing pages look as they did.
 
 ## All Tools Derive from BaseDesignerObject
 
