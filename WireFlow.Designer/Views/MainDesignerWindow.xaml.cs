@@ -345,6 +345,8 @@ namespace WireFlow
             InputBindings.Add(keyBinding);
             // File > Save
             InputBindings.Add(new KeyBinding(SaveFileCmd, Key.S, ModifierKeys.Control));
+            // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
+            InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             ApplyConfigSettings();
             // Once the window shows, so that it is there while the project loads and behind any message about it
             Dispatcher.BeginInvoke(new Action(ReopenPreviousProject), System.Windows.Threading.DispatcherPriority.ContextIdle);
@@ -363,6 +365,16 @@ namespace WireFlow
             string previous = Config.PreviousProject;
             if (!string.IsNullOrWhiteSpace(previous) && File.Exists(previous))
                 OpenProjectFile(previous);
+        }
+
+
+
+        // Esc: the Select tool, in the Tools list and in the current designer
+        private void SelectDefaultTool()
+        {
+            int index = Tools.Items.IndexOf(DefaultDrawingTool);
+            if (index >= 0)
+                SelectedToolIndex = index;
         }
 
 

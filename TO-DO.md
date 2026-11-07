@@ -38,9 +38,11 @@ Make it a shortcut for File|Save.
 
 Done. Ctrl+S is File → Save, and the menu shows it. As the menu does, it saves every modified page, layout and part, and the project; a project not saved yet asks for a file name first.
 
-## Esc Cancel Specialized Tool
+## [DONE] Esc Cancel Specialized Tool
 
 Pressing Esc should revert the tools selection to Select. 
+
+Done. Esc chooses the Select tool again, from any other tool, wherever the keyboard is in the window: the page, the Tools list, Properties. On the page it also still does what it did: it ends a drag and clears the selection.
 
 ## Reopen Previous
 
