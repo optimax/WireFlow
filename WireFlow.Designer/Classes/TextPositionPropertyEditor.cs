@@ -30,12 +30,10 @@ namespace WireFlow
         private static readonly string[] AlignmentProperties = { "TextAlignment", "TextVerticalAlignment", "TextHorizontalAlignment" };
 
 
-        /// <summary>Makes it the editor of the TextAlignment of texts and boxes in the property grid.</summary>
+        /// <summary>Makes it the editor of the TextAlignment of texts and boxes in the property grid (their nodes' properties).</summary>
         public static void Register()
         {
-            var editor = new TextPositionPropertyEditor();
-            PropertyEditors.Register(typeof(TextAlignment), typeof(WireFlowText), nameof(WireFlowText.TextAlignment), editor);
-            PropertyEditors.Register(typeof(TextAlignment), typeof(Box), nameof(Box.TextAlignment), editor);
+            PropertyEditors.Register(typeof(FlowTextAlignment), typeof(NodeProperties), "TextAlignment", new TextPositionPropertyEditor());
         }
 
 
@@ -97,10 +95,10 @@ namespace WireFlow
         public static PageContentPosition PositionOf(object component)
         {
             var properties = TypeDescriptor.GetProperties(component);
-            var across = properties["TextAlignment"]?.GetValue(component) is TextAlignment a ? a : TextAlignment.Left;
-            var down = properties["TextVerticalAlignment"]?.GetValue(component) is VerticalAlignment v ? v : VerticalAlignment.Top;
-            int column = across switch { TextAlignment.Center => 1, TextAlignment.Right => 2, _ => 0 };
-            int row = down switch { VerticalAlignment.Center => 1, VerticalAlignment.Bottom => 2, _ => 0 };
+            var across = properties["TextAlignment"]?.GetValue(component) is FlowTextAlignment a ? a : FlowTextAlignment.Left;
+            var down = properties["TextVerticalAlignment"]?.GetValue(component) is FlowVerticalAlignment v ? v : FlowVerticalAlignment.Top;
+            int column = across switch { FlowTextAlignment.Center => 1, FlowTextAlignment.Right => 2, _ => 0 };
+            int row = down switch { FlowVerticalAlignment.Center => 1, FlowVerticalAlignment.Bottom => 2, _ => 0 };
             return Positions[row, column];
         }
 
@@ -120,7 +118,7 @@ namespace WireFlow
                 PageContentPosition.BottomRight => "Bottom-Right",
                 _ => "Center"
             };
-            bool justified = TypeDescriptor.GetProperties(component)["TextAlignment"]?.GetValue(component) is TextAlignment.Justify;
+            bool justified = TypeDescriptor.GetProperties(component)["TextAlignment"]?.GetValue(component) is FlowTextAlignment.Justify;
             return justified ? name + " (justified)" : name;
         }
 
@@ -133,9 +131,9 @@ namespace WireFlow
                 {
                     if (Positions[row, column] != position)
                         continue;
-                    var down = row switch { 1 => VerticalAlignment.Center, 2 => VerticalAlignment.Bottom, _ => VerticalAlignment.Top };
-                    var block = column switch { 1 => HorizontalAlignment.Center, 2 => HorizontalAlignment.Right, _ => HorizontalAlignment.Left };
-                    var across = column switch { 1 => TextAlignment.Center, 2 => TextAlignment.Right, _ => TextAlignment.Left };
+                    var down = row switch { 1 => FlowVerticalAlignment.Center, 2 => FlowVerticalAlignment.Bottom, _ => FlowVerticalAlignment.Top };
+                    var block = column switch { 1 => FlowHorizontalAlignment.Center, 2 => FlowHorizontalAlignment.Right, _ => FlowHorizontalAlignment.Left };
+                    var across = column switch { 1 => FlowTextAlignment.Center, 2 => FlowTextAlignment.Right, _ => FlowTextAlignment.Left };
                     item.SetComponentProperty("TextVerticalAlignment", down);
                     item.SetComponentProperty("TextHorizontalAlignment", block);
                     item.SetValue(across);

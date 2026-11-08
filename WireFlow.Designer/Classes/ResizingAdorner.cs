@@ -7,6 +7,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using WireFlow;
 
 namespace Optimax
 {
@@ -37,6 +38,44 @@ namespace Optimax
         public Brush Background { get; set; }
 
         public event Action<UIElement, Size> ResizeCompleted;
+
+
+        // A size or position set while resizing goes to the element's DOM node, which the view follows at once; an element
+        // without a node is set itself
+        private static void SetWidth(FrameworkElement e, double value)
+        {
+            if (FlowView.GetNode(e) is FlowElementBase node)
+                node.Width = value;
+            else
+                e.Width = value;
+        }
+
+
+        private static void SetHeight(FrameworkElement e, double value)
+        {
+            if (FlowView.GetNode(e) is FlowElementBase node)
+                node.Height = value;
+            else
+                e.Height = value;
+        }
+
+
+        private static void SetLeft(UIElement e, double value)
+        {
+            if (FlowView.GetNode(e) is FlowElementBase node)
+                node.Left = value;
+            else
+                Canvas.SetLeft(e, value);
+        }
+
+
+        private static void SetTop(UIElement e, double value)
+        {
+            if (FlowView.GetNode(e) is FlowElementBase node)
+                node.Top = value;
+            else
+                Canvas.SetTop(e, value);
+        }
 
         #endregion
 
@@ -185,8 +224,8 @@ namespace Optimax
 
                 // Change the size by the amount the user drags the mouse, as long as it's larger
                 // than the width or height of an adorner, respectively.
-                adornedElement.Width = Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width);
-                adornedElement.Height = Math.Max(adornedElement.Height + args.VerticalChange, hitThumb.DesiredSize.Height);
+                SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
+                SetHeight(adornedElement, Math.Max(adornedElement.Height + args.VerticalChange, hitThumb.DesiredSize.Height));
             }
             else
             {
@@ -214,14 +253,14 @@ namespace Optimax
                 {
                     pos.X = Canvas.GetLeft(e);
                     pos.Y = Canvas.GetTop(e);
-                    e.Width = e.Width*scaleX;
-                    e.Height = e.Height*scaleY;
-                    Canvas.SetLeft(e,pos.X*scaleX);
-                    Canvas.SetTop(e,pos.Y*scaleY);
+                    SetWidth(e, e.Width*scaleX);
+                    SetHeight(e, e.Height*scaleY);
+                    SetLeft(e,pos.X*scaleX);
+                    SetTop(e,pos.Y*scaleY);
                 }
 
-                adornedElement.Width = Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width);
-                adornedElement.Height = Math.Max(adornedElement.Height + args.VerticalChange, hitThumb.DesiredSize.Height);
+                SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
+                SetHeight(adornedElement, Math.Max(adornedElement.Height + args.VerticalChange, hitThumb.DesiredSize.Height));
 
                 Debug.WriteLine("Element: {0},{1}", adornedElement.ActualWidth, adornedElement.ActualHeight);
 
@@ -259,14 +298,14 @@ namespace Optimax
 
             // Change the size by the amount the user drags the mouse, as long as it's larger
             // than the width or height of an adorner, respectively.
-            adornedElement.Width = Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width);
+            SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
             //adornedElement.Height = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
 
             double height_old = adornedElement.Height;
             double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
             double top_old = Canvas.GetTop(adornedElement);
-            adornedElement.Height = height_new;
-            Canvas.SetTop(adornedElement, top_old - (height_new - height_old));
+            SetHeight(adornedElement, height_new);
+            SetTop(adornedElement, top_old - (height_new - height_old));
         }
 
         // Handler for resizing from the top-left.
@@ -288,14 +327,14 @@ namespace Optimax
             double width_old = adornedElement.Width;
             double width_new = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
             double left_old = Canvas.GetLeft(adornedElement);
-            adornedElement.Width = width_new;
-            Canvas.SetLeft(adornedElement, left_old - (width_new - width_old));
+            SetWidth(adornedElement, width_new);
+            SetLeft(adornedElement, left_old - (width_new - width_old));
 
             double height_old = adornedElement.Height;
             double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
             double top_old = Canvas.GetTop(adornedElement);
-            adornedElement.Height = height_new;
-            Canvas.SetTop(adornedElement, top_old - (height_new - height_old));
+            SetHeight(adornedElement, height_new);
+            SetTop(adornedElement, top_old - (height_new - height_old));
         }
 
 
@@ -313,13 +352,13 @@ namespace Optimax
             // Change the size by the amount the user drags the mouse, as long as it's larger
             // than the width or height of an adorner, respectively.
             //adornedElement.Width = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
-            adornedElement.Height = Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height);
+            SetHeight(adornedElement, Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height));
 
             double width_old = adornedElement.Width;
             double width_new = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
             double left_old = Canvas.GetLeft(adornedElement);
-            adornedElement.Width = width_new;
-            Canvas.SetLeft(adornedElement, left_old - (width_new - width_old));
+            SetWidth(adornedElement, width_new);
+            SetLeft(adornedElement, left_old - (width_new - width_old));
         }
 
 
@@ -338,7 +377,7 @@ namespace Optimax
 
             // Change the size by the amount the user drags the mouse, as long as it's larger
             // than the width or height of an adorner, respectively.
-            adornedElement.Height = Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height);
+            SetHeight(adornedElement, Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height));
         }
 
 
@@ -361,14 +400,14 @@ namespace Optimax
 
             if (ResizeSymmetric)
             {
-                adornedElement.Height = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
+                SetHeight(adornedElement, Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height));
                 double height_old = adornedElement.Height;
 
                 double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
                 double top_old = Canvas.GetTop(adornedElement);
                 double top_new = top_old - (height_new - height_old);
-                adornedElement.Height = height_new;
-                Canvas.SetTop(adornedElement, top_new);
+                SetHeight(adornedElement, height_new);
+                SetTop(adornedElement, top_new);
             }
             else
             {
@@ -376,8 +415,8 @@ namespace Optimax
                 double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
                 double top_old = Canvas.GetTop(adornedElement);
                 double top_new = top_old - (height_new - height_old);
-                adornedElement.Height = height_new;
-                Canvas.SetTop(adornedElement, top_new);
+                SetHeight(adornedElement, height_new);
+                SetTop(adornedElement, top_new);
             }
         }
 
@@ -401,8 +440,8 @@ namespace Optimax
             double width_old = adornedElement.Width;
             double width_new = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
             double left_old = Canvas.GetLeft(adornedElement);
-            adornedElement.Width = width_new;
-            Canvas.SetLeft(adornedElement, left_old - (width_new - width_old));
+            SetWidth(adornedElement, width_new);
+            SetLeft(adornedElement, left_old - (width_new - width_old));
         }
 
 
@@ -418,7 +457,7 @@ namespace Optimax
             // Ensure that the Width and Height are properly initialized after the resize.
             EnforceSize(adornedElement);
 
-            adornedElement.Width = Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width);
+            SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
         }
 
         private void CornerThumbOnDragCompleted(object sender, DragCompletedEventArgs dragCompletedEventArgs)
@@ -503,9 +542,9 @@ namespace Optimax
         void EnforceSize(FrameworkElement adornedElement)
         {
             if (adornedElement.Width.Equals(Double.NaN))
-                adornedElement.Width = adornedElement.DesiredSize.Width;
+                SetWidth(adornedElement, adornedElement.DesiredSize.Width);
             if (adornedElement.Height.Equals(Double.NaN))
-                adornedElement.Height = adornedElement.DesiredSize.Height;
+                SetHeight(adornedElement, adornedElement.DesiredSize.Height);
 
             //FrameworkElement parent = adornedElement.Parent as FrameworkElement;
             //if (parent != null)

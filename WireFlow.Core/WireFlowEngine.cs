@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -515,6 +516,12 @@ namespace WireFlow
 
 
 
+        /// <summary>
+        /// The DOM node of an element made as a WPF control, as a drawing tool makes a new one with its defaults.
+        /// </summary>
+        public FlowElementBase ToNode(UIElement uiElement) => ConvertUiElement(uiElement);
+
+
         private FlowElementBase ConvertUiElement(UIElement uiElement)
         {
             FlowElementBase element;
@@ -711,7 +718,7 @@ namespace WireFlow
                 HorizontalAlignment = text.HorizontalAlignment.ToFlow(),
                 VerticalAlignment = text.TextVerticalAlignment.ToFlow(),
                 LineHeight = text.LineHeight,
-                // A text's padding is saved as its StrokeThickness, which AddTextBlock reads
+                // A text's padding is saved as its StrokeThickness, which ApplyText reads
                 StrokeThickness = text.TextPadding.Left,
                 Text = text.Text,
                 TextAlignment = text.TextAlignment.ToFlow(),
@@ -795,6 +802,7 @@ namespace WireFlow
 
         public void RenderPage(Canvas canvas, FlowPage pageNode)
         {
+            Unfollow(canvas);
             canvas.Children.Clear();
             if (pageNode == null)
             {
@@ -810,6 +818,31 @@ namespace WireFlow
             RenderMasterPages(pageNode.Master, canvas);
             RenderUserPage(pageNode, canvas);
             RenderGrids(canvas);
+
+            // The page's size and background follow its node
+            PropertyChangedEventHandler onPage = (sender, e) => ApplyPage(pageNode, canvas);
+            pageNode.PropertyChanged += onPage;
+            canvas.SetValue(ViewLinkProperty, new ViewLink { Node = pageNode, OnProperty = onPage });
+        }
+
+
+        // A page's size and background, its own or inherited, given to the canvas and to the layouts and layers on it
+        private void ApplyPage(FlowPage pageNode, Canvas canvas)
+        {
+            var size = InheritedPageSize(pageNode);
+            canvas.Width = !double.IsNaN(pageNode.Width) ? pageNode.Width : size.Width;
+            canvas.Height = !double.IsNaN(pageNode.Height) ? pageNode.Height : size.Height;
+            canvas.Background = BackgroundBrush(!string.IsNullOrWhiteSpace(pageNode.Background) ? pageNode.Background : InheritedPageBackground(pageNode));
+            foreach (var layout in canvas.Children.OfType<Layout>())
+            {
+                layout.Width = canvas.Width;
+                layout.Height = canvas.Height;
+                foreach (var layer in layout.Children.OfType<Layer>())
+                {
+                    layer.Width = canvas.Width;
+                    layer.Height = canvas.Height;
+                }
+            }
         }
 
 
@@ -895,8 +928,6 @@ namespace WireFlow
         private void RenderLayer<LayerType>(FlowPage pageNode, FlowLayer layer, Canvas canvas)
             where LayerType: Layer, new()
         {
-            var typeName = typeof (LayerType).ToString();
-
             Layer layerCanvas = new LayerType()
             {
                 Width = canvas.Width,
@@ -912,75 +943,264 @@ namespace WireFlow
             Canvas.SetLeft(layerCanvas, 0);
 
             canvas.Children.Add(layerCanvas);
+            FlowView.SetNode(layerCanvas, layer);
 
             foreach (var element in layer.Elements)
             {
                 RenderElement(element, layerCanvas);
             }
+            FollowChildren(layer, layer.Elements, layerCanvas);
         }
 
 
 
-        private void RenderElement(FlowElementBase element, Panel canvas)
+        #region Following the DOM
+
+
+        /// <summary>
+        /// What the engine listens to for a page, layer or element it drew, so that it can stop when the drawing is
+        /// taken away.
+        /// </summary>
+        private sealed class ViewLink
+        {
+            public FlowBase Node;
+            public PropertyChangedEventHandler OnProperty;
+            public INotifyCollectionChanged Children;
+            public NotifyCollectionChangedEventHandler OnChildren;
+        }
+
+
+        private static readonly DependencyProperty ViewLinkProperty =
+            DependencyProperty.RegisterAttached("ViewLink", typeof(ViewLink), typeof(WireFlowEngine), new PropertyMetadata(null));
+
+
+        // Keeps a panel's children in step with a node's children
+        private void FollowChildren(FlowBase node, IList<FlowElementBase> children, Panel panel)
+        {
+            var link = panel.GetValue(ViewLinkProperty) as ViewLink ?? new ViewLink { Node = node };
+            link.Children = (INotifyCollectionChanged)children;
+            link.OnChildren = (sender, e) => Reconcile(children, panel);
+            link.Children.CollectionChanged += link.OnChildren;
+            panel.SetValue(ViewLinkProperty, link);
+        }
+
+
+        // Keeps an element in step with its node's properties
+        private void FollowNode(FlowElementBase node, FrameworkElement ui)
+        {
+            var link = ui.GetValue(ViewLinkProperty) as ViewLink ?? new ViewLink { Node = node };
+            link.OnProperty = (sender, e) => Refresh(node, ui);
+            node.PropertyChanged += link.OnProperty;
+            ui.SetValue(ViewLinkProperty, link);
+        }
+
+
+        /// <summary>Stops following the nodes of a drawing and of everything in it.</summary>
+        private static void Unfollow(DependencyObject ui)
+        {
+            if (ui == null)
+                return;
+            if (ui.GetValue(ViewLinkProperty) is ViewLink link)
+            {
+                if (link.OnProperty != null)
+                    link.Node.PropertyChanged -= link.OnProperty;
+                if (link.Children != null)
+                    link.Children.CollectionChanged -= link.OnChildren;
+                ui.ClearValue(ViewLinkProperty);
+            }
+            if (ui is Panel panel)
+                foreach (UIElement child in panel.Children)
+                    Unfollow(child);
+        }
+
+
+        /// <summary>
+        /// Puts a panel's children in step with a node's children: the elements of nodes added are drawn, those of nodes
+        /// taken away removed, and all put in the nodes' order (bottom first).
+        /// </summary>
+        private void Reconcile(IList<FlowElementBase> nodes, Panel panel)
+        {
+            var shown = new Dictionary<FlowBase, UIElement>();
+            foreach (UIElement child in panel.Children)
+            {
+                var node = FlowView.GetNode(child);
+                if (node != null && !shown.ContainsKey(node))
+                    shown[node] = child;
+            }
+            var wanted = new List<UIElement>();
+            foreach (var node in nodes.ToList())
+            {
+                if (!shown.TryGetValue(node, out var ui))
+                    ui = RenderElement(node, panel);
+                if (ui != null)
+                    wanted.Add(ui);
+            }
+            for (int i = panel.Children.Count - 1; i >= 0; i--)
+            {
+                var child = panel.Children[i];
+                if (FlowView.GetNode(child) != null && !wanted.Contains(child))
+                {
+                    Unfollow(child);
+                    panel.Children.RemoveAt(i);
+                }
+            }
+            for (int i = 0; i < wanted.Count; i++)
+                if (panel.Children.IndexOf(wanted[i]) != i)
+                {
+                    panel.Children.Remove(wanted[i]);
+                    panel.Children.Insert(i, wanted[i]);
+                }
+            if (panel is Group group)
+                ApplyGroupSize(group);
+        }
+
+
+        /// <summary>
+        /// Brings an element up to date with its node, in place; an image or a part reference that names another image or
+        /// part is drawn again.
+        /// </summary>
+        private void Refresh(FlowElementBase node, FrameworkElement ui)
+        {
+            var panel = ui.Parent as Panel;
+            if (panel == null)
+                return;
+            bool redraw = (ui is ImageBox image && image.ImageFileName != (node as FlowImage)?.Image)
+                || (ui is Part part && part.TemplateName != node.Name);
+            if (redraw)
+            {
+                int index = panel.Children.IndexOf(ui);
+                Unfollow(ui);
+                panel.Children.Remove(ui);
+                var redrawn = RenderElement(node, panel);
+                if (redrawn != null)
+                {
+                    panel.Children.Remove(redrawn);
+                    panel.Children.Insert(Math.Min(index, panel.Children.Count), redrawn);
+                }
+            }
+            else
+                Apply(node, ui, panel);
+            if (panel is Group group)
+                ApplyGroupSize(group);
+        }
+
+
+        #endregion
+
+
+
+        /// <summary>
+        /// Draws an element in a panel, on top of what it holds, and keeps the drawing in step with the node; returns it,
+        /// or null for an element that is not drawn.
+        /// </summary>
+        private FrameworkElement RenderElement(FlowElementBase element, Panel canvas)
         {
             try
             {
-                string eltType = element.Type;
-                switch (eltType)
-                {
-                    case "image":
-                        RenderImage(element, canvas);
-                        break;
-                    case "rect":
-                        RenderRectangle(element, canvas);
-                        break;
-                    case "ellipse":
-                        RenderEllipse(element, canvas);
-                        break;
-                    case "text":
-                        RenderText(element, canvas);
-                        break;
-                    case "box":
-                        RenderBox(element, canvas);
-                        break;
-                    case "group":
-                        RenderGroup(element, canvas);
-                        break;
-                    case "stack":
-                        RenderStack(element, canvas);
-                        break;
-                    case "part":
-                        RenderPartRef(element, canvas);
-                        break;
-                    case "none":
-                        break;
-                    default:
-                        RenderUnknown(element, canvas);
-                        break;
-                }
+                FrameworkElement ui = CreateElement(element);
+                if (ui == null)
+                    return null;
+                FlowView.SetNode(ui, element);
+                Apply(element, ui, canvas);
+                canvas.Children.Add(ui);
+                AddNavigation(element, ui);
+                FollowNode(element, ui);
+                return ui;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"EXCEPTION {ex.GetType()}\n{ex.Message}\nSTACK TRACE:\n{ex.StackTrace}");
+                return null;
             }
         }
 
 
-
-        private void RenderImage(FlowElementBase element, Panel canvas)
+        // The control that draws a kind of element, with the drawings of its children (a group's, a stack panel's, a part's)
+        private FrameworkElement CreateElement(FlowElementBase element)
         {
-            var img = AddImage(element as FlowImage, canvas);
-            AddNavigation(element, img);
+            switch (element.Type)
+            {
+                case "image":
+                    return CreateImage(element as FlowImage);
+                case "rect":
+                    return new WireFlowRectangle();
+                case "ellipse":
+                    return new WireFlowEllipse();
+                case "text":
+                    return new WireFlowText();
+                case "box":
+                    return new Box();
+                case "group":
+                    return CreateGroup(element as FlowGroup);
+                case "stack":
+                    return CreateStack(element as FlowStack);
+                case "part":
+                    return CreatePartRef(element);
+                case "none":
+                    return null;
+                default:
+                    return new Rectangle { Name = "UnknownObject_" + element.Type };
+            }
         }
 
 
-        private void RenderText(FlowElementBase element, Panel canvas)
+        // Gives an element's control the values of its node
+        private void Apply(FlowElementBase element, FrameworkElement ui, Panel panel)
         {
-            var text = AddTextBlock(element as FlowElement, canvas);
-            if (text == null)
-                return;
+            switch (ui)
+            {
+                case WireFlowText text:
+                    ApplyText(element as FlowElement, text);
+                    break;
+                case WireFlowRectangle rect:
+                    ApplyRectangle(element as FlowElement, rect);
+                    break;
+                case WireFlowEllipse ellipse:
+                    ApplyEllipse(element as FlowElement, ellipse);
+                    break;
+                case Box box:
+                    ApplyBox(element as FlowElement, box);
+                    break;
+                case ImageBox image:
+                    ApplyImage(element as FlowImage, image, panel);
+                    break;
+                case Stack stack:
+                    ApplyStack(element as FlowStack, stack);
+                    break;
+                case Group group:
+                    ApplyGroup(element, group);
+                    break;
+                case Part part:
+                    ApplyPartRef(element, part);
+                    break;
+                case Rectangle unknown:
+                    ApplyUnknown(element, unknown);
+                    break;
+            }
+            ui.Cursor = string.IsNullOrWhiteSpace(element.Href) ? null : Cursors.Hand;
+        }
+
+
+        private void ApplyText(FlowElement element, WireFlowText text)
+        {
+            text.Opacity = 1 - element.Transparency;
+            text.FontFamily = new FontFamily(element.Font);
+            text.FontSize = element.FontSize;
+            text.FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight);
+            text.FontStretch = element.FontStretch.ToWpf();
+            text.Foreground = ColorUtils.StringToBrush(element.Color);
+            // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
+            text.TextVerticalAlignment = element.VerticalAlignment.ToWpf();
+            // Its saved Fill; transparent without one (WireFlowText keeps it a brush, so that its whole frame can be clicked)
+            text.Background = TextBackground(element.Fill);
+            text.HorizontalAlignment = element.HorizontalAlignment.ToWpf();
+            text.TextAlignment = element.TextAlignment.ToWpf();
+            text.TextWrapping = element.TextWrapping.ToWpf();
+            text.Text = element.Text;
+            text.LineHeight = element.LineHeight;
+            text.LineStackingStrategy = LineStackingStrategy.BlockLineHeight;
+            text.TextPadding = new Thickness(element.StrokeThickness);
             text.Href = element.Href;
-            AddNavigation(element, text);
             text.Width = element.Width;
             text.Height = element.Height;
             Canvas.SetLeft(text, element.Left);
@@ -988,11 +1208,18 @@ namespace WireFlow
         }
 
 
-        private void RenderRectangle(FlowElementBase element, Panel canvas)
+        private void ApplyRectangle(FlowElement element, WireFlowRectangle rect)
         {
-            var rect = AddRectangle(element as FlowElement, canvas);
+            // Kept, so that they stay in the element's node (a canvas ignores them)
+            rect.HorizontalAlignment = element.HorizontalAlignment.ToWpf();
+            rect.VerticalAlignment = element.VerticalAlignment.ToWpf();
+            rect.Opacity = 1 - element.Transparency;
+            rect.RadiusX = element.RadiusX;
+            rect.RadiusY = element.RadiusY;
+            rect.StrokeThickness = element.StrokeThickness;
+            rect.Fill = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "LightGray"));
+            rect.Stroke = new SolidColorBrush(ColorUtils.StringToColor(element.Stroke));
             rect.Href = element.Href;
-            AddNavigation(element, rect);
             rect.Width = element.Width;
             rect.Height = element.Height;
             Canvas.SetLeft(rect, element.Left);
@@ -1000,11 +1227,16 @@ namespace WireFlow
         }
 
 
-        private void RenderEllipse(FlowElementBase element, Panel canvas)
+        private void ApplyEllipse(FlowElement element, WireFlowEllipse ellipse)
         {
-            var ellipse = AddEllipse(element as FlowElement, canvas);
+            // Kept, so that they stay in the element's node (a canvas ignores them)
+            ellipse.HorizontalAlignment = element.HorizontalAlignment.ToWpf();
+            ellipse.VerticalAlignment = element.VerticalAlignment.ToWpf();
+            ellipse.Opacity = 1 - element.Transparency;
+            ellipse.StrokeThickness = element.StrokeThickness;
+            ellipse.Fill = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "LightGray"));
+            ellipse.Stroke = new SolidColorBrush(ColorUtils.StringToColor(element.Stroke));
             ellipse.Href = element.Href;
-            AddNavigation(element, ellipse);
             ellipse.Width = element.Width;
             ellipse.Height = element.Height;
             Canvas.SetLeft(ellipse, element.Left);
@@ -1016,59 +1248,32 @@ namespace WireFlow
         /// Rectangle with a stroke and fill, and a text element inside, may have rounded corners and a background image
         /// It may also serve as a link.
         /// </summary>
-        private void RenderBox(FlowElementBase baseElement, Panel canvas)
+        private void ApplyBox(FlowElement element, Box box)
         {
-            //var box = new Grid()
-            //{
-            //    Width = element.Width,
-            //    Height = element.Height,
-            //    ClipToBounds = true,
-            //};
-            //Canvas.SetTop(box, element.Top);
-            //Canvas.SetLeft(box, element.Left);
-
-            var element = baseElement as FlowElement;
-
-
-            Color fillColor = ColorUtils.StringToColor(element.Fill, "LightGray");
-            Color strokeColor = ColorUtils.StringToColor(element.Stroke, "Black");
-            SolidColorBrush fill = new SolidColorBrush(fillColor);
-            SolidColorBrush stroke = new SolidColorBrush(strokeColor);
-
-            var box = new Box()
-            {
-                Width = element.Width,
-                Height = element.Height,
-                Left = element.Left,
-                Top = element.Top,
-                Text = element.Text,
-                Opacity = 1 - element.Transparency,
-                BorderColor = stroke,
-                BorderRadiusX = element.RadiusX,
-                BorderRadiusY = element.RadiusY,
-                BorderWidth = element.StrokeThickness,
-                Fill = fill,
-                Foreground = ColorUtils.StringToBrush(element.Color),
-                FontFamily = new FontFamily(element.Font),
-                FontSize = element.FontSize,
-                FontStretch = element.FontStretch.ToWpf(),
-                FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight),
-                TextVerticalAlignment = element.VerticalAlignment.ToWpf(),
-                TextHorizontalAlignment = element.HorizontalAlignment.ToWpf(),
-                TextAlignment = element.TextAlignment.ToWpf(),
-                TextWrapping = element.TextWrapping.ToWpf(),
-                TextPadding = new Thickness(element.StrokeThickness),
-                LineHeight = element.LineHeight,
-                LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
-                Href = element.Href,
-            };
-            canvas.Children.Add(box);
-            AddNavigation(element, box);
-
-
-            //AddImage(element, box);
-            //AddRectangle(element, box);
-            //AddTextBlock(element, box);
+            box.Width = element.Width;
+            box.Height = element.Height;
+            box.Left = element.Left;
+            box.Top = element.Top;
+            box.Text = element.Text;
+            box.Opacity = 1 - element.Transparency;
+            box.BorderColor = new SolidColorBrush(ColorUtils.StringToColor(element.Stroke, "Black"));
+            box.BorderRadiusX = element.RadiusX;
+            box.BorderRadiusY = element.RadiusY;
+            box.BorderWidth = element.StrokeThickness;
+            box.Fill = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "LightGray"));
+            box.Foreground = ColorUtils.StringToBrush(element.Color);
+            box.FontFamily = new FontFamily(element.Font);
+            box.FontSize = element.FontSize;
+            box.FontStretch = element.FontStretch.ToWpf();
+            box.FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight);
+            box.TextVerticalAlignment = element.VerticalAlignment.ToWpf();
+            box.TextHorizontalAlignment = element.HorizontalAlignment.ToWpf();
+            box.TextAlignment = element.TextAlignment.ToWpf();
+            box.TextWrapping = element.TextWrapping.ToWpf();
+            box.TextPadding = new Thickness(element.StrokeThickness);
+            box.LineHeight = element.LineHeight;
+            box.LineStackingStrategy = LineStackingStrategy.BlockLineHeight;
+            box.Href = element.Href;
         }
 
 
@@ -1088,108 +1293,92 @@ namespace WireFlow
 
 
 
-        private void RenderPartRef(FlowElementBase element, Panel canvas)
+        // A part reference, with the drawing of the part's saved content
+        private Part CreatePartRef(FlowElementBase element)
         {
+            var partCanvas = new Part { TemplateName = element.Name };
+            var part = Repository.GetPart(element.Name);
+            if (part != null)
+                RenderElement(part, partCanvas);
+            return partCanvas;
+        }
 
-            var partCanvas = new Part()
-            {
-                Width = element.Width,
-                Height = element.Height,
-                TemplateName = element.Name,
-                Left = element.Left,
-                Top = element.Top,
-                Href = element.Href,
-            };
-            canvas.Children.Add(partCanvas);
-            AddNavigation(element, partCanvas);
 
-            var partName = element.Name;
-            var part = Repository.GetPart(partName);
-            if (part == null)
-            {
-                RenderNodeProxy(partCanvas);
-                return;
-            }
-            RenderElement(part, partCanvas);
-            if (double.IsNaN(element.Width))
-                partCanvas.Width = part.Width;
-            if (double.IsNaN(element.Height))
-                partCanvas.Height = part.Height;
-
+        private void ApplyPartRef(FlowElementBase element, Part partCanvas)
+        {
+            partCanvas.Left = element.Left;
+            partCanvas.Top = element.Top;
+            partCanvas.Href = element.Href;
+            // Without a size of its own, it takes the part's
+            var part = partCanvas.Children.OfType<FrameworkElement>().Select(FlowView.GetNode).OfType<FlowElementBase>().FirstOrDefault();
+            partCanvas.Width = double.IsNaN(element.Width) && part != null ? part.Width : element.Width;
+            partCanvas.Height = double.IsNaN(element.Height) && part != null ? part.Height : element.Height;
         }
 
 
 
-
-
-        private void RenderGroup(FlowElementBase baseElement, Panel canvas)
+        private Group CreateGroup(FlowGroup element)
         {
-            var element = baseElement as FlowGroup;
-
-
             if (element.Children == null)
                 throw new MissingMemberException("Group with no children!");
-            var group = new Group()
-            {
-                Left = element.Left,
-                Top = element.Top,
-                Href = element.Href,
-            };
-            AddNavigation(element, group);
-            //
-            double minX = Double.PositiveInfinity;
-            double minY = Double.PositiveInfinity;
-            double maxWidth = 0.0;
-            double maxHeight = 0.0;
+            var group = new Group();
             foreach (var child in element.Children)
-            {
                 RenderElement(child, group);
-                if (child.Left < minX)
-                    minX = child.Left;
-                if (child.Top < minY)
-                    minY = child.Top;
-                var extX = child.Left + child.Width;
-                if (extX > maxWidth)
-                    maxWidth = extX;
-                var extY = child.Top + child.Height;
-                if (extY > maxHeight)
-                    maxHeight = extY;
+            FollowChildren(element, element.Children, group);
+            return group;
+        }
+
+
+        private void ApplyGroup(FlowElementBase element, Group group)
+        {
+            group.Left = element.Left;
+            group.Top = element.Top;
+            group.Href = element.Href;
+            ApplyGroupSize(group);
+        }
+
+
+        // A group is as large as the extent of its children, from its own top left corner
+        private static void ApplyGroupSize(Group group)
+        {
+            double width = 0.0, height = 0.0;
+            foreach (var child in group.Children.OfType<FrameworkElement>())
+            {
+                if (!(FlowView.GetNode(child) is FlowElementBase node))
+                    continue;
+                width = Math.Max(width, node.Left + (double.IsNaN(node.Width) ? 0 : node.Width));
+                height = Math.Max(height, node.Top + (double.IsNaN(node.Height) ? 0 : node.Height));
             }
-            group.Width = maxWidth;
-            group.Height = maxHeight;
-            //
-            element.Left = minX;
-            element.Top = minY;
-            element.Width = maxWidth;
-            element.Height = maxHeight;
-            //
-            canvas.Children.Add(group);
+            group.Width = width;
+            group.Height = height;
         }
 
 
         /// <summary>
         /// A stack panel: its children one after another in its direction, stretched across it (see Stack)
         /// </summary>
-        private void RenderStack(FlowElementBase baseElement, Panel canvas)
+        private Stack CreateStack(FlowStack element)
         {
-            var element = baseElement as FlowStack;
             if (element == null)
-                return;
-            var stack = new Stack()
-            {
-                Left = element.Left,
-                Top = element.Top,
-                Width = element.Width,
-                Height = element.Height,
-                Direction = element.Direction.ToWpf(),
-                Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent")),
-                Opacity = 1 - element.Transparency,
-                Href = element.Href,
-            };
-            canvas.Children.Add(stack);
-            AddNavigation(element, stack);
+                return null;
+            var stack = new Stack();
             foreach (var child in element.Children)
                 RenderElement(child, stack);
+            FollowChildren(element, element.Children, stack);
+            return stack;
+        }
+
+
+        private void ApplyStack(FlowStack element, Stack stack)
+        {
+            stack.Left = element.Left;
+            stack.Top = element.Top;
+            stack.Width = element.Width;
+            stack.Height = element.Height;
+            stack.Direction = element.Direction.ToWpf();
+            stack.Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent"));
+            stack.Opacity = 1 - element.Transparency;
+            stack.Href = element.Href;
         }
 
 
@@ -1198,27 +1387,18 @@ namespace WireFlow
         /// <summary>
         /// Rectangle with a stroke and fill, and a text element inside
         /// </summary>
-        private void RenderUnknown(FlowElementBase element, Panel canvas)
+        private void ApplyUnknown(FlowElementBase element, Rectangle rect)
         {
-            var rect = new Rectangle()
-            {
-                Width = element.Width,
-                Height = element.Height,
-                Name = "UnknownObject_"+element.Type,
-            };
+            rect.Width = element.Width;
+            rect.Height = element.Height;
             Canvas.SetTop(rect, element.Top);
             Canvas.SetLeft(rect, element.Left);
 
-            Brush brush = ColorUtils.StringToBrush("Pink");
-            Brush stroke = ColorUtils.StringToBrush("Red");
-
-            rect.Fill = brush;
-            rect.Stroke = stroke;
+            rect.Fill = ColorUtils.StringToBrush("Pink");
+            rect.Stroke = ColorUtils.StringToBrush("Red");
             rect.StrokeThickness = 2;
             rect.RadiusX = rect.RadiusY;
             rect.Opacity = 1 - element.Transparency;
-
-            canvas.Children.Add(rect);
         }
 
 
@@ -1315,40 +1495,6 @@ namespace WireFlow
         #region Graphics Primitives
 
 
-        private WireFlowText AddTextBlock(FlowElement element, Panel panel)
-        {
-            if (String.IsNullOrWhiteSpace(element.Text))
-                return null;
-
-            var text = new WireFlowText
-            {
-                Width = double.NaN,
-                Height = double.NaN,
-
-                Opacity = 1 - element.Transparency,
-                FontFamily = new FontFamily(element.Font),
-                FontSize = element.FontSize,
-                FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight),
-                FontStretch = element.FontStretch.ToWpf(),
-                Foreground = ColorUtils.StringToBrush(element.Color),
-                // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
-                TextVerticalAlignment = element.VerticalAlignment.ToWpf(),
-                // Its saved Fill; transparent without one (WireFlowText keeps it a brush, so that its whole frame can be clicked)
-                Background = TextBackground(element.Fill),
-                HorizontalAlignment = element.HorizontalAlignment.ToWpf(),
-                TextAlignment = element.TextAlignment.ToWpf(),
-                TextWrapping = element.TextWrapping.ToWpf(),
-                Text = element.Text,
-                LineHeight = element.LineHeight,
-                LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
-                TextPadding = new Thickness(element.StrokeThickness),
-            };
-            panel.Children.Add(text);
-
-            return text;
-        }
-
-
         // A text's background: its saved Fill, or transparent when it has none or one that is not a color
         // (ColorUtils.StringToBrush makes an empty Fill black)
         private static Brush TextBackground(string fill)
@@ -1366,66 +1512,14 @@ namespace WireFlow
         }
 
 
-        private WireFlowRectangle AddRectangle(FlowElement element, Panel panel)
-        {
-            Color fillColor = ColorUtils.StringToColor(element.Fill, "LightGray");
-            SolidColorBrush fill = new SolidColorBrush(fillColor);
-            Color strokeColor = ColorUtils.StringToColor(element.Stroke);
-            SolidColorBrush stroke = new SolidColorBrush(strokeColor);
-
-            var rect = new WireFlowRectangle()
-            {
-                Width = double.NaN,
-                Height = double.NaN,
-
-                // Kept, so that saving writes them again (a canvas ignores them)
-                HorizontalAlignment = element.HorizontalAlignment.ToWpf(),
-                VerticalAlignment = element.VerticalAlignment.ToWpf(),
-                Opacity = 1 - element.Transparency,
-                RadiusX = element.RadiusX,
-                RadiusY = element.RadiusY,
-                StrokeThickness = element.StrokeThickness,
-                Fill = fill,
-                Stroke = stroke,
-            };
-            panel.Children.Add(rect);
-            return rect;
-        }
-
-
-        private WireFlowEllipse AddEllipse(FlowElement element, Panel panel)
-        {
-            var ellipse = new WireFlowEllipse()
-            {
-                Width = double.NaN,
-                Height = double.NaN,
-
-                // Kept, so that saving writes them again (a canvas ignores them)
-                HorizontalAlignment = element.HorizontalAlignment.ToWpf(),
-                VerticalAlignment = element.VerticalAlignment.ToWpf(),
-                Opacity = 1 - element.Transparency,
-                StrokeThickness = element.StrokeThickness,
-                Fill = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "LightGray")),
-                Stroke = new SolidColorBrush(ColorUtils.StringToColor(element.Stroke)),
-            };
-            panel.Children.Add(ellipse);
-            return ellipse;
-        }
-
-
+        // A click on a linked element follows its link, as its node has it when clicked; the innermost link wins
         private void AddNavigation(FlowElementBase link, FrameworkElement parent)
         {
-            if (String.IsNullOrWhiteSpace(link.Href))
-                return;
-
-
-            parent.Cursor = Cursors.Hand;
-
             // Hosts that follow links (the Browser) set NavigateToNodeFunc; the Designer
             // leaves it null and handles clicks through its own navigate tool.
             parent.MouseLeftButtonUp += (sender, e) =>
             {
-                if (NavigateToNodeFunc == null)
+                if (NavigateToNodeFunc == null || string.IsNullOrWhiteSpace(link.Href))
                     return;
                 e.Handled = true;
                 NavigateToNodeFunc(link.Href);
@@ -1433,27 +1527,23 @@ namespace WireFlow
         }
 
 
-        private ImageBox AddImage(FlowImage element, Panel panel)
+        // An image's control, with its picture; without one (an image not imported), an empty frame of its size
+        private ImageBox CreateImage(FlowImage element)
         {
-            if (String.IsNullOrWhiteSpace(element?.Image))
+            if (element == null)
                 return null;
-
-            var imageBits = RetrieveImageBitmap(element);
-            if (imageBits == null)
-                return null;
-
+            var imageBits = String.IsNullOrWhiteSpace(element.Image) ? null : RetrieveImageBitmap(element);
+            return new ImageBox(imageBits) { ImageFileName = element.Image };
+        }
 
 
-            ImageBox imageBox = new ImageBox(imageBits)
-            {
-                Left = element.Left,
-                Top = element.Top,
-                Width = element.Width,
-                Height = element.Height,
-                ImageFileName = element.Image,
-            };
-
-
+        private void ApplyImage(FlowImage element, ImageBox imageBox, Panel panel)
+        {
+            imageBox.Left = element.Left;
+            imageBox.Top = element.Top;
+            imageBox.Width = element.Width;
+            imageBox.Height = element.Height;
+            imageBox.Href = element.Href;
             if (element.Stretch != FlowStretch.None)
             {
                 imageBox.Stretch = element.Stretch.ToWpf();
@@ -1462,10 +1552,13 @@ namespace WireFlow
                 if (Double.IsNaN(element.Height))
                     imageBox.Height = panel.Height;
             }
-
-
-            panel.Children.Add(imageBox);
-            return imageBox;
+            else
+            {
+                imageBox.Stretch = Stretch.None;
+                // Without a size of its own, it takes its picture's
+                if (Double.IsNaN(element.Width) && imageBox.Source != null)
+                    imageBox.Source = imageBox.Source;
+            }
         }
 
 

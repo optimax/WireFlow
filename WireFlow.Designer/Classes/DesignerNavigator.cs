@@ -402,8 +402,8 @@ namespace WireFlow
                         double oldTop = Canvas.GetTop(selectedElement);
                         double oldLeft = Canvas.GetLeft(selectedElement);
 
-                        Canvas.SetTop(selectedElement, oldTop + deltaY);
-                        Canvas.SetLeft(selectedElement, oldLeft + deltaX);
+                        SetTop(selectedElement, oldTop + deltaY);
+                        SetLeft(selectedElement, oldLeft + deltaX);
                     }
                     StartPoint = mousePos;
                     IsModified = true;
@@ -596,8 +596,8 @@ namespace WireFlow
             this.InvokeWithWaitCursor(() =>
             {
                 Debug.WriteLine($"{this.GetType()}.{MethodBase.GetCurrentMethod().Name}: {CurrentPage?.Name} PAGE SAVED");
-                var pageToSave = Engine.SerializePage(CurrentPage as FlowPage, CurrentCanvas);
-                Engine.SavePage(pageToSave);
+                // Its DOM, which the edits changed
+                Engine.SavePage(CurrentPage as FlowPage);
                 IsModified = false;
             });
         }
@@ -611,8 +611,8 @@ namespace WireFlow
             this.InvokeWithWaitCursor(() =>
             {
                 Debug.WriteLine($"{this.GetType()}.{MethodBase.GetCurrentMethod().Name}: {CurrentPage?.Name} LAYOUT SAVED");
-                var pageToSave = Engine.SerializePage(CurrentPage as FlowPage, CurrentCanvas);
-                Engine.SaveLayout(pageToSave);
+                // Its DOM, which the edits changed
+                Engine.SaveLayout(CurrentPage as FlowPage);
                 IsModified = false;
             });
         }
@@ -1125,26 +1125,36 @@ namespace WireFlow
             if (Rubberband == null)
                 return;
 
+            // The tool makes the element with its defaults; it goes onto the page as its node, which the view draws
             var element = drawingTool.CreateElement();
             if (element == null)
                 return;
+            var node = Engine.ToNode(element);
+            if (node == null || !(FlowView.GetNode(CurrentLayer) is FlowLayer layer))
+                return;
 
-            element.Width = Rubberband.Width;
-            element.Height = Rubberband.Height;
+            node.Width = Rubberband.Width;
+            node.Height = Rubberband.Height;
             var start = new Point(Canvas.GetLeft(Rubberband), Canvas.GetTop(Rubberband));
             // An element drawn starting inside a stack panel becomes its last child, which the panel places
             Stack stack = FindStackAt(CurrentLayer, start);
-            if (stack != null)
+            if (stack != null && FlowView.GetNode(stack) is FlowStack stackNode)
             {
-                stack.Children.Add(element);
-                SelectElementOrItsGroup(element);
+                node.Left = 0;
+                node.Top = 0;
+                stackNode.Children.Add(node);
+                var drawn = ViewOf(node, stack);
+                if (drawn != null)
+                    SelectElementOrItsGroup(drawn);
             }
             else
             {
-                CurrentLayer.Children.Add(element);
-                Canvas.SetLeft(element, start.X);
-                Canvas.SetTop(element, start.Y);
-                SelectElement(element);
+                node.Left = start.X;
+                node.Top = start.Y;
+                layer.Elements.Add(node);
+                var drawn = ViewOf(node, CurrentLayer);
+                if (drawn != null)
+                    SelectElement(drawn);
             }
 
             IsModified = true;
@@ -1214,22 +1224,22 @@ namespace WireFlow
             if (selectedElements.Count == 0)
                 return;
 
-            var newElements = new List<FrameworkElement>();
+            // A copy of each element's node, made through its JSON as it is saved, on top of the nodes beside it
+            var copies = new List<(FlowElementBase Node, Panel Panel)>();
             foreach (var e in selectedElements)
             {
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Panel parent = lparent as Panel;
-                if (parent == null)
+                var node = NodeOf(e);
+                var siblings = SiblingsOf(node);
+                if (siblings == null || !(LogicalTreeHelper.GetParent(e) is Panel parent))
                     continue;
-                string xaml = XamlWriter.Save(e);
-                StringReader stringReader = new StringReader(xaml);
-                XmlReader xmlReader = XmlReader.Create(stringReader);
-                FrameworkElement newElement = (FrameworkElement)XamlReader.Load(xmlReader);
-                parent.Children.Add(newElement);
-                newElements.Add(newElement);
+                var copy = FlatFolderRepository.DeserializeFromJSON<FlowElementBase>(FlatFolderRepository.SerializeToJSON(node), node.Name);
+                if (copy == null)
+                    continue;
+                siblings.Add(copy);
+                copies.Add((copy, parent));
             }
             DeselectAll();
-            selectedElements.AddRange(newElements);
+            selectedElements.AddRange(copies.Select(c => ViewOf(c.Node, c.Panel)).Where(v => v != null));
             RebuildSelection();
 
             IsModified = true;
@@ -1241,17 +1251,11 @@ namespace WireFlow
         {
             if (selectedElements.Count == 0)
                 return;
-            foreach (UIElement e in selectedElements)
-            {
-                //var vparent = VisualTreeHelper.GetParent(e);
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Panel parent = lparent as Panel;
-                if (parent != null)
-                    parent.Children.Remove(e);
-                //DesignerCanvas.Children.Remove(e);
-            }
-            selectedElements.Clear();
-            CurrentElement = CurrentCanvas;
+            var nodes = selectedElements.Select(NodeOf).Where(n => n != null).ToList();
+            // Deselected first, so that the adorners go while the elements are on the page
+            DeselectAll();
+            foreach (var node in nodes)
+                SiblingsOf(node)?.Remove(node);
 
             IsModified = true;
             OnElementsChanged();
@@ -1272,43 +1276,27 @@ namespace WireFlow
             if (!CanGroup)
                 return;
 
-            var anchorElement = selectedElements[0];
-            var anchorParent = LogicalTreeHelper.GetParent(anchorElement) as Layer;
-            if (anchorParent == null)
+            if (!(NodeOf(selectedElements[0])?.Parent is FlowLayer layer))
                 return;
-            //var anchorIndex = anchorParent.Children.IndexOf(anchorElement);
-
-
-            Group group = new Group();
-            //group.Background = Brushes.Transparent;
-
-            Point pos = new Point();
             var bounds = GetGroupBounds(selectedElements);
-
-            // Reparent and reposition the elements
-            foreach (FrameworkElement e in selectedElements)
-            {
-                pos.X = Canvas.GetLeft(e);
-                pos.Y = Canvas.GetTop(e);
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Panel parent = lparent as Panel;
-                if (parent != null)
-                {
-                    parent.Children.Remove(e);
-                    group.Children.Add(e);
-                    Canvas.SetLeft(e, pos.X - bounds.X);
-                    Canvas.SetTop(e, pos.Y - bounds.Y);
-                }
-            }
-            group.Width = bounds.Width;
-            group.Height = bounds.Height;
-            Canvas.SetLeft(group, bounds.Left);
-            Canvas.SetTop(group, bounds.Top);
-
-            anchorParent.Children.Add(group);
-
+            // The selected elements of the anchor's layer, in their order on it, bottom first
+            var nodes = selectedElements.Select(NodeOf).Where(n => n != null && n.Parent == layer).OrderBy(n => layer.Elements.IndexOf(n)).ToList();
             DeselectAll();
-            SelectElement(group);
+
+            var group = new FlowGroup { Type = "group", Left = bounds.Left, Top = bounds.Top, Width = bounds.Width, Height = bounds.Height };
+            // Reparent and reposition the elements
+            foreach (var node in nodes)
+            {
+                layer.Elements.Remove(node);
+                node.Left -= bounds.X;
+                node.Top -= bounds.Y;
+                group.Children.Add(node);
+            }
+            layer.Elements.Add(group);
+
+            var drawn = ViewOf(group, CurrentLayer);
+            if (drawn != null)
+                SelectElement(drawn);
 
             IsModified = true;
             OnElementsChanged();
@@ -1351,22 +1339,23 @@ namespace WireFlow
 
         public void UngroupSelected()
         {
-            List<FrameworkElement> list = new List<FrameworkElement>();
-
-            foreach (FrameworkElement e in selectedElements)
-            {
-                Canvas c = e as Canvas;
-                if (c == null)
-                {
-                    list.Add(e);
-                    continue;
-                }
-                UngroupElement(c, list);
-            }
+            var selection = selectedElements.ToList();
             DeselectAll();
-            foreach (FrameworkElement e in list)
+            var nodes = new List<FlowElementBase>();
+            foreach (FrameworkElement e in selection)
             {
-                SelectElement(e);
+                var node = NodeOf(e);
+                // Groups and stack panels; a part reference keeps its part
+                if (node is FlowGroup group && !(node is FlowPart) && e is Panel panel)
+                    UngroupNode(group, panel, nodes);
+                else if (node != null)
+                    nodes.Add(node);
+            }
+            foreach (var node in nodes)
+            {
+                var drawn = ViewOf(node, CurrentLayer);
+                if (drawn != null)
+                    SelectElement(drawn);
             }
 
             IsModified = true;
@@ -1374,42 +1363,35 @@ namespace WireFlow
         }
 
 
-        public void UngroupElement(Canvas group, List<FrameworkElement> newSelection)
+        /// <summary>
+        /// Puts a group's or stack panel's children in its place in its layer, where they are on the page (as drawn, which
+        /// is where a stack panel put them), and takes it away.
+        /// </summary>
+        private static void UngroupNode(FlowGroup group, Panel panel, List<FlowElementBase> released)
         {
-            // Remember the layer
-            var groupLayer = LogicalTreeHelper.GetParent(group) as Layer;
-            if (groupLayer == null)
+            if (!(group.Parent is FlowLayer layer))
                 return;
-            var groupIndex = groupLayer.Children.IndexOf(group);
-            // Collect the elements of the group
-            List<FrameworkElement> list = group.Children.Cast<FrameworkElement>().ToList();
-            Point groupPos = new Point()
+            int index = layer.Elements.IndexOf(group);
+            var children = group.Children.ToList();
+            var places = children.Select(child => ViewOf(child, panel))
+                .Select(v => v == null ? (Rect?)null : new Rect(Canvas.GetLeft(v), Canvas.GetTop(v), v.Width, v.Height)).ToList();
+            layer.Elements.Remove(group);
+            for (int i = 0; i < children.Count; i++)
             {
-                X = Canvas.GetLeft(group),
-                Y = Canvas.GetTop(group)
-            };
-            // Delete the group-canvas from its parent
-            groupLayer.Children.Remove(group);
-            // Reparent all elements to the Layer
-            foreach (FrameworkElement element in list)
-            {
-                double x = Canvas.GetLeft(element);
-                double y = Canvas.GetTop(element);
-                x += groupPos.X;
-                y += groupPos.Y;
-                group.Children.Remove(element);
-
-
-                groupLayer.Children.Insert(groupIndex, element);
-                groupIndex++;
-
-                Canvas.SetLeft(element, x);
-                Canvas.SetTop(element, y);
+                var child = children[i];
+                group.Children.Remove(child);
+                if (places[i] is Rect place)
+                {
+                    child.Left = place.X;
+                    child.Top = place.Y;
+                    child.Width = place.Width;
+                    child.Height = place.Height;
+                }
+                child.Left += group.Left;
+                child.Top += group.Top;
+                layer.Elements.Insert(index++, child);
             }
-            // Select elements of teh original group
-            newSelection.AddRange(list);
-
-            IsModified = true;
+            released.AddRange(children);
         }
 
 
@@ -1426,13 +1408,13 @@ namespace WireFlow
                 return;
             if (selectedElements.Count == 1)
             {
-                Canvas.SetTop(anchorElement, 0);
+                SetTop(anchorElement, 0);
                 return;
             }
             var top = Canvas.GetTop(anchorElement);
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetTop(e, top);
+                SetTop(e, top);
             }
             IsModified = true;
         }
@@ -1445,13 +1427,13 @@ namespace WireFlow
                 return;
             if (selectedElements.Count == 1)
             {
-                Canvas.SetTop(anchorElement, CurrentCanvas.Height - anchorElement.Height);
+                SetTop(anchorElement, CurrentCanvas.Height - anchorElement.Height);
                 return;
             }
             var bottom = Canvas.GetTop(anchorElement) + anchorElement.Height;
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetTop(e, bottom - e.Height);
+                SetTop(e, bottom - e.Height);
             }
             IsModified = true;
         }
@@ -1464,13 +1446,13 @@ namespace WireFlow
                 return;
             if (selectedElements.Count == 1)
             {
-                Canvas.SetLeft(anchorElement, 0);
+                SetLeft(anchorElement, 0);
                 return;
             }
             var left = Canvas.GetLeft(anchorElement);
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetLeft(e, left);
+                SetLeft(e, left);
             }
             IsModified = true;
         }
@@ -1483,13 +1465,13 @@ namespace WireFlow
                 return;
             if (selectedElements.Count == 1)
             {
-                Canvas.SetLeft(anchorElement, CurrentCanvas.Width - anchorElement.Width);
+                SetLeft(anchorElement, CurrentCanvas.Width - anchorElement.Width);
                 return;
             }
             var right = Canvas.GetLeft(anchorElement) + anchorElement.Width;
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetLeft(e, right - e.Width);
+                SetLeft(e, right - e.Width);
             }
             IsModified = true;
         }
@@ -1504,13 +1486,13 @@ namespace WireFlow
             if (selectedElements.Count == 1)
             {
                 var hCenter = CurrentCanvas.Width / 2;
-                Canvas.SetLeft(anchorElement, hCenter - anchorElement.Width / 2);
+                SetLeft(anchorElement, hCenter - anchorElement.Width / 2);
                 return;
             }
             var center = Canvas.GetLeft(anchorElement) + anchorElement.Width / 2;
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetLeft(e, center - (e.Width / 2));
+                SetLeft(e, center - (e.Width / 2));
             }
             IsModified = true;
         }
@@ -1524,13 +1506,13 @@ namespace WireFlow
             if (selectedElements.Count == 1)
             {
                 var vCenter = CurrentCanvas.Height / 2;
-                Canvas.SetTop(anchorElement, vCenter - anchorElement.Height / 2);
+                SetTop(anchorElement, vCenter - anchorElement.Height / 2);
                 return;
             }
             var center = Canvas.GetTop(anchorElement) + (anchorElement.Height / 2);
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetTop(e, center - (e.Height / 2));
+                SetTop(e, center - (e.Height / 2));
             }
             IsModified = true;
         }
@@ -1545,14 +1527,14 @@ namespace WireFlow
             var vCenter = CurrentCanvas.Height / 2;
             if (selectedElements.Count == 1)
             {
-                Canvas.SetLeft(anchorElement, hCenter - anchorElement.Width / 2);
-                Canvas.SetTop(anchorElement, vCenter - anchorElement.Height / 2);
+                SetLeft(anchorElement, hCenter - anchorElement.Width / 2);
+                SetTop(anchorElement, vCenter - anchorElement.Height / 2);
                 return;
             }
             foreach (FrameworkElement e in selectedElements)
             {
-                Canvas.SetTop(e, vCenter - (e.Height / 2));
-                Canvas.SetLeft(e, hCenter - (e.Width / 2));
+                SetTop(e, vCenter - (e.Height / 2));
+                SetLeft(e, hCenter - (e.Width / 2));
             }
             IsModified = true;
         }
@@ -1594,7 +1576,7 @@ namespace WireFlow
             {
                 if (e == leftAnchor || e == rightAnchor)
                     continue;
-                Canvas.SetLeft(e, leftExtent);
+                SetLeft(e, leftExtent);
                 leftExtent += e.Width + spacing;
             }
             IsModified = true;
@@ -1637,7 +1619,7 @@ namespace WireFlow
             {
                 if (e == topAnchor || e == bottomAnchor)
                     continue;
-                Canvas.SetTop(e, topExtent);
+                SetTop(e, topExtent);
                 topExtent += e.Height + spacing;
             }
             IsModified = true;
@@ -1717,7 +1699,7 @@ namespace WireFlow
                         }
                     }
                 }
-                Canvas.SetLeft(e, newLeft);
+                SetLeft(e, newLeft);
             }
 
             IsModified = true;
@@ -1797,7 +1779,7 @@ namespace WireFlow
                         }
                     }
                 }
-                Canvas.SetTop(e, newTop);
+                SetTop(e, newTop);
             }
 
             IsModified = true;
@@ -1809,12 +1791,12 @@ namespace WireFlow
         {
             ApplyToSelected(e =>
             {
-                Canvas.SetLeft(e, Canvas.GetLeft(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+                SetLeft(e, Canvas.GetLeft(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             });
             //if (!selectedElements.Any())
             //    return;
             //foreach (FrameworkElement e in selectedElements)
-            //    Canvas.SetLeft(e, Canvas.GetLeft(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+            //    SetLeft(e, Canvas.GetLeft(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             //IsModified = true;
         }
 
@@ -1823,12 +1805,12 @@ namespace WireFlow
         {
             ApplyToSelected(e =>
             {
-                Canvas.SetLeft(e, Canvas.GetLeft(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+                SetLeft(e, Canvas.GetLeft(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             });
             //if (!selectedElements.Any())
             //    return;
             //foreach (FrameworkElement e in selectedElements)
-            //    Canvas.SetLeft(e, Canvas.GetLeft(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+            //    SetLeft(e, Canvas.GetLeft(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             //IsModified = true;
         }
 
@@ -1837,12 +1819,12 @@ namespace WireFlow
         {
             ApplyToSelected(e =>
             {
-                Canvas.SetTop(e, Canvas.GetTop(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+                SetTop(e, Canvas.GetTop(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             });
             //if (!selectedElements.Any())
             //    return;
             //foreach (FrameworkElement e in selectedElements)
-            //    Canvas.SetTop(e, Canvas.GetTop(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+            //    SetTop(e, Canvas.GetTop(e) - (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             //IsModified = true;
         }
 
@@ -1851,12 +1833,12 @@ namespace WireFlow
         {
             ApplyToSelected(e =>
             {
-                Canvas.SetTop(e, Canvas.GetTop(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+                SetTop(e, Canvas.GetTop(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             });
             //if (!selectedElements.Any())
             //    return;
             //foreach (FrameworkElement e in selectedElements)
-            //    Canvas.SetTop(e, Canvas.GetTop(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
+            //    SetTop(e, Canvas.GetTop(e) + (IsShiftPressed ? 10 : IsCtrlPressed ? 5 : 1));
             //IsModified = true;
         }
 
@@ -1876,12 +1858,12 @@ namespace WireFlow
             IsModified = true;
             if (selectedElements.Count == 1)
             {
-                anchorElement.Width = CurrentCanvas.Width;
+                SetWidth(anchorElement, CurrentCanvas.Width);
                 return;
             }
             var w = anchorElement.Width;
             foreach (FrameworkElement e in selectedElements)
-                e.Width = w;
+                SetWidth(e, w);
         }
 
 
@@ -1893,12 +1875,12 @@ namespace WireFlow
             IsModified = true;
             if (selectedElements.Count == 1)
             {
-                anchorElement.Height = CurrentCanvas.Height;
+                SetHeight(anchorElement, CurrentCanvas.Height);
                 return;
             }
             var h = anchorElement.Height;
             foreach (FrameworkElement e in selectedElements)
-                e.Height = h;
+                SetHeight(e, h);
         }
 
 
@@ -1912,16 +1894,16 @@ namespace WireFlow
             IsModified = true;
             if (selectedElements.Count == 1)
             {
-                anchorElement.Width = CurrentCanvas.Width;
-                anchorElement.Height = CurrentCanvas.Height;
+                SetWidth(anchorElement, CurrentCanvas.Width);
+                SetHeight(anchorElement, CurrentCanvas.Height);
                 return;
             }
             var w = anchorElement.Width;
             var h = anchorElement.Height;
             foreach (FrameworkElement e in selectedElements)
             {
-                e.Width = w;
-                e.Height = h;
+                SetWidth(e, w);
+                SetHeight(e, h);
             }
         }
 
@@ -1932,16 +1914,16 @@ namespace WireFlow
             ApplyToSelected(e =>
             {
                 var temp = e.Width;
-                e.Width = e.Height;
-                e.Height = temp;
+                SetWidth(e, e.Height);
+                SetHeight(e, temp);
             });
             //if (!selectedElements.Any())
             //    return;
             //foreach (FrameworkElement e in selectedElements)
             //{
             //    var temp = e.Width;
-            //    e.Width = e.Height;
-            //    e.Height = temp;
+            //    SetWidth(e, e.Height);
+            //    SetHeight(e, temp);
             //}
             //IsModified = true;
         }
@@ -1954,148 +1936,92 @@ namespace WireFlow
 
         #region Z-Order
 
-        public void ObjectSendBackward()
+        public void ObjectSendBackward() => Reorder((index, count) => Math.Max(index - 1, 0));
+
+
+        public void ObjectBringForward() => Reorder((index, count) => Math.Min(index + 1, count - 1));
+
+
+        public void ObjectSendToBack() => Reorder((index, count) => 0);
+
+
+        public void ObjectBringToFront() => Reorder((index, count) => count - 1);
+
+
+        // Moves each selected element's node to the place among the nodes beside it that place gives, from its own place and their count
+        private void Reorder(Func<int, int, int> place)
         {
             ApplyToSelected(e =>
             {
-                //var vparent = VisualTreeHelper.GetParent(e);
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Canvas parent = lparent as Canvas;
-                if (parent != null)
-                {
-                    int i = parent.Children.IndexOf(e);
-                    if (i > 0)
-                    {
-                        parent.Children.RemoveAt(i);
-                        parent.Children.Insert(i - 1, e);
-                    }
-                }
+                var node = NodeOf(e);
+                if (!(SiblingsOf(node) is System.Collections.ObjectModel.ObservableCollection<FlowElementBase> siblings))
+                    return;
+                int index = siblings.IndexOf(node);
+                int target = place(index, siblings.Count);
+                if (target != index)
+                    siblings.Move(index, target);
             });
             OnElementsChanged();
-            //if (!HasElementsSelected)
-            //    return;
-            //foreach (UIElement e in selectedElements)
-            //{
-            //    //var vparent = VisualTreeHelper.GetParent(e);
-            //    var lparent = LogicalTreeHelper.GetParent(e);
-            //    Canvas parent = lparent as Canvas;
-            //    if (parent != null)
-            //    {
-            //        int i = parent.Children.IndexOf(e);
-            //        if (i > 0)
-            //        {
-            //            parent.Children.RemoveAt(i);
-            //            parent.Children.Insert(i - 1, e);
-            //        }
-            //    }
-            //}
-            //IsModified = true;
         }
 
 
-        public void ObjectBringForward()
+        #endregion
+
+
+
+        #region DOM
+
+
+        /// <summary>The DOM node an element on the page shows; null for one that shows none.</summary>
+        private static FlowElementBase NodeOf(UIElement e) => FlowView.GetNode(e) as FlowElementBase;
+
+
+        // An element's position and size change in its node, which the view follows
+        private static void SetLeft(UIElement e, double value)
         {
-            ApplyToSelected(e =>
-            {
-                //var vparent = VisualTreeHelper.GetParent(e);
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Canvas parent = lparent as Canvas;
-                if (parent != null)
-                {
-                    int i = parent.Children.IndexOf(e);
-                    if (i < parent.Children.Count - 1)
-                    {
-                        parent.Children.RemoveAt(i);
-                        parent.Children.Insert(i + 1, e);
-                    }
-                }
-            });
-            OnElementsChanged();
-            //if (!HasElementsSelected)
-            //    return;
-            //foreach (FrameworkElement e in selectedElements)
-            //{
-            //    //var vparent = VisualTreeHelper.GetParent(e);
-            //    var lparent = LogicalTreeHelper.GetParent(e);
-            //    Canvas parent = lparent as Canvas;
-            //    if (parent != null)
-            //    {
-            //        int i = parent.Children.IndexOf(e);
-            //        if (i < parent.Children.Count - 1)
-            //        {
-            //            parent.Children.RemoveAt(i);
-            //            parent.Children.Insert(i + 1, e);
-            //        }
-            //    }
-            //}
-            //IsModified = true;
+            if (NodeOf(e) is FlowElementBase node)
+                node.Left = value;
         }
 
 
-        public void ObjectSendToBack()
+        private static void SetTop(UIElement e, double value)
         {
-            ApplyToSelected(e =>
-            {
-                //var vparent = VisualTreeHelper.GetParent(e);
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Canvas parent = lparent as Canvas;
-                if (parent != null)
-                {
-                    int i = parent.Children.IndexOf(e);
-                    parent.Children.RemoveAt(i);
-                    parent.Children.Insert(0, e);
-                }
-            });
-            OnElementsChanged();
-            //if (!HasElementsSelected)
-            //    return;
-            //foreach (FrameworkElement e in selectedElements)
-            //{
-            //    //var vparent = VisualTreeHelper.GetParent(e);
-            //    var lparent = LogicalTreeHelper.GetParent(e);
-            //    Canvas parent = lparent as Canvas;
-            //    if (parent != null)
-            //    {
-            //        int i = parent.Children.IndexOf(e);
-            //        parent.Children.RemoveAt(i);
-            //        parent.Children.Insert(0, e);
-            //    }
-            //}
-            //IsModified = true;
+            if (NodeOf(e) is FlowElementBase node)
+                node.Top = value;
         }
 
 
-        public void ObjectBringToFront()
+        private static void SetWidth(UIElement e, double value)
         {
-            ApplyToSelected( e =>
-            {
-                //var vparent = VisualTreeHelper.GetParent(e);
-                var lparent = LogicalTreeHelper.GetParent(e);
-                Canvas parent = lparent as Canvas;
-                if (parent != null)
-                {
-                    int i = parent.Children.IndexOf(e);
-                    parent.Children.RemoveAt(i);
-                    parent.Children.Insert(parent.Children.Count, e);
-                }
+            if (NodeOf(e) is FlowElementBase node)
+                node.Width = value;
+        }
 
-            });
-            OnElementsChanged();
-            //if (!HasElementsSelected)
-            //    return;
-            //foreach (FrameworkElement e in selectedElements)
-            //{
-            //    //var vparent = VisualTreeHelper.GetParent(e);
-            //    var lparent = LogicalTreeHelper.GetParent(e);
-            //    Canvas parent = lparent as Canvas;
-            //    if (parent != null)
-            //    {
-            //        int i = parent.Children.IndexOf(e);
-            //        parent.Children.RemoveAt(i);
-            //        parent.Children.Insert(parent.Children.Count, e);
-            //    }
-            //}
-            //IsModified = true;
+
+        private static void SetHeight(UIElement e, double value)
+        {
+            if (NodeOf(e) is FlowElementBase node)
+                node.Height = value;
+        }
+
+
+        /// <summary>The element that shows a node in a panel; null if there is none.</summary>
+        private static FrameworkElement ViewOf(FlowBase node, Panel panel) =>
+            panel?.Children.OfType<FrameworkElement>().FirstOrDefault(e => FlowView.GetNode(e) == node);
+
+
+        /// <summary>The nodes beside a node in the node holding it (its layer's elements, its group's children); null for none.</summary>
+        private static IList<FlowElementBase> SiblingsOf(FlowElementBase node)
+        {
+            switch (node?.Parent)
+            {
+                case FlowLayer layer:
+                    return layer.Elements;
+                case FlowGroup group:
+                    return group.Children;
+                default:
+                    return null;
+            }
         }
 
 

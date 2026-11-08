@@ -14,8 +14,8 @@ namespace WireFlow
 
         public string ImageFileName { get; set; }
 
-        public double SourceWidth => Source.Width;
-        public double SourceHeight => Source.Height;
+        public double SourceWidth => Source?.Width ?? 0;
+        public double SourceHeight => Source?.Height ?? 0;
 
         public int PixelWidth => pixelWidth;
         public int PixelHeight => pixelHeight;

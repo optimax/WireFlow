@@ -373,7 +373,7 @@
                                     x:Name="PropertyGrid"
                                     NameColumnWidth="160"
                                     BorderThickness="0"
-                                    SelectedObject="{Binding CurrentElement}"
+                                    SelectedObject="{Binding CurrentProperties}"
                                     Background="{DynamicResource ListBackgroundBrush}"
                                     Foreground="{DynamicResource LightLightColorBrush}"
                                     CategoryBackground="{DynamicResource DarkDarkDarkBrush}"

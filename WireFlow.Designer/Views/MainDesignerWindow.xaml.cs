@@ -249,6 +249,20 @@ namespace WireFlow
         }
 
 
+        /// <summary>What Properties shows: the DOM node of the element selected, or of the page when none is.</summary>
+        public object CurrentProperties
+        {
+            get
+            {
+                var element = CurrentElement;
+                if (element == null || CurrentDesigner == null)
+                    return null;
+                var node = FlowView.GetNode(element) ?? (element == CurrentCanvas ? CurrentDesigner.CurrentPage : null);
+                return node == null ? null : new NodeProperties(node, Engine);
+            }
+        }
+
+
 
 
 
@@ -672,6 +686,7 @@ namespace WireFlow
             //TODO: This is likely where we can create a wrapper around the element to only show the correct properties.
 
             OnPropertyChanged(nameof(CurrentElement));
+            OnPropertyChanged(nameof(CurrentProperties));
             if (sender == CurrentDesigner)
                 UpdateOutlineHighlight();
         }
