@@ -94,7 +94,7 @@ Done. Every element with an extent now has Href, under Properties → Navigation
 - The Browser and the Designer's Navigate tool behave alike.
 - Links are saved with the page; existing files need no conversion.
 
-## [>>WORKING<<] Convert to a DOM (Both)
+## [QUESTION] Convert to a DOM (Both)
 
 This applies to both the Designer and Browser. 
 
@@ -108,9 +108,13 @@ Plan, in phases; each one is committed on its own, with the Designer and the Bro
 4. Edits go through the DOM. Properties shows the selected element's node; drawing, moving, resizing, deleting, duplicating, grouping and ordering change nodes, and the view follows. This is also what Undo/Redo (the next task) will record.
 5. The Browser draws the DOM through the same view, read-only.
 
-Progress: phases 1 and 2 are done. The Flow* classes use no WPF type any more (the project no longer uses WPF); they tell of every change of their properties and children, and each node knows its parent. The files are unchanged: all 30 documents of the 7 sample projects read and write back the same JSON. Nothing changes in the Designer yet: phase 3 is next.
+Done, all five phases, under the assumptions of the questions below (still open, hence [QUESTION]). Phases 3 to 5 were done together rather than one by one: with saving writing the DOM, an edit still made on the WPF elements would have been lost, so the view following the DOM and the Designer editing it had to arrive at once.
 
-Found while testing: drawn and saved again through WPF, as the Designer saves today, a page loses detail: a color name such as White comes back as #FFFFFFFF, a rectangle without a stroke gets a black one, and a group's automatic size becomes fixed numbers. Phase 3, in which saving writes the DOM and not the WPF tree, ends that.
+- The DOM is the model. The Designer keeps each open page or layout as its DOM, and saves the DOM; the Browser draws the DOM it reads. The WPF elements are a view: each is tied to its node and follows it, in place, so the selection stays on it; adding, removing or reordering a layer's or group's nodes adds, removes or reorders their elements.
+- Every edit changes nodes: drawing, moving (mouse and arrow keys), resizing, aligning, distributing, stacking, sizing, duplicating, deleting, grouping, ungrouping and ordering. Undo/Redo can record them at the DOM.
+- Properties shows the selected element's own properties for its kind (a rectangle no longer lists fonts, margins or cursors), under the names it had (TextPadding, BorderColor, TextVerticalAlignment, ...), and the page's size and background when nothing is selected. Colors keep the swatch and the color dialog; the text position keeps its chooser.
+- Saving no longer loses detail: color names stay names, a rectangle without a stroke keeps none, a group's size is not fixed. All 8 pages of the sample project, drawn and saved unchanged, write the same JSON.
+- Tested with scripts (view and Properties: 26 checks; the Designer's operations: 18 checks), not by hand in the running Designer: please try drawing, moving, resizing, grouping and Properties.
 
 **Q1: I am making the existing Flow* classes the DOM (observable and WPF-free), rather than adding a separate set of DOM classes beside them, and keeping the `.wf` format unchanged. OK?**
 
