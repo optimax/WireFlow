@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace WireFlow
 {
@@ -26,8 +28,9 @@ namespace WireFlow
         public SelectImageViewModel(WireFlowEngine engine)
         {
             Engine = engine;
-            var projectImages = Engine.Images;
-            Images = new ObservableCollection<string>(projectImages);
+            // A project without images may have no list of them
+            IEnumerable<string> projectImages = Engine?.Images;
+            Images = new ObservableCollection<string>(projectImages ?? Array.Empty<string>());
         }
 
 

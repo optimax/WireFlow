@@ -46,9 +46,15 @@ Done. With several objects selected, Properties shows the rows that all of them 
 - Rows are matched by the name they are shown under, so a text's Background (its fill) is not shared with a rectangle's Fill.
 - Tested with a script, not by hand in the running Designer.
 
-## BUG: Image Crashes App
+## [DONE] BUG: Image Crashes App
 
 Placing an image object on a page crashes the app.
+
+Fixed. The image dialog still asked for a style of the old look, which the themes no longer have, so it failed as it opened, and the Designer with it. It now opens, lists the project's images, and the image chosen is placed.
+
+- A placed image now keeps its Uniform stretch: it was saved as None and drawn at its natural size.
+- A project without images opens the dialog with an empty list rather than failing.
+- Checked with a script that builds the dialog and places an image; not by hand in the running Designer.
 
 ## BUG: Color Selection Dialog Controls
 

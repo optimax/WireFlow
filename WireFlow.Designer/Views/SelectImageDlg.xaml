@@ -27,7 +27,7 @@
             </ListBox>
         </DockPanel>
 
-        <DockPanel Grid.Row="1" HorizontalAlignment="Stretch" Style="{StaticResource {x:Type Panel}}">
+        <DockPanel Grid.Row="1" HorizontalAlignment="Stretch">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right" Margin="0,0,20,0">
                 <Button Content="OK" Width="42" Margin="5" Click="ButtonOK_Click"/>
                 <Button Content="Cancel" Width="42" Margin="5" Click="ButtonCancel_Click" />

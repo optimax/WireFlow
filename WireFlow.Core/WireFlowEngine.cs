@@ -645,6 +645,7 @@ namespace WireFlow
                 Type = "image",
                 Name = string.IsNullOrWhiteSpace(img.Name)?null:img.Name,
                 Image = img.ImageFileName,
+                Stretch = img.Stretch.ToFlow(),
                 Left = img.Left,
                 Top = img.Top,
                 Height = img.Height,
