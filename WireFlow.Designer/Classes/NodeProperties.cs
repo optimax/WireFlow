@@ -26,7 +26,7 @@ namespace WireFlow
 
         private static readonly Shown[] Position = { P("Left", "Layout"), P("Top", "Layout") };
         private static readonly Shown[] Size = { P("Width", "Layout"), P("Height", "Layout") };
-        private static readonly Shown[] Common = { P("Name", "Common"), P("Href", "Navigation") };
+        private static readonly Shown[] Common = { P("Name", "Common"), P("ID", "Common", "Id"), P("Href", "Navigation") };
         private static readonly Shown[] Font =
         {
             P("Color", "Text", "Foreground"), P("Font", "Text", "FontFamily"), P("FontSize", "Text"), P("FontWeight", "Text"),
@@ -62,14 +62,14 @@ namespace WireFlow
             {
                 P("Direction", "Layout"), P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"),
             }).ToArray(),
-            ["part"] = new[] { P("Name", "Common", "Part"), P("Href", "Navigation") }.Concat(Position).Concat(Size).ToArray(),
+            ["part"] = new[] { P("Name", "Common", "Part"), P("ID", "Common", "Id"), P("Href", "Navigation") }.Concat(Position).Concat(Size).ToArray(),
         };
 
-        private static readonly Shown[] Unknown = new[] { P("Name", "Common"), P("Type", "Common", readOnly: true) }.Concat(Position).Concat(Size).ToArray();
+        private static readonly Shown[] Unknown = new[] { P("Name", "Common"), P("ID", "Common", "Id"), P("Type", "Common", readOnly: true) }.Concat(Position).Concat(Size).ToArray();
 
         private static readonly Shown[] Page =
         {
-            P("Name", "Common", readOnly: true), P("Master", "Common", "Layout", readOnly: true),
+            P("Name", "Common", readOnly: true), P("ID", "Common", "Id"), P("Master", "Common", "Layout", readOnly: true),
             P("Width", "Layout"), P("Height", "Layout"), P("Background", "Appearance"),
         };
 
@@ -116,7 +116,8 @@ namespace WireFlow
             var list = new List<PropertyDescriptor>();
             foreach (PropertyDescriptor first in parts[0].Properties)
             {
-                if (first.Name == "Name")
+                // Each keeps its own name and ID
+                if (first.Name == "Name" || first.Name == "ID")
                     continue;
                 var each = parts.Select(p => p.Properties[first.Name]).ToArray();
                 if (each.Any(d => d == null || d.PropertyType != first.PropertyType))

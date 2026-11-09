@@ -150,9 +150,19 @@ The Properties grid should identify the type of the currently selected node, ins
 
 Done. The header names what is selected: Rectangle, Ellipse, Text, Box, Image, Group, Stack Panel, Part, Page or Layout, followed by its name; with several selected, "3 objects". Checked by a script; not by hand.
 
-## ID Property
+## [QUESTION] ID Property
 
 In addition to Name, every element should define a common property ID. The ID should be the target/content of an Href link.
+
+Done, under the assumptions below. Every element, and every page and layout, has an ID in Properties (under Common, after Name), empty until you set one; it is saved with the project. A link (Href) can name a page, as before, or an ID: the ID of a page leads to that page, and the ID of an element leads to the page that holds it. This works in the Browser and with the Designer's Navigate tool. Names and IDs compare ignoring case, as page names do. With several objects selected, Properties does not offer ID (each keeps its own), as it does not offer Name. Checked by a script against a copy of a sample project; not by hand.
+
+**Q1: Should a new element get an ID by itself (say `rect-12`, unique in the project), or stay without one until you give it one, as now?**
+
+**Q2: Should the Designer refuse an ID that another element or page already has? Now nothing checks, and a link goes to the first page found that has it.**
+
+**Q3: When a link names an element's ID, the Browser opens the page holding it. Should it also show which element (scroll it into view, mark it briefly)?**
+
+**Q4: Should links keep naming pages by name, or should they name IDs only? Both work now; a page's name is tried first.**
 
 ## Property Grid and Arrow Keys
 

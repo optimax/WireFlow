@@ -511,7 +511,8 @@ namespace WireFlow
             if (href == null)
                 return;
             //TODO: Instead of navigating to page directly, ask the main window to do it, which in turn may call NavigateToPage, but then it may switch to an already open tab.
-            OnNavigating(href);
+            // A link names a page, or the ID of a page or of an element on one
+            OnNavigating(Engine.PageOfHref(href) ?? href);
             //NavigateToPage(href) is called by the Navigation Manager, not here!
         }
 

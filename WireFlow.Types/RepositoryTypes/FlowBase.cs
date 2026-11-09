@@ -12,6 +12,7 @@ namespace WireFlow
     public class FlowBase : INotifyPropertyChanged
     {
         private string name;
+        private string id;
         private string type;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -20,6 +21,13 @@ namespace WireFlow
         {
             get => name;
             set => Set(ref name, value);
+        }
+
+        /// <summary>What a link (an element's Href) can name to lead here: to this page, or to the page holding this element.</summary>
+        public string Id
+        {
+            get => id;
+            set => Set(ref id, value);
         }
 
         public string Type

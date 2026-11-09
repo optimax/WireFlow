@@ -215,6 +215,34 @@ namespace WireFlow
             return Repository.GetMasterPage(nodeName);
         }
 
+        /// <summary>
+        /// The name of the page a link goes to: the page of that name, else the page with that ID, else the page holding an element
+        /// (or layer) with that ID; null when there is none. Names and IDs compare ignoring case.
+        /// </summary>
+        public string PageOfHref(string href)
+        {
+            if (string.IsNullOrWhiteSpace(href))
+                return null;
+            var names = Pages ?? new List<string>();
+            var named = names.FirstOrDefault(n => string.Equals(n, href, StringComparison.OrdinalIgnoreCase));
+            if (named != null)
+                return named;
+            var pages = names.Select(n => (Name: n, Page: GetPage(n))).Where(p => p.Page != null).ToList();
+            var withId = pages.FirstOrDefault(p => IsId(p.Page, href));
+            if (withId.Page != null)
+                return withId.Name;
+            var holding = pages.FirstOrDefault(p => p.Page.Layers?.Any(layer => IsId(layer, href) || HoldsId(layer.Elements, href)) == true);
+            return holding.Page != null ? holding.Name : null;
+        }
+
+
+        private static bool IsId(FlowBase node, string id) => string.Equals(node?.Id, id, StringComparison.OrdinalIgnoreCase);
+
+
+        private static bool HoldsId(IEnumerable<FlowElementBase> elements, string id) =>
+            elements?.Any(e => IsId(e, id) || (e is FlowGroup group && HoldsId(group.Children, id))) == true;
+
+
         public FlowPage GetPage(string nodeName)
         {
             return Repository.GetPage(nodeName);

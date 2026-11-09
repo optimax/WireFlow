@@ -29,14 +29,14 @@ namespace WireFlow
 
 
     /// <summary>
-    /// Writes Type and Name before the other properties, so that each object shows first what it is.
+    /// Writes Type, Name and Id before the other properties, so that each object shows first what it is.
     /// </summary>
     public class KindFirstContractResolver : DefaultContractResolver
     {
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
         {
             return base.CreateProperties(type, memberSerialization)
-                .OrderBy(p => p.PropertyName == nameof(FlowBase.Type) ? 0 : p.PropertyName == nameof(FlowBase.Name) ? 1 : 2)
+                .OrderBy(p => p.PropertyName == nameof(FlowBase.Type) ? 0 : p.PropertyName == nameof(FlowBase.Name) ? 1 : p.PropertyName == nameof(FlowBase.Id) ? 2 : 3)
                 .ToList();
         }
     }
