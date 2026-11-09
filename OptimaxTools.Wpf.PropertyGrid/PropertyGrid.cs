@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -124,9 +125,14 @@ namespace OptimaxTools.Wpf
         public string SelectedObjectName => (string)GetValue(SelectedObjectNameProperty);
 
 
+        // The rows' host in the template
+        private ItemsControl propertiesHost;
+
+
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+            propertiesHost = GetTemplateChild("PART_Properties") as ItemsControl;
             if (GetTemplateChild("PART_ClearFilter") is ButtonBase clear)
                 clear.Click += (sender, e) => Filter = string.Empty;
             if (GetTemplateChild("PART_Filter") is TextBox filter)
@@ -138,6 +144,77 @@ namespace OptimaxTools.Wpf
                         e.Handled = true;
                     }
                 };
+        }
+
+
+        // Up and Down move to the value of the row above or below, as in a spreadsheet; a value typed is set as its box loses the focus.
+        // An open list and a text of several lines keep the keys while they have somewhere to go.
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+            if (e.Handled || (e.Key != Key.Up && e.Key != Key.Down) || Keyboard.Modifiers != ModifierKeys.None)
+                return;
+            var focused = Keyboard.FocusedElement as DependencyObject;
+            if (propertiesHost == null || Properties == null || focused == null || !propertiesHost.IsAncestorOf(focused))
+                return;
+            if (focused is ComboBox combo && combo.IsDropDownOpen)
+                return;
+            bool down = e.Key == Key.Down;
+            if (focused is TextBox box && box.AcceptsReturn)
+            {
+                int line = box.GetLineIndexFromCharacterIndex(box.CaretIndex);
+                if (down ? line < box.LineCount - 1 : line > 0)
+                    return;
+            }
+            PropertyItem current = null;
+            for (var node = focused; node != null && node != propertiesHost && current == null; node = VisualTreeHelper.GetParent(node))
+                current = (node as FrameworkElement)?.DataContext as PropertyItem;
+            var rows = Properties.Cast<object>().ToList();
+            int index = current == null ? -1 : rows.IndexOf(current);
+            int target = index + (down ? 1 : -1);
+            if (index < 0 || target < 0 || target >= rows.Count)
+                return;
+            e.Handled = FocusValue(rows[target], down);
+        }
+
+
+        // Gives the keyboard focus to a row's value, scrolling the row into view first: rows out of view have no controls
+        private bool FocusValue(object row, bool down)
+        {
+            var container = propertiesHost.ItemContainerGenerator.ContainerFromItem(row) as FrameworkElement;
+            var scroller = Descendants<ScrollViewer>(propertiesHost).FirstOrDefault();
+            for (int i = 0; container == null && scroller != null && i < 100; i++)
+            {
+                if (down)
+                    scroller.LineDown();
+                else
+                    scroller.LineUp();
+                propertiesHost.UpdateLayout();
+                container = propertiesHost.ItemContainerGenerator.ContainerFromItem(row) as FrameworkElement;
+            }
+            if (container == null)
+                return false;
+            container.BringIntoView();
+            var editor = Descendants<Control>(container).FirstOrDefault(c => c.Focusable && c.IsEnabled && c.IsVisible && !(c is Button));
+            if (editor == null)
+                return false;
+            Keyboard.Focus(editor);
+            if (editor is TextBox text)
+                text.SelectAll();
+            return true;
+        }
+
+
+        private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is T found)
+                    yield return found;
+                foreach (var inner in Descendants<T>(child))
+                    yield return inner;
+            }
         }
 
 

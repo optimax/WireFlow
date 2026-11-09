@@ -164,9 +164,11 @@ Done, under the assumptions below. Every element, and every page and layout, has
 
 **Q4: Should links keep naming pages by name, or should they name IDs only? Both work now; a page's name is tried first.**
 
-## Property Grid and Arrow Keys
+## [DONE] Property Grid and Arrow Keys
 
 Up and Down arrows should navigate up and down in the property grid, like in a spreadsheet.
+
+Done. Up and Down move to the value of the row above or below, across categories, scrolling as needed; a value typed is set as you leave it, as with Tab. An open drop-down list keeps Up and Down to choose in it, and so does a text of several lines while there are lines to move to. (On the way, the ID row from the item above did not show; it does now.) Checked by a script that presses the keys in a grid; not by hand.
 
 ## Outline Caption and Menu
 
