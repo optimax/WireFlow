@@ -130,9 +130,11 @@ Expected: When an object inside the StackPanel is clicked on, that object become
 
 Done. A click on an object in a stack panel selects that object; Esc selects the panel (or group) holding it, and Esc on a top-level object leaves nothing selected, which shows the page in Properties. So that a panel full of objects can still be moved with the mouse: once the panel is selected, a drag that starts on one of its objects moves the panel, and a click without a drag selects the object. Objects in a group are still selected as their group on the canvas (they are meant to move as one); the Outline selects them one by one. Delete, duplicate and the order commands work on a selected object in a panel; dragging it or the arrow keys do not move it, since the panel places it. Checked by a script that drives the Designer's mouse handlers; not by hand.
 
-## Avoid Rebuilding Entire Outline
+## [DONE] Avoid Rebuilding Entire Outline
 
 Avoid rebuilding the entire outline on every change. Rebuild/update only the elements of the outline that are affected by the change. Make outline virtualizing, so that when the tree gets long and complicated, it renders fast.
+
+Done. After a change the Outline is brought up to date in place: the entries of the elements that stay are kept as they are (expanded or collapsed, selected), and only the entries of elements added, removed or moved change. A rename (in Properties, or by undo) shows in its entry at once, without any update of the tree. The tree is virtualizing: only the entries in view are drawn. Checked by a script against a sample project; not by hand.
 
 ## [DONE] TextHorizontalAlignment
 

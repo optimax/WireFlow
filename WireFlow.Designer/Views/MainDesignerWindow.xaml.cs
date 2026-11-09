@@ -1389,10 +1389,14 @@ namespace WireFlow
 
         public void ClearOutlineTree()
         {
+            if (LayerOutline != null)
+                foreach (var proxy in LayerOutline)
+                    proxy.Detach();
             LayerOutline = null;
         }
 
 
+        // Brings the Outline up to date with the current designer's page in place: the entries of elements that stay are kept as they are (expanded, selected); only those of elements added, removed or moved change
         public void PopulateOutlineTree()
         {
             if (CurrentDesigner == null)
@@ -1400,79 +1404,84 @@ namespace WireFlow
                 ClearOutlineTree();
                 return;
             }
-            LayerOutline = new ObservableCollection<UIElementProxy>();
-            OutlinePopulate(CurrentDesigner.Designer.Canvas);
+            if (LayerOutline == null)
+                LayerOutline = new ObservableCollection<UIElementProxy>();
+            OutlineSync(CurrentDesigner.Designer.Canvas, LayerOutline);
             UpdateOutlineHighlight();
         }
 
 
-
-
-
-        private void OutlinePopulate(Panel parent)
+        // The elements a panel's entry lists: the page's layouts, a layout's layers and a layer's or group's elements, topmost first; a stack panel's elements in their order in it
+        private static List<FrameworkElement> OutlineChildren(Panel panel)
         {
-            foreach (FrameworkElement element in parent.Children)
-            {
-                if (element is Layout)
-                {
-                    Layout layer = element as Layout;
-                    var proxy = new UILayoutProxy(element);
-                    LayerOutline.Insert(0, proxy);
-                    OutlinePopulateLayout(layer, proxy);
-                }
-                else
-                {
-                    var proxy = new UIElementProxy(element);
-                    LayerOutline.Insert(0, proxy);
-                }
-            }
-            Outline.ExpandAll();
+            var children = panel is Layout ? panel.Children.OfType<Layer>().Cast<FrameworkElement>().ToList() : panel.Children.OfType<FrameworkElement>().ToList();
+            if (!(panel is Stack))
+                children.Reverse();
+            return children;
         }
 
 
-        private void OutlinePopulateLayout(Layout layout, UILayoutProxy layoutProxy)
+        // A new entry for an element of a panel
+        private static UIElementProxy OutlineProxy(Panel panel, FrameworkElement element)
         {
-            foreach (FrameworkElement element in layout.Children)
+            if (panel is Layout)
+                return new UILayerProxy(element);
+            if (!(panel is Layer || panel is Group || panel is Stack))
+                return element is Layout ? new UILayoutProxy(element) : new UIElementProxy(element);
+            switch (element)
             {
-                if (element is Layer)
-                {
-                    Layer layer = element as Layer;
-                    var proxy = new UILayerProxy(element);
-                    layoutProxy.Elements.Insert(0, proxy);
-                    OutlinePopulateLayer(layer, proxy);
-                }
+                case Part _: return new UIPartProxy(element);
+                case Group _: return new UIGroupProxy(element);
+                case Stack _: return new UIStackProxy(element);
+                case Box _: return new UIBoxProxy(element);
+                case ImageBox _: return new UIImageProxy(element);
+                case WireFlowText _: return new UITextProxy(element);
+                default: return new UIElementProxy(element);
             }
         }
 
 
-
-        // Lists a layer's, group's or stack panel's elements: a layer's and a group's topmost first, a stack panel's in their order in it
-        private void OutlinePopulateLayer(Panel layer, UICanvasProxy layerProxy)
+        // Makes a panel's entries those of its elements, keeping the entries of the elements they already show; true when any entry was added, removed or moved
+        private static bool OutlineSync(Panel panel, ObservableCollection<UIElementProxy> proxies)
         {
-            UIElementProxy proxy;
-            foreach (FrameworkElement element in layer.Children)
+            bool changed = false;
+            var children = OutlineChildren(panel);
+            var wanted = new HashSet<FrameworkElement>(children);
+            for (int i = proxies.Count - 1; i >= 0; i--)
+                if (!wanted.Contains(proxies[i].UIElement))
+                {
+                    proxies[i].Detach();
+                    proxies.RemoveAt(i);
+                    changed = true;
+                }
+            for (int i = 0; i < children.Count; i++)
             {
-                if (element is Part)
-                    proxy = new UIPartProxy(element);
-                else if (element is Group)
-                    proxy = new UIGroupProxy(element);
-                else if (element is Stack)
-                    proxy = new UIStackProxy(element);
-                else if (element is Box)
-                    proxy = new UIBoxProxy(element);
-                else if (element is ImageBox)
-                    proxy = new UIImageProxy(element);
-                else if (element is WireFlowText)
-                    proxy = new UITextProxy(element);
+                var child = children[i];
+                int at = -1;
+                for (int j = i; j < proxies.Count && at < 0; j++)
+                    if (proxies[j].UIElement == child)
+                        at = j;
+                UIElementProxy proxy;
+                if (at < 0)
+                {
+                    proxy = OutlineProxy(panel, child);
+                    proxies.Insert(i, proxy);
+                    changed = true;
+                }
                 else
-                    proxy = new UIElementProxy(element);
-                if (layer is Stack)
-                    layerProxy.Elements.Add(proxy);
-                else
-                    layerProxy.Elements.Insert(0, proxy);
-                if ((element is Group || element is Stack) && proxy is UICanvasProxy panelProxy)
-                    OutlinePopulateLayer((Panel)element, panelProxy);
+                {
+                    proxy = proxies[at];
+                    if (at != i)
+                    {
+                        proxies.Move(at, i);
+                        changed = true;
+                    }
+                }
+                // A count shown in the entry follows its elements
+                if (proxy is UICanvasProxy canvas && (child is Layer || child is Group || child is Stack) && OutlineSync((Panel)child, canvas.Elements))
+                    canvas.Refresh();
             }
+            return changed;
         }
 
 

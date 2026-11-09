@@ -313,7 +313,9 @@
                         <dock:LayoutAnchorablePane>
                             <dock:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="False" CanClose="False">
 
-                                <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged">
+                                <!-- Virtualizing: only the entries in view have items. Standard, not Recycling, mode, so that an entry collapsed by hand does not pass that on to another -->
+                                <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged"
+                                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" ScrollViewer.CanContentScroll="True">
                                     <TreeView.Resources>
                                         <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                                             <Setter Property="IsExpanded" Value="True" />

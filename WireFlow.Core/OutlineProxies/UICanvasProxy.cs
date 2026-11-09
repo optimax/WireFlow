@@ -15,5 +15,13 @@ namespace WireFlow
         public UICanvasProxy(FrameworkElement element): base(element)
         {
         }
+
+
+        public override void Detach()
+        {
+            base.Detach();
+            foreach (var proxy in Elements)
+                proxy.Detach();
+        }
     }
 }

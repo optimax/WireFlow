@@ -49,11 +49,37 @@ namespace WireFlow
         }
 
 
+        /// <summary>The element's node, whose changes the entry shows as they happen; null for an element without one.</summary>
+        public FlowBase Node { get; }
+
+
         public UIElementProxy(FrameworkElement element)
         {
             UIElement = element;
             Type = element.GetType().Name;
-            Name = element.Name;
+            Node = FlowView.GetNode(element);
+            Name = Node?.Name ?? element.Name;
+            if (Node != null)
+                Node.PropertyChanged += NodePropertyChanged;
+        }
+
+
+        private void NodePropertyChanged(object sender, PropertyChangedEventArgs e) => Refresh();
+
+
+        /// <summary>Shows the element's name, place and size as they are now.</summary>
+        public void Refresh()
+        {
+            Name = Node?.Name ?? UIElement.Name;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+        }
+
+
+        /// <summary>Stops following the node, as the entry leaves the Outline.</summary>
+        public virtual void Detach()
+        {
+            if (Node != null)
+                Node.PropertyChanged -= NodePropertyChanged;
         }
 
 
