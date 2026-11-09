@@ -108,21 +108,27 @@ Q3: Colors stay text in the DOM (`#AARRGGBB` or a color name), as the files keep
 
 A3: Yes.
 
-## Stack Panel Behavior
+## [DONE] Stack Panel Behavior
 
 ![pasted](<TO-DO.images/pasted.png>)
 
 Place a rectangle inside a vertical StackPanel. --> The rectangle does not span the panel horizontally as it should but seems clipped on the right instead.
 
-## Stack Panel Content in Outline
+Fixed by the conversion to a DOM: a rectangle drawn inside a vertical stack panel now spans it (checked by a script: an 800 px wide panel, a rectangle drawn 430 px wide inside it shows 800 px wide at its left edge, and stays so after its node changes). The rectangle keeps its own width in the file, so it comes back if it is taken out of the panel.
+
+## [DONE] Stack Panel Content in Outline
 
 A Rectangle inside a StackPanel does not show up in the Outline. Any objects placed inside a StackPanel should be listed and be selectable in the Outline.
 
-## Stack Panel HitTest
+Done. The Outline lists the elements of stack panels, in their order in the panel, and of groups (topmost first, as a layer's), and a click there selects any of them.
+
+## [DONE] Stack Panel HitTest
 
 An object inside StackPanel cannot be selected by clicking on it. The entire panel is being selected on click, instead of individual objects.
 
 Expected: When an object inside the StackPanel is clicked on, that object becomes selected. Pressing Esc should unselect object but select it's parent/owner container. Eventually, the Page  itself becomes selected.
+
+Done. A click on an object in a stack panel selects that object; Esc selects the panel (or group) holding it, and Esc on a top-level object leaves nothing selected, which shows the page in Properties. So that a panel full of objects can still be moved with the mouse: once the panel is selected, a drag that starts on one of its objects moves the panel, and a click without a drag selects the object. Objects in a group are still selected as their group on the canvas (they are meant to move as one); the Outline selects them one by one. Delete, duplicate and the order commands work on a selected object in a panel; dragging it or the arrow keys do not move it, since the panel places it. Checked by a script that drives the Designer's mouse handlers; not by hand.
 
 ## Avoid Rebuilding Entire Outline
 

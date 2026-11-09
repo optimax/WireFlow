@@ -1446,7 +1446,8 @@ namespace WireFlow
 
 
 
-        private void OutlinePopulateLayer(Layer layer, UILayerProxy layerProxy)
+        // Lists a layer's, group's or stack panel's elements: a layer's and a group's topmost first, a stack panel's in their order in it
+        private void OutlinePopulateLayer(Panel layer, UICanvasProxy layerProxy)
         {
             UIElementProxy proxy;
             foreach (FrameworkElement element in layer.Children)
@@ -1465,7 +1466,12 @@ namespace WireFlow
                     proxy = new UITextProxy(element);
                 else
                     proxy = new UIElementProxy(element);
-                layerProxy.Elements.Insert(0, proxy);
+                if (layer is Stack)
+                    layerProxy.Elements.Add(proxy);
+                else
+                    layerProxy.Elements.Insert(0, proxy);
+                if ((element is Group || element is Stack) && proxy is UICanvasProxy panelProxy)
+                    OutlinePopulateLayer((Panel)element, panelProxy);
             }
         }
 

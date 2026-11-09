@@ -185,6 +185,9 @@ namespace WireFlow
         public bool CanGroup => selectedElements.Count > 1;
         public bool CanUngroup => selectedElements.Count > 0;
 
+        // An element inside a selected group or stack panel pressed on: selected when the press ends without a drag
+        private FrameworkElement pendingChildSelection;
+
         private bool IsSelecting => Designer.Mode == MouseDragMode.Select;
         private bool IsPanning => Designer.Mode == MouseDragMode.Pan;
         private bool IsNavigating => Designer.Mode == MouseDragMode.Navigate;
@@ -354,6 +357,7 @@ namespace WireFlow
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {mousePos}");
             // A drag whose end was missed ends here
             EndGestureStep();
+            pendingChildSelection = null;
 
             bool isSelected = selectedElements.Contains(clickedElement);
             bool isModifierKeyPressed = IsModifierKeyPressed;
@@ -371,9 +375,15 @@ namespace WireFlow
 
                 if (!isSelected)
                 {
-                    if (!isModifierKeyPressed)
-                        DeselectAll();
-                    SelectElementOrItsGroup(clickedElement);
+                    // Inside a selected stack panel or group, a drag moves the selection; a click without one selects what was clicked (DesignerSelectEndHandler)
+                    if (!isModifierKeyPressed && SelectedContainerOf(clickedElement) != null)
+                        pendingChildSelection = clickedElement;
+                    else
+                    {
+                        if (!isModifierKeyPressed)
+                            DeselectAll();
+                        SelectElementOrItsGroup(clickedElement);
+                    }
                     IsDraggingShapes = true;
                 }
                 else
@@ -410,6 +420,7 @@ namespace WireFlow
 
                 if (moveElements)
                 {
+                    pendingChildSelection = null;
                     //Point position = Mouse.GetPosition(CurrentCanvas);
                     var deltaX = mousePos.X - StartPoint.X;
                     var deltaY = mousePos.Y - StartPoint.Y;
@@ -440,6 +451,13 @@ namespace WireFlow
             if (IsSelecting)
                 SelectWithRubberband();
             RemoveRubberband();
+
+            if (pendingChildSelection != null)
+            {
+                DeselectAll();
+                SelectElementOrItsGroup(pendingChildSelection);
+                pendingChildSelection = null;
+            }
 
             IsDraggingShapes = false;
             EndGestureStep();
@@ -843,7 +861,7 @@ namespace WireFlow
             Canvas parent = lparent as Canvas;
             if (parent == null)
                 return;
-            if (parent != CurrentLayer) // group
+            if (parent is Group)
             {
                 //clickedElement = parent;
                 DeselectElementOrItsGroup(parent);
@@ -857,6 +875,38 @@ namespace WireFlow
         }
 
 
+        // The layer an element is on, through the groups and stack panels holding it
+        private static Layer LayerOf(FrameworkElement element)
+        {
+            for (var parent = LogicalTreeHelper.GetParent(element); parent != null; parent = LogicalTreeHelper.GetParent(parent))
+                if (parent is Layer layer)
+                    return layer;
+            return null;
+        }
+
+
+        // The selected group or stack panel holding the element, if any
+        private FrameworkElement SelectedContainerOf(FrameworkElement element)
+        {
+            if (element == null)
+                return null;
+            for (var parent = LogicalTreeHelper.GetParent(element); parent is Group || parent is Stack; parent = LogicalTreeHelper.GetParent(parent))
+                if (selectedElements.Contains(parent))
+                    return (FrameworkElement)parent;
+            return null;
+        }
+
+
+        /// <summary>Selects the groups and stack panels holding the selected elements, as Esc does; with none, deselects all, which leaves the page selected.</summary>
+        public void SelectContainers()
+        {
+            var containers = selectedElements.Select(e => LogicalTreeHelper.GetParent(e)).OfType<FrameworkElement>().Where(p => p is Group || p is Stack).Distinct().ToList();
+            DeselectAll();
+            foreach (var container in containers)
+                SelectElementOrItsGroup(container);
+        }
+
+
         void SelectElementOrItsGroup(FrameworkElement clickedElement)
         {
             if (clickedElement == null)
@@ -866,7 +916,7 @@ namespace WireFlow
             if (parent == null)
                 return;
 
-            if ((clickedElement is Part) || (parent is Layer) || (parent == CurrentCanvas)) // group, or freehand
+            if ((clickedElement is Part) || (parent is Layer) || (parent is Stack) || (parent == CurrentCanvas)) // not in a group, or freehand
             {
                 SelectElement(clickedElement);
                 return;
@@ -882,7 +932,7 @@ namespace WireFlow
 
         void SelectElement(FrameworkElement clickedElement)
         {
-            if (clickedElement.Parent != CurrentLayer)
+            if (LayerOf(clickedElement) != CurrentLayer || selectedElements.Contains(clickedElement))
                 return;
 
             AdornerLayer aLayer = AdornerLayer.GetAdornerLayer(clickedElement);
@@ -1149,7 +1199,10 @@ namespace WireFlow
                     break;
                 case Key.Escape:
                     //StickyCreate = false;
-                    ResetAppModes();
+                    if (IsDraggingShapes || Designer?.IsMouseCaptured == true)
+                        ResetAppModes();
+                    else
+                        SelectContainers();
                     break;
                 case Key.Up:
                     MoveSelectionUp();
@@ -2114,6 +2167,8 @@ namespace WireFlow
         // An element's position and size change in its node, which the view follows
         private static void SetLeft(UIElement e, double value)
         {
+            if (LogicalTreeHelper.GetParent(e) is Stack)
+                return;
             if (NodeOf(e) is FlowElementBase node)
                 node.Left = value;
         }
@@ -2121,6 +2176,8 @@ namespace WireFlow
 
         private static void SetTop(UIElement e, double value)
         {
+            if (LogicalTreeHelper.GetParent(e) is Stack)
+                return;
             if (NodeOf(e) is FlowElementBase node)
                 node.Top = value;
         }
@@ -2141,8 +2198,20 @@ namespace WireFlow
 
 
         /// <summary>The element that shows a node in a panel; null if there is none.</summary>
-        private static FrameworkElement ViewOf(FlowBase node, Panel panel) =>
-            panel?.Children.OfType<FrameworkElement>().FirstOrDefault(e => FlowView.GetNode(e) == node);
+        private static FrameworkElement ViewOf(FlowBase node, Panel panel)
+        {
+            if (panel == null)
+                return null;
+            foreach (var element in panel.Children.OfType<FrameworkElement>())
+            {
+                if (FlowView.GetNode(element) == node)
+                    return element;
+                // The elements of groups and stack panels, which can be selected too
+                if ((element is Group || element is Stack) && ViewOf(node, (Panel)element) is FrameworkElement inner)
+                    return inner;
+            }
+            return null;
+        }
 
 
         /// <summary>The nodes beside a node in the node holding it (its layer's elements, its group's children); null for none.</summary>
