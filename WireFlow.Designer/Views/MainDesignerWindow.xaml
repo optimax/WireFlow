@@ -36,8 +36,8 @@
             </MenuItem>
 
             <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo"/>
-                <MenuItem Header="_Redo"/>
+                <MenuItem Header="_Undo" Command="{Binding UndoCmd}" InputGestureText="Ctrl+Z"/>
+                <MenuItem Header="_Redo" Command="{Binding RedoCmd}" InputGestureText="Ctrl+Y"/>
                 <Separator/>
                 <MenuItem Header="Cut"/>
                 <MenuItem Header="Copy"/>

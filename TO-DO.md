@@ -8,61 +8,19 @@ Title: TO-DO
 >
 > ---
 
-## [DONE] BUG: Background Not Saved
+## [DONE] Support Undo/Redo
 
-User-defined page background does not survive project save/reload.
+Redesign the app, so that unlimited Undo/Redo is supported. Undo history must be kept since the last save.
 
-Fixed. A page had no background of its own in the file: every page was drawn in the project's background, so the one you gave the page in Properties was never saved. Now a page, or a layout, keeps the Background you give it (the canvas in Properties, with nothing selected), and it shows again after save and reload, in the Designer and in the Browser.
+Done. Edit → Undo (Ctrl+Z) and Redo (Ctrl+Y or Ctrl+Shift+Z), without limit, for the page or layout in front, back to when it was opened or last saved.
 
-- A page whose background you leave alone stores none, and keeps following its layout's background, or else the project's. A background given to a layout reaches the pages that use it.
-- Clearing a page's Background in Properties makes it follow its layout or the project again.
-- Existing files need no conversion: their pages simply have no background of their own yet.
+- The history records the DOM itself: every change of every node of the page, and every element added, removed or moved. So every edit can be undone, whatever made it: drawing, moving, resizing, aligning, sizing, duplicating, deleting, grouping, ungrouping, ordering, and values set in Properties.
+- A drag of the mouse or a resize is one step, however far it goes; any other edit is one step, even when it moves many elements (aligning ten elements is undone at once). Each arrow key press is a step.
+- Each open tab has its own history. Saving clears it, as does opening another page in the tab. Undoing every edit since the save makes the page unmodified again.
+- In a text box (in Properties, say), Ctrl+Z undoes the typing in the box, as usual.
+- Tested with a script (27 checks), not by hand in the running Designer: please try Undo and Redo after the edits above.
 
-## [DONE] Pages Line Spacing
-
-Pages list's lines are too far apart. Make them the same spacing as Tools palette. The same applies to Layouts, Parts, Images, and History.
-
-Done. Pages, Layouts, Parts, Images and History now have the Tools palette's row spacing: 27 px rows in Dark and Light, as a menu item, instead of the theme's 45 px, and Classic's own compact 23 px rows. All six lists share one piece of code, so they stay alike, also after a change of theme and as new rows appear.
-
-History is still empty: nothing fills it yet. Its rows will be as compact when something does.
-
-## [DONE] BUG: StackPanel Crashes App
-
-Place a StackPanel on a page. Check its `IsItemsHost` property. Click on the panel — the app crashes.
-
-Fixed. `IsItemsHost` is a WPF panel property that hands the panel's children to a list control (an `ItemsControl`). A page element is in none, so once it was checked WPF refused every access to the panel's children ("A panel with IsItemsHost="true" is not nested in an ItemsControl"), and a click, which reads them, crashed the Designer. It means nothing for a wireframe, so Properties no longer lists it: not for stack panels, nor for groups, layers, parts and the page itself, which are panels too and crashed the same way.
-
-## [DONE] Ctrl+S
-
-Make it a shortcut for File|Save.
-
-Done. Ctrl+S is File → Save, and the menu shows it. As the menu does, it saves every modified page, layout and part, and the project; a project not saved yet asks for a file name first.
-
-## [DONE] Esc Cancel Specialized Tool
-
-Pressing Esc should revert the tools selection to Select. 
-
-Done. Esc chooses the Select tool again, from any other tool, wherever the keyboard is in the window: the page, the Tools list, Properties. On the page it also still does what it did: it ends a drag and clears the selection.
-
-## [DONE] Reopen Previous
-
-"Reopen previous project on startup" option should ensure that not only the project re-opens, but all the tabs within that project that were open get re-opened.
-
-Done. With the option on, the Designer reopens the project with the tabs that were open when you closed it: pages, layouts and parts, in the same order, with the same tab in front.
-
-- A tab whose page, layout or part has since been deleted or renamed is skipped.
-- If none is left (or you had closed them all), the home page opens, as before.
-- Tabs dragged out into a floating window are not remembered.
-
-## [DONE] Text Alignment Custom Editor
-
-Text Alignment Custom Editor should not be embedded into the property grid directly. It should be invoked via `...` button and shown in a popup like any other property. Only the value should be shown in the property grid directly.
-
-Done. The TextAlignment row of a text or a box now shows only the value: where the text lies in its frame, named as the 9-point chooser names it (Top-Left, Top, Top-Right, Left, Center, Right, Bottom-Left, Bottom, Bottom-Right). Its `...` button opens the chooser in a small dialog, as Background opens the color dialog; Ctrl+Enter or a double click on the value open it too. The dialog is laid out as PDFTools shows the chooser in Add Margins and Resize Pages: the chooser in a "Text position" group, its label at the right, then OK (Enter) and Cancel (Esc). OK moves the text; Cancel leaves it.
-
-- Justified text shows as, for example, "Top-Left (justified)", and stays justified unless you choose another position.
-
-## [DONE] TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
+## BUG: TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
 
 TextAlignment needs to be in sync with TextHorizonalAlignment and TextVerticalAlignment. When changing one of TextHorizonalAlignment, or TextVerticalAlignment, TextAlignment's highlight remains where it was. In custom editor shown only on demand, it should not be a problem, but the value should be in sync with the other two.
 
@@ -72,29 +30,31 @@ Done. The TextAlignment row follows the other two as they change: set TextVertic
 - A text (not a box) now lists its TextVerticalAlignment under Appearance too, as a box does; before, only the chooser could set it.
 - Saved boxes keep their own TextAlignment when loaded, so existing pages look as they did.
 
-## [DONE] All Tools Derive from BaseDesignerObject
+BUG: TextHorizontalAlignment is no longer even shown.
 
-Make all element tools, including Text, Rectangle, Ellipse, derive from BaseDesignerObject, exposing  (forwarding) the properties that make sense, so that all can support HRef property, in preparation for the next task.
+## BUG: Properties of Multiple Objects
 
-Done. Text, Rectangle and Ellipse are now BaseDesignerObjects, as Box and Image already were: each is a small control holding its WPF shape, and Properties shows the shape's properties that make sense (Fill, Stroke, StrokeThickness, RadiusX/RadiusY for a rectangle; Text, TextAlignment, TextVerticalAlignment, TextWrapping, TextPadding, LineHeight, Background, Foreground and the font for a text) and Href, under Navigation.
+When multiple objects are selected, the Properties grid should show the properties that all of the selected objects have in common, not the last selected object's properties. Changing a value of such property should apply to all the selected objects.
 
-Found and fixed on the way:
+## BUG: Image Crashes App
 
-- Ellipses were saved but never drawn again: a page with an ellipse showed a pink "unknown object" in its place after reload, and saving that page again turned it into a rectangle. Ellipses now load as ellipses.
-- Duplicate copies an element through XAML, which would also write its inner shape; it no longer does, so each copy builds its own shape, and changing the copy's properties changes what it shows (checked for texts, rectangles, ellipses and boxes).
-- A text's padding and a rectangle's saved alignments were lost on save; they are kept now.
+Placing an image object on a page crashes the app.
 
-## [DONE] Href on All Elements
+## BUG: Color Selection Dialog Controls
 
-Ensure that a hyperlink target (Href) can be defined on any element (at least any that has a visual extent): Text, Rectangle, etc., not only on Image or Box.
+Color Selection Dialog (Fill, Background, Stroke, etc.) overlaps color component textboxes. Also, it does not provide enough room for the "Web color" box, especially, when the focus is on it and the clear-X appears.
 
-Done. Every element with an extent now has Href, under Properties → Navigation: Text, Rectangle, Ellipse, Box and Image (from the task above), and also groups, stack panels and part references. Layers have none.
+![pasted-4](<TO-DO.images/pasted-4.png>)
 
-- A click follows the innermost link around what you clicked: an element's own link first, else that of the group, stack panel or part it is in. So you can link a whole group (say, a card) and still give one element inside it a different link.
-- The Browser and the Designer's Navigate tool behave alike.
-- Links are saved with the page; existing files need no conversion.
+## Color Selection Dialog
 
-## [QUESTION] Convert to a DOM (Both)
+Color Selection Dialog needs a number of predefined swatches near the bottom: Black, White, Light Gray (#dddddd), and Gray (#999999). Additionally, it needs to remember and show swatches for the last 10 colors selected. Clicking such a swatch would set the dialog's color to what the swatch represents. 
+
+![pasted-5](<TO-DO.images/pasted-5.png>)
+
+Remove the above-highlighted control in the middle.
+
+## Convert to a DOM (Both)
 
 This applies to both the Designer and Browser. 
 
@@ -118,19 +78,75 @@ Done, all five phases, under the assumptions of the questions below (still open,
 
 **Q1: I am making the existing Flow* classes the DOM (observable and WPF-free), rather than adding a separate set of DOM classes beside them, and keeping the `.wf` format unchanged. OK?**
 
+A1: Yes.
+
 **Q2: After phase 4, Properties shows an element's own properties (Fill, Stroke, Text, Href, position and size, font, alignment and so on), no longer every WPF property of the control that draws it (Margin, Cursor, IsHitTestVisible, Focusable and others, which are not saved anyway). OK?**
+
+A2: Yes. We may have to adjust and show specific additional properties later on.
 
 **Q3: Colors stay text in the DOM (`#AARRGGBB` or a color name), as the files keep them; the color dialog keeps working on them.**
 
-## Support Undo/Redo
+A3: Yes.
 
-Redesign the app, so that unlimited Undo/Redo is supported. Undo history must be kept since the last save.
+## Stack Panel Behavior
+
+![pasted](<TO-DO.images/pasted.png>)
+
+Place a rectangle inside a vertical StackPanel. --> The rectangle does not span the panel horizontally as it should but seems clipped on the right instead.
+
+## Stack Panel Content in Outline
+
+A Rectangle inside a StackPanel does not show up in the Outline. Any objects placed inside a StackPanel should be listed and be selectable in the Outline.
+
+## Stack Panel HitTest
+
+An object inside StackPanel cannot be selected by clicking on it. The entire panel is being selected on click, instead of individual objects.
+
+Expected: When an object inside the StackPanel is clicked on, that object becomes selected. Pressing Esc should unselect object but select it's parent/owner container. Eventually, the Page  itself becomes selected.
 
 ## Avoid Rebuilding Entire Outline
 
 Avoid rebuilding the entire outline on every change. Rebuild/update only the elements of the outline that are affected by the change. Make outline virtualizing, so that when the tree gets long and complicated, it renders fast.
 
+## TextHorizontalAlignment
 
+Is missing from Text and Box elements.
+
+## NodeProperties
+
+![pasted-3](<TO-DO.images/pasted-3.png>)
+
+The Properties grid should identify the type of the currently selected node, instead of saying "NodeProperties" for everything.,
+
+## ID Property
+
+In addition to Name, every element should define a common property ID. The ID should be the target/content of an Href link.
+
+## Property Grid and Arrow Keys
+
+Up and Down arrows should navigate up and down in the property grid, like in a spreadsheet.
+
+## Outline Caption and Menu
+
+![pasted-6](<TO-DO.images/pasted-6.png>)
+
+Add an Add Layer and Delete small buttons in the Caption of the Outline, to make it possible to insert new Layers and to delete the selected objects. Add corresponding commands to the Outline menu.
+
+## Remember Window Position and Panes
+
+Make sure that the window position, layout (the open panes), and the splitter positions are remembered from run to run.
+
+## View Menu Toggles
+
+For each pane in the application (Outline, History, Tools, Pages, Layouts, etc.), make it possible to toggle its visibility via View menu. 
+
+## Pages: An Ordered List
+
+Pages should be an ordered list, with move up and move down buttons in the caption bar, as well as drag-and-drop supported. The first page in the list is the default entry point for the model.
+
+## Font Family in Properties
+
+Font Family should have a custom editor that brings up a font chooser and sets multiple font-related properties, not just the FontFamily.
 
 
 ## END-OF-TO-DO

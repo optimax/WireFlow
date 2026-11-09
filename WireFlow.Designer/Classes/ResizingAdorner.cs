@@ -37,6 +37,7 @@ namespace Optimax
 
         public Brush Background { get; set; }
 
+        public event Action<UIElement> ResizeStarted;
         public event Action<UIElement, Size> ResizeCompleted;
 
 
@@ -460,6 +461,12 @@ namespace Optimax
             SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
         }
 
+        private void CornerThumbOnDragStarted(object sender, DragStartedEventArgs dragStartedEventArgs)
+        {
+            if (AdornedElement is FrameworkElement adornedElement)
+                ResizeStarted?.Invoke(adornedElement);
+        }
+
         private void CornerThumbOnDragCompleted(object sender, DragCompletedEventArgs dragCompletedEventArgs)
         {
             FrameworkElement adornedElement = AdornedElement as FrameworkElement;
@@ -507,6 +514,7 @@ namespace Optimax
             if (cornerThumb != null) return;
 
             cornerThumb = new Thumb();
+            cornerThumb.DragStarted += CornerThumbOnDragStarted;
             cornerThumb.DragCompleted += CornerThumbOnDragCompleted;
 
             // Set some arbitrary visual characteristics.

@@ -33,20 +33,21 @@ namespace WireFlow
         public FlowBase Parent { get; internal set; }
 
 
-        /// <summary>Sets a property's field and tells of the change, if the value changed.</summary>
+        /// <summary>Sets a property's field and tells of the change, with the values before and after it, if the value changed.</summary>
         protected bool Set<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
+            var oldValue = field;
             field = value;
-            OnPropertyChanged(propertyName);
+            OnPropertyChanged(new FlowPropertyChangedEventArgs(propertyName, oldValue, value));
             return true;
         }
 
 
-        protected virtual void OnPropertyChanged(string propertyName)
+        protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, e);
         }
     }
 }

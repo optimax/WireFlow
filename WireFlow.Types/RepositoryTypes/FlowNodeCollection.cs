@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace WireFlow
 {
@@ -7,7 +9,7 @@ namespace WireFlow
     /// The children of a DOM node (a page's layers, a layer's or group's elements): it tells of each change
     /// (CollectionChanged), and makes the node owning it the Parent of each node it holds.
     /// </summary>
-    public class FlowNodeCollection<T> : ObservableCollection<T> where T : FlowBase
+    public class FlowNodeCollection<T> : ObservableCollection<T>, IFlowNodeCollection where T : FlowBase
     {
         private readonly FlowBase owner;
 
@@ -56,12 +58,12 @@ namespace WireFlow
         }
 
 
+        // Removes the nodes one by one, from the last, so that each removal is told with the node and its place (a Reset tells neither,
+        // and could not be undone)
         protected override void ClearItems()
         {
-            var nodes = new List<T>(this);
-            base.ClearItems();
-            foreach (var node in nodes)
-                Release(node);
+            for (var i = Count - 1; i >= 0; i--)
+                RemoveItem(i);
         }
 
 
@@ -71,5 +73,12 @@ namespace WireFlow
             if (node != null && node.Parent == owner && !Contains(node))
                 node.Parent = null;
         }
+    }
+
+
+    /// <summary>A list of children whatever the type of its nodes, as FlowHistory undoes its changes.</summary>
+    internal interface IFlowNodeCollection : IList, INotifyCollectionChanged
+    {
+        void Move(int oldIndex, int newIndex);
     }
 }

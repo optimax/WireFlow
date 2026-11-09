@@ -359,6 +359,10 @@ namespace WireFlow
             InputBindings.Add(keyBinding);
             // File > Save
             InputBindings.Add(new KeyBinding(SaveFileCmd, Key.S, ModifierKeys.Control));
+            // Edit > Undo, Redo; a text box with the keyboard undoes its own typing first, as its own bindings come before the window's
+            InputBindings.Add(new KeyBinding(UndoCmd, Key.Z, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(RedoCmd, Key.Y, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(RedoCmd, Key.Z, ModifierKeys.Control | ModifierKeys.Shift));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             ApplyConfigSettings();
@@ -2172,6 +2176,8 @@ namespace WireFlow
 
         public ICommand ObjectDuplicateCmd { get; set; }
         public ICommand ObjectDeleteCmd { get; set; }
+        public ICommand UndoCmd { get; set; }
+        public ICommand RedoCmd { get; set; }
         public ICommand ObjectBringForwardCmd { get; set; }
         public ICommand ObjectSendBackwardCmd { get; set; }
         public ICommand ObjectBringToFrontCmd { get; set; }
@@ -2244,6 +2250,8 @@ namespace WireFlow
 
             ObjectDuplicateCmd = new RelayCommand(o => CurrentDesigner?.DuplicateSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectDeleteCmd = new RelayCommand(o =>CurrentDesigner?.DeleteSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => CurrentDesigner?.CanUndo ?? false);
+            RedoCmd = new RelayCommand(o => CurrentDesigner?.Redo(), o => CurrentDesigner?.CanRedo ?? false);
             ObjectBringForwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectBringForward(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectSendBackwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectSendBackward(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectBringToFrontCmd = new RelayCommand(o => CurrentDesigner?.ObjectBringToFront(), o => CurrentDesigner?.HasElementsSelected ?? false);

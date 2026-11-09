@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using System.Xml;
 
 namespace WireFlow
@@ -72,9 +73,21 @@ namespace WireFlow
                 if (value == null)
                     Debugger.Break();
                 _currentPage = value;
-
+                StartHistory(value);
             }
         }
+
+
+        // The Undo/Redo history of the page or layout open, since it was opened or last saved
+        private FlowHistory history;
+        // Whether a step of the history is open for a gesture of the mouse (a drag of the selection, a resize)
+        private bool gestureStepOpen;
+        // Whether the changes recorded outside a gesture are to be made a step once the edit making them is done
+        private bool commitScheduled;
+
+        public FlowHistory History => history;
+        public bool CanUndo => history?.CanUndo == true;
+        public bool CanRedo => history?.CanRedo == true;
 
 
         private Shape Rubberband { get; set; }
@@ -339,6 +352,8 @@ namespace WireFlow
         public void DesignerSelectStartHandler(DesignerPanel designer, Point mousePos, FrameworkElement clickedElement)
         {
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {mousePos}");
+            // A drag whose end was missed ends here
+            EndGestureStep();
 
             bool isSelected = selectedElements.Contains(clickedElement);
             bool isModifierKeyPressed = IsModifierKeyPressed;
@@ -375,6 +390,8 @@ namespace WireFlow
             StartPoint = mousePos;
             if (!IsDraggingShapes)
                 CreateRubberband();
+            else
+                BeginGestureStep();
         }
 
 
@@ -425,6 +442,7 @@ namespace WireFlow
             RemoveRubberband();
 
             IsDraggingShapes = false;
+            EndGestureStep();
         }
 
 
@@ -599,6 +617,7 @@ namespace WireFlow
                 // Its DOM, which the edits changed
                 Engine.SavePage(CurrentPage as FlowPage);
                 IsModified = false;
+                ClearHistory();
             });
         }
 
@@ -614,6 +633,7 @@ namespace WireFlow
                 // Its DOM, which the edits changed
                 Engine.SaveLayout(CurrentPage as FlowPage);
                 IsModified = false;
+                ClearHistory();
             });
         }
 
@@ -628,6 +648,7 @@ namespace WireFlow
                 var pageToSave = Engine.SerializePart(CurrentPage as FlowPart, CurrentCanvas);
                 Engine.SavePart(pageToSave);
                 IsModified = false;
+                ClearHistory();
             });
         }
 
@@ -880,6 +901,7 @@ namespace WireFlow
             if (adorner != null)
             {
 
+                (adorner as ResizingAdorner).ResizeStarted -= OnElementResizeStarted;
                 (adorner as ResizingAdorner).ResizeCompleted -= OnElementResized;
                 aLayer?.Remove(adorner);
             }
@@ -901,6 +923,7 @@ namespace WireFlow
                 adorner = new ResizingAdorner(clickedElement, new SolidColorBrush(Colors.Yellow));
             else
                 adorner = new ResizingAdorner(clickedElement, new SolidColorBrush(Colors.Chartreuse));
+            adorner.ResizeStarted += OnElementResizeStarted;
             adorner.ResizeCompleted += OnElementResized;
             adorner.IsClipEnabled = true;
             aLayer.Add(adorner);
@@ -908,10 +931,119 @@ namespace WireFlow
 
 
 
+        private void OnElementResizeStarted(UIElement e)
+        {
+            BeginGestureStep();
+        }
+
+
         private void OnElementResized(UIElement e, Size s)
         {
             IsModified = true;
+            EndGestureStep();
         }
+
+
+
+        #region Undo/Redo
+
+        // Watches the DOM of the page or layout opened; what it held before is forgotten
+        private void StartHistory(FlowBase page)
+        {
+            if (history != null)
+            {
+                history.Changed -= HistoryChanged;
+                history.Detach();
+            }
+            gestureStepOpen = false;
+            history = page == null ? null : new FlowHistory(page);
+            if (history != null)
+                history.Changed += HistoryChanged;
+            OnHistoryStateChanged();
+        }
+
+
+        private void ClearHistory()
+        {
+            gestureStepOpen = false;
+            history?.Clear();
+        }
+
+
+        // Changes made outside a gesture make one step per edit: the step closes once the edit is done, when the dispatcher
+        // has nothing left to do but wait for input, so an edit changing many nodes (aligning, grouping, ...) is undone at once
+        private void HistoryChanged(object sender, EventArgs e)
+        {
+            if (sender == history && history.HasUncommittedChanges && !commitScheduled)
+            {
+                commitScheduled = true;
+                var scheduledFor = history;
+                Designer.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(() =>
+                {
+                    commitScheduled = false;
+                    if (scheduledFor == history)
+                        history.CommitStep();
+                    OnHistoryStateChanged();
+                }));
+            }
+            OnHistoryStateChanged();
+        }
+
+
+        private void OnHistoryStateChanged()
+        {
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+            // A step closed when idle comes with no input, after which the commands would otherwise be asked again
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+
+        private void BeginGestureStep()
+        {
+            if (gestureStepOpen || history == null)
+                return;
+            gestureStepOpen = true;
+            history.BeginStep();
+        }
+
+
+        private void EndGestureStep()
+        {
+            if (!gestureStepOpen)
+                return;
+            gestureStepOpen = false;
+            history?.EndStep();
+        }
+
+
+        /// <summary>Undoes the last edit of the page or layout open. The page is unmodified again once every edit since it was opened or saved is undone.</summary>
+        public void Undo()
+        {
+            if (!CanUndo)
+                return;
+            EndGestureStep();
+            // The elements selected may be taken away
+            DeselectAll();
+            history.Undo();
+            IsModified = history.CanUndo;
+            OnElementsChanged();
+        }
+
+
+        /// <summary>Redoes the last edit undone.</summary>
+        public void Redo()
+        {
+            if (!CanRedo)
+                return;
+            EndGestureStep();
+            DeselectAll();
+            history.Redo();
+            IsModified = true;
+            OnElementsChanged();
+        }
+
+        #endregion
 
 
 
@@ -1284,15 +1416,16 @@ namespace WireFlow
             DeselectAll();
 
             var group = new FlowGroup { Type = "group", Left = bounds.Left, Top = bounds.Top, Width = bounds.Width, Height = bounds.Height };
-            // Reparent and reposition the elements
+            // Reparent and reposition the elements. The group is put on the layer first, and each element changed only while it is
+            // on the page, where the Undo history sees its changes.
+            layer.Elements.Add(group);
             foreach (var node in nodes)
             {
                 layer.Elements.Remove(node);
+                group.Children.Add(node);
                 node.Left -= bounds.X;
                 node.Top -= bounds.Y;
-                group.Children.Add(node);
             }
-            layer.Elements.Add(group);
 
             var drawn = ViewOf(group, CurrentLayer);
             if (drawn != null)
@@ -1375,11 +1508,13 @@ namespace WireFlow
             var children = group.Children.ToList();
             var places = children.Select(child => ViewOf(child, panel))
                 .Select(v => v == null ? (Rect?)null : new Rect(Canvas.GetLeft(v), Canvas.GetTop(v), v.Width, v.Height)).ToList();
-            layer.Elements.Remove(group);
+            // Each child is put on the layer, before the group, and then placed, and the group is taken away last, so that every
+            // change is made on the page, where the Undo history sees it
             for (int i = 0; i < children.Count; i++)
             {
                 var child = children[i];
                 group.Children.Remove(child);
+                layer.Elements.Insert(index + i, child);
                 if (places[i] is Rect place)
                 {
                     child.Left = place.X;
@@ -1389,8 +1524,8 @@ namespace WireFlow
                 }
                 child.Left += group.Left;
                 child.Top += group.Top;
-                layer.Elements.Insert(index++, child);
             }
+            layer.Elements.Remove(group);
             released.AddRange(children);
         }
 
