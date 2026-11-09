@@ -257,6 +257,10 @@ namespace WireFlow
                 var element = CurrentElement;
                 if (element == null || CurrentDesigner == null)
                     return null;
+                // Several elements selected: what they have in common
+                var selected = CurrentDesigner.SelectedElements.Select(FlowView.GetNode).Where(n => n != null).Distinct().ToList();
+                if (selected.Count > 1)
+                    return new NodeProperties(selected, Engine);
                 var node = FlowView.GetNode(element) ?? (element == CurrentCanvas ? CurrentDesigner.CurrentPage : null);
                 return node == null ? null : new NodeProperties(node, Engine);
             }

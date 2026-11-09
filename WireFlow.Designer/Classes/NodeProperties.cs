@@ -76,10 +76,15 @@ namespace WireFlow
 
         private readonly WireFlowEngine engine;
         private PropertyDescriptorCollection properties;
+        // The nodes shown, when several are: what each of them shows, of which this one shows what they have in common
+        private readonly NodeProperties[] parts;
 
 
-        /// <summary>The node shown.</summary>
+        /// <summary>The node shown; the first, when several are.</summary>
         public FlowBase Node { get; }
+
+        /// <summary>The nodes shown.</summary>
+        public IReadOnlyList<FlowBase> Nodes => parts == null ? new[] { Node } : parts.Select(p => p.Node).ToArray();
 
 
         public NodeProperties(FlowBase node, WireFlowEngine engine)
@@ -89,10 +94,37 @@ namespace WireFlow
         }
 
 
-        public override string ToString() => Node.Name;
+        /// <summary>
+        /// Shows the properties that all the nodes show, under the same name and of the same type, but their Name, which each keeps:
+        /// a value shows where all the nodes have it, and is empty where they differ; a value set is set on all of them.
+        /// </summary>
+        public NodeProperties(IReadOnlyList<FlowBase> nodes, WireFlowEngine engine) : this(nodes?.FirstOrDefault(), engine)
+        {
+            if (nodes.Count > 1)
+                parts = nodes.Select(n => new NodeProperties(n, engine)).ToArray();
+        }
 
 
-        private PropertyDescriptorCollection Properties => properties ?? (properties = MakeProperties());
+        public override string ToString() => parts == null ? Node.Name : $"{parts.Length} objects";
+
+
+        private PropertyDescriptorCollection Properties => properties ?? (properties = parts == null ? MakeProperties() : MakeCommonProperties());
+
+
+        private PropertyDescriptorCollection MakeCommonProperties()
+        {
+            var list = new List<PropertyDescriptor>();
+            foreach (PropertyDescriptor first in parts[0].Properties)
+            {
+                if (first.Name == "Name")
+                    continue;
+                var each = parts.Select(p => p.Properties[first.Name]).ToArray();
+                if (each.Any(d => d == null || d.PropertyType != first.PropertyType))
+                    continue;
+                list.Add(new CommonPropertyDescriptor(first, parts, each));
+            }
+            return new PropertyDescriptorCollection(list.ToArray(), true);
+        }
 
 
         private PropertyDescriptorCollection MakeProperties()
@@ -155,8 +187,8 @@ namespace WireFlow
         #region ICustomTypeDescriptor
 
         public AttributeCollection GetAttributes() => AttributeCollection.Empty;
-        public string GetClassName() => Node is FlowPage page ? (page.IsMaster ? "Layout" : "Page") : Node.Type;
-        public string GetComponentName() => Node.Name;
+        public string GetClassName() => parts != null ? $"{parts.Length} objects" : Node is FlowPage page ? (page.IsMaster ? "Layout" : "Page") : Node.Type;
+        public string GetComponentName() => parts == null ? Node.Name : null;
         public TypeConverter GetConverter() => null;
         public EventDescriptor GetDefaultEvent() => null;
         public PropertyDescriptor GetDefaultProperty() => null;
@@ -168,6 +200,77 @@ namespace WireFlow
         public object GetPropertyOwner(PropertyDescriptor pd) => this;
 
         #endregion
+
+
+
+        /// <summary>
+        /// A property that several nodes show: its value is theirs where they agree, else null; a value set is set on each of them,
+        /// through what each shows (so a page's inherited size, or an alignment carrying another, works as for one node). It tells
+        /// of a change of the property of any of them.
+        /// </summary>
+        private sealed class CommonPropertyDescriptor : PropertyDescriptor
+        {
+            private readonly NodeProperties[] parts;
+            private readonly PropertyDescriptor[] each;
+            private readonly Dictionary<object, EventHandler> watches = new Dictionary<object, EventHandler>();
+
+
+            public CommonPropertyDescriptor(PropertyDescriptor first, NodeProperties[] parts, PropertyDescriptor[] each)
+                : base(first.Name, new Attribute[] { new CategoryAttribute(first.Category) })
+            {
+                this.parts = parts;
+                this.each = each;
+            }
+
+
+            public override Type ComponentType => typeof(NodeProperties);
+            public override Type PropertyType => each[0].PropertyType;
+            public override bool IsReadOnly => each.Any(d => d.IsReadOnly);
+            public override TypeConverter Converter => each[0].Converter;
+            public override bool CanResetValue(object component) => false;
+            public override void ResetValue(object component) { }
+            public override bool ShouldSerializeValue(object component) => false;
+
+
+            public override object GetValue(object component)
+            {
+                var value = each[0].GetValue(parts[0]);
+                for (int i = 1; i < parts.Length; i++)
+                    if (!Equals(each[i].GetValue(parts[i]), value))
+                        return null;
+                return value;
+            }
+
+
+            public override void SetValue(object component, object value)
+            {
+                for (int i = 0; i < parts.Length; i++)
+                    each[i].SetValue(parts[i], value);
+            }
+
+
+            public override void AddValueChanged(object component, EventHandler handler)
+            {
+                base.AddValueChanged(component, handler);
+                if (watches.ContainsKey(component))
+                    return;
+                EventHandler watch = (sender, e) => OnValueChanged(component, EventArgs.Empty);
+                for (int i = 0; i < parts.Length; i++)
+                    each[i].AddValueChanged(parts[i], watch);
+                watches[component] = watch;
+            }
+
+
+            public override void RemoveValueChanged(object component, EventHandler handler)
+            {
+                base.RemoveValueChanged(component, handler);
+                if (GetValueChangedHandler(component) != null || !watches.TryGetValue(component, out var watch))
+                    return;
+                for (int i = 0; i < parts.Length; i++)
+                    each[i].RemoveValueChanged(parts[i], watch);
+                watches.Remove(component);
+            }
+        }
 
 
 

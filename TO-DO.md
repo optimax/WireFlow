@@ -34,9 +34,17 @@ BUG: TextHorizontalAlignment is no longer even shown.
 
 Fixed. A box listed it (under Text, at the end), but a text did not. Both now do, and on both, setting it moves the lines with it (TextAlignment follows: Left, Center or Right), and the TextAlignment row and its chooser follow it; the chooser sets it too.
 
-## BUG: Properties of Multiple Objects
+## [DONE] BUG: Properties of Multiple Objects
 
 When multiple objects are selected, the Properties grid should show the properties that all of the selected objects have in common, not the last selected object's properties. Changing a value of such property should apply to all the selected objects.
+
+Done. With several objects selected, Properties shows the rows that all of them have (a rectangle and a text share Href, position, size and Transparency; two texts share all of a text's rows).
+
+- A value shows where all the objects have the same one, and is empty where they differ.
+- A value set is set on all of them, and one Undo takes it back from all.
+- Name is left out: setting it would give all of them the same name.
+- Rows are matched by the name they are shown under, so a text's Background (its fill) is not shared with a rectangle's Fill.
+- Tested with a script, not by hand in the running Designer.
 
 ## BUG: Image Crashes App
 
