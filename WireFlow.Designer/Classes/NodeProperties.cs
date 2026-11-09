@@ -48,6 +48,7 @@ namespace WireFlow
             ["text"] = Common.Concat(Position).Concat(Size).Concat(Font).Concat(new[]
             {
                 P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"), P("StrokeThickness", "Text", "TextPadding"),
+                P("HorizontalAlignment", "Text", "TextHorizontalAlignment"),
             }).ToArray(),
             ["box"] = Common.Concat(Position).Concat(Size).Concat(Font).Concat(new[]
             {
@@ -119,8 +120,8 @@ namespace WireFlow
                         inner.SetValue(n, !hasOwn && value == Inherited(page, width) ? double.NaN : value);
                     };
                 }
-                else if (Node.Type == "box" && p.Property == "HorizontalAlignment")
-                    // Where a box's text lies across it carries where its lines lie with it, but for Stretch
+                else if ((Node.Type == "box" || Node.Type == "text") && p.Property == "HorizontalAlignment")
+                    // Where a box's or text's text lies across it carries where its lines lie with it, but for Stretch
                     set = (n, v) =>
                     {
                         inner.SetValue(n, v);

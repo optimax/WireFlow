@@ -20,7 +20,7 @@ Done. Edit → Undo (Ctrl+Z) and Redo (Ctrl+Y or Ctrl+Shift+Z), without limit, f
 - In a text box (in Properties, say), Ctrl+Z undoes the typing in the box, as usual.
 - Tested with a script (27 checks), not by hand in the running Designer: please try Undo and Redo after the edits above.
 
-## BUG: TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
+## [DONE] BUG: TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
 
 TextAlignment needs to be in sync with TextHorizonalAlignment and TextVerticalAlignment. When changing one of TextHorizonalAlignment, or TextVerticalAlignment, TextAlignment's highlight remains where it was. In custom editor shown only on demand, it should not be a problem, but the value should be in sync with the other two.
 
@@ -31,6 +31,8 @@ Done. The TextAlignment row follows the other two as they change: set TextVertic
 - Saved boxes keep their own TextAlignment when loaded, so existing pages look as they did.
 
 BUG: TextHorizontalAlignment is no longer even shown.
+
+Fixed. A box listed it (under Text, at the end), but a text did not. Both now do, and on both, setting it moves the lines with it (TextAlignment follows: Left, Center or Right), and the TextAlignment row and its chooser follow it; the chooser sets it too.
 
 ## BUG: Properties of Multiple Objects
 
@@ -108,9 +110,11 @@ Expected: When an object inside the StackPanel is clicked on, that object become
 
 Avoid rebuilding the entire outline on every change. Rebuild/update only the elements of the outline that are affected by the change. Make outline virtualizing, so that when the tree gets long and complicated, it renders fast.
 
-## TextHorizontalAlignment
+## [DONE] TextHorizontalAlignment
 
 Is missing from Text and Box elements.
+
+Done with the bug above: texts and boxes both list TextHorizontalAlignment under Text, in sync with TextAlignment.
 
 ## NodeProperties
 
