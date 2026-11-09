@@ -74,7 +74,7 @@ Remove the above-highlighted control in the middle.
 
 Done. Under the color wheel and sliders: a Standard row (black, white, light gray #dddddd, gray #999999) and a Recent row with the last 10 colors chosen with OK, the latest first, each shown once. A click on a swatch makes it the dialog's color; its tooltip gives its #AARRGGBB; translucent colors show over a checkerboard. The recent colors are kept in the Designer's settings, from run to run. The two-color control in the middle is gone.
 
-## Convert to a DOM (Both)
+## [DONE] Convert to a DOM (Both)
 
 This applies to both the Designer and Browser. 
 
@@ -88,7 +88,7 @@ Plan, in phases; each one is committed on its own, with the Designer and the Bro
 4. Edits go through the DOM. Properties shows the selected element's node; drawing, moving, resizing, deleting, duplicating, grouping and ordering change nodes, and the view follows. This is also what Undo/Redo (the next task) will record.
 5. The Browser draws the DOM through the same view, read-only.
 
-Done, all five phases, under the assumptions of the questions below (still open, hence [QUESTION]). Phases 3 to 5 were done together rather than one by one: with saving writing the DOM, an edit still made on the WPF elements would have been lost, so the view following the DOM and the Designer editing it had to arrive at once.
+Done, all five phases; the questions below were answered as the work had assumed. Phases 3 to 5 were done together rather than one by one: with saving writing the DOM, an edit still made on the WPF elements would have been lost, so the view following the DOM and the Designer editing it had to arrive at once.
 
 - The DOM is the model. The Designer keeps each open page or layout as its DOM, and saves the DOM; the Browser draws the DOM it reads. The WPF elements are a view: each is tied to its node and follows it, in place, so the selection stays on it; adding, removing or reordering a layer's or group's nodes adds, removes or reorders their elements.
 - Every edit changes nodes: drawing, moving (mouse and arrow keys), resizing, aligning, distributing, stacking, sizing, duplicating, deleting, grouping, ungrouping and ordering. Undo/Redo can record them at the DOM.
@@ -96,15 +96,15 @@ Done, all five phases, under the assumptions of the questions below (still open,
 - Saving no longer loses detail: color names stay names, a rectangle without a stroke keeps none, a group's size is not fixed. All 8 pages of the sample project, drawn and saved unchanged, write the same JSON.
 - Tested with scripts (view and Properties: 26 checks; the Designer's operations: 18 checks), not by hand in the running Designer: please try drawing, moving, resizing, grouping and Properties.
 
-**Q1: I am making the existing Flow* classes the DOM (observable and WPF-free), rather than adding a separate set of DOM classes beside them, and keeping the `.wf` format unchanged. OK?**
+Q1: I am making the existing Flow* classes the DOM (observable and WPF-free), rather than adding a separate set of DOM classes beside them, and keeping the `.wf` format unchanged. OK?
 
 A1: Yes.
 
-**Q2: After phase 4, Properties shows an element's own properties (Fill, Stroke, Text, Href, position and size, font, alignment and so on), no longer every WPF property of the control that draws it (Margin, Cursor, IsHitTestVisible, Focusable and others, which are not saved anyway). OK?**
+Q2: After phase 4, Properties shows an element's own properties (Fill, Stroke, Text, Href, position and size, font, alignment and so on), no longer every WPF property of the control that draws it (Margin, Cursor, IsHitTestVisible, Focusable and others, which are not saved anyway). OK?
 
 A2: Yes. We may have to adjust and show specific additional properties later on.
 
-**Q3: Colors stay text in the DOM (`#AARRGGBB` or a color name), as the files keep them; the color dialog keeps working on them.**
+Q3: Colors stay text in the DOM (`#AARRGGBB` or a color name), as the files keep them; the color dialog keeps working on them.
 
 A3: Yes.
 
