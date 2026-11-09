@@ -46,7 +46,7 @@ The Designer and the Browser have the themes of Optimax's other programs (PDFToo
 
 ## Property grid
 
-`OptimaxTools.Wpf.PropertyGrid` lists the browsable properties of `SelectedObject`'s type, as Xceed's grid did: by category (in the order of their names) or by name, with a filter box, a header naming the object's type and `Name`, and a name column whose width the grip between the columns sets. Rows are virtualized, grouped or not.
+`OptimaxTools.Wpf.PropertyGrid` lists the browsable properties of `SelectedObject`'s type, as Xceed's grid did: by category (in the order of their names) or by name, with a filter box, a header naming the object's type (the class name an object that describes itself gives, `ICustomTypeDescriptor.GetClassName`: `NodeProperties` names the node's kind, "Rectangle", "Stack Panel", "Page", or "3 objects") and `Name`, and a name column whose width the grip between the columns sets. Rows are virtualized, grouped or not.
 
 - `PropertyItem` is one property. Text goes through the property's `TypeConverter` in the invariant culture, as in XAML (`Auto`, `1,2,3,4`, `#FFFF0000`); empty text is null for a reference type other than string. A value that cannot be set leaves the property and sets `Error`, which the row shows as a red frame and a tooltip. While listed, each item watches its property (`AddValueChanged`), so a change made elsewhere shows; the watch ends when the selection changes.
 - `PropertyValueChanged` is raised for a value set in the grid only, and only when it changed. Xceed's was raised for any change of a watched property, so it fired on every click; the Designer sets `IsModified` from it.

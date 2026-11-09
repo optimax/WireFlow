@@ -187,7 +187,25 @@ namespace WireFlow
         #region ICustomTypeDescriptor
 
         public AttributeCollection GetAttributes() => AttributeCollection.Empty;
-        public string GetClassName() => parts != null ? $"{parts.Length} objects" : Node is FlowPage page ? (page.IsMaster ? "Layout" : "Page") : Node.Type;
+        public string GetClassName() => parts != null ? $"{parts.Length} objects" : Node is FlowPage page ? (page.IsMaster ? "Layout" : "Page") : KindName(Node.Type);
+
+
+        // The name a kind of element is shown by (Properties' header), as the tools and the Outline name it
+        private static string KindName(string kind)
+        {
+            switch (kind)
+            {
+                case "rect": return "Rectangle";
+                case "ellipse": return "Ellipse";
+                case "text": return "Text";
+                case "box": return "Box";
+                case "image": return "Image";
+                case "group": return "Group";
+                case "stack": return "Stack Panel";
+                case "part": return "Part";
+                default: return kind;
+            }
+        }
         public string GetComponentName() => parts == null ? Node.Name : null;
         public TypeConverter GetConverter() => null;
         public EventDescriptor GetDefaultEvent() => null;

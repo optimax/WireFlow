@@ -142,11 +142,13 @@ Is missing from Text and Box elements.
 
 Done with the bug above: texts and boxes both list TextHorizontalAlignment under Text, in sync with TextAlignment.
 
-## NodeProperties
+## [DONE] NodeProperties
 
 ![pasted-3](<TO-DO.images/pasted-3.png>)
 
 The Properties grid should identify the type of the currently selected node, instead of saying "NodeProperties" for everything.,
+
+Done. The header names what is selected: Rectangle, Ellipse, Text, Box, Image, Group, Stack Panel, Part, Page or Layout, followed by its name; with several selected, "3 objects". Checked by a script; not by hand.
 
 ## ID Property
 

@@ -165,7 +165,8 @@ namespace OptimaxTools.Wpf
             }
             items = listed;
 
-            SetValue(SelectedObjectTypeNamePropertyKey, selected?.GetType().Name);
+            // An object that describes itself names its own kind, as its properties are its own
+            SetValue(SelectedObjectTypeNamePropertyKey, selected is ICustomTypeDescriptor described ? described.GetClassName() : selected?.GetType().Name);
             SetValue(SelectedObjectNamePropertyKey, NameOf(selected));
             SetValue(PropertiesPropertyKey, new ListCollectionView(listed) { Filter = IsListed });
             ArrangeView();
