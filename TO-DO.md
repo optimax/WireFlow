@@ -56,19 +56,23 @@ Fixed. The image dialog still asked for a style of the old look, which the theme
 - A project without images opens the dialog with an empty list rather than failing.
 - Checked with a script that builds the dialog and places an image; not by hand in the running Designer.
 
-## BUG: Color Selection Dialog Controls
+## [DONE] BUG: Color Selection Dialog Controls
 
 Color Selection Dialog (Fill, Background, Stroke, etc.) overlaps color component textboxes. Also, it does not provide enough room for the "Web color" box, especially, when the focus is on it and the clear-X appears.
 
 ![pasted-4](<TO-DO.images/pasted-4.png>)
 
-## Color Selection Dialog
+Fixed, with the item below. The H, S, V and A values (and R, G, B, L) show in full: the theme's text boxes were wider than the room the sliders give them. The Web color box is wider, so #AARRGGBB shows whole with the clear-X. Checked by drawing the dialog to an image with the light theme; not by hand.
+
+## [DONE] Color Selection Dialog
 
 Color Selection Dialog needs a number of predefined swatches near the bottom: Black, White, Light Gray (#dddddd), and Gray (#999999). Additionally, it needs to remember and show swatches for the last 10 colors selected. Clicking such a swatch would set the dialog's color to what the swatch represents. 
 
 ![pasted-5](<TO-DO.images/pasted-5.png>)
 
 Remove the above-highlighted control in the middle.
+
+Done. Under the color wheel and sliders: a Standard row (black, white, light gray #dddddd, gray #999999) and a Recent row with the last 10 colors chosen with OK, the latest first, each shown once. A click on a swatch makes it the dialog's color; its tooltip gives its #AARRGGBB; translucent colors show over a checkerboard. The recent colors are kept in the Designer's settings, from run to run. The two-color control in the middle is gone.
 
 ## Convert to a DOM (Both)
 

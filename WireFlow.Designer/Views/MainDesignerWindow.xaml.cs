@@ -480,6 +480,9 @@ namespace WireFlow
                 Config = new ConfigSettings();
             }
             Debug.Assert(Config != null);
+            // The color dialog keeps its recent colors in the settings' list, which is saved with them
+            Config.RecentColors ??= new List<string>();
+            ColorPickerDialog.RecentColors = Config.RecentColors;
         }
 
 

@@ -19,6 +19,8 @@ namespace WireFlow
         // Its tabs then, in their order, and the index of the one in front (-1: none), reopened with it
         public List<TabSetting> PreviousTabs { get; set; } = new List<TabSetting>();
         public int PreviousTab { get; set; } = -1;
+        // The colors last chosen in the color dialog, the latest first, as #AARRGGBB (ColorPickerDialog.RecentColors)
+        public List<string> RecentColors { get; set; } = new List<string>();
     }
 
 
