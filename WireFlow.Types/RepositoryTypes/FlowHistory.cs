@@ -34,6 +34,10 @@ namespace WireFlow
         /// <summary>Raised when a change is recorded, and when a step is undone or redone, or the history cleared.</summary>
         public event EventHandler Changed;
 
+        /// <summary>Raised when a node is put in the tree by an edit (not by undoing or redoing one), after it is recorded, so that
+        /// changes made to it then are recorded in the same step.</summary>
+        public event Action<FlowBase> NodeAdded;
+
         public FlowBase Root => root;
 
         /// <summary>Whether there is a step to undo, the step still open included.</summary>
@@ -221,6 +225,8 @@ namespace WireFlow
                         var node = (FlowBase)e.NewItems[i];
                         Watch(node);
                         Record(new InsertChange(list, e.NewStartingIndex + i, node));
+                        if (!replaying)
+                            NodeAdded?.Invoke(node);
                     }
                     break;
                 case NotifyCollectionChangedAction.Remove:

@@ -20,6 +20,10 @@ namespace WireFlow
         }
 
 
+        /// <summary>Whether another node has an ID; an ID typed in that another has is refused (the row shows why).</summary>
+        public static Func<FlowBase, string, bool> IdTaken { get; set; }
+
+
         private static Shown P(string property, string category, string name = null, bool readOnly = false) =>
             new Shown { Property = property, Name = name ?? property, Category = category, ReadOnly = readOnly };
 
@@ -333,6 +337,8 @@ namespace WireFlow
 
             public override void SetValue(object component, object value)
             {
+                if (inner.Name == nameof(FlowBase.Id) && value is string id && IdTaken?.Invoke(NodeOf(component), id.Trim()) == true)
+                    throw new ArgumentException($"The ID \"{id.Trim()}\" is already used in the project.");
                 if (set != null)
                     set(NodeOf(component), value);
                 else

@@ -52,27 +52,29 @@ The New Layout dialog does not give its controls sufficient height, making the t
 
 Fixed. The dialog had a fixed height and rows and buttons sized for the old theme; it now takes the height its fields need, with OK and Cancel at the right, full size. New Layout and New Page are the same dialog, and New Part, which had the same fault, is fixed too. Checked by a script that opened them with the theme (every field and button whole) and drew New Layout; not by hand.
 
-## ID Property
+## [DONE] ID Property
 
 In addition to Name, every element should define a common property ID. The ID should be the target/content of an Href link.
 
 Done, under the assumptions below. Every element, and every page and layout, has an ID in Properties (under Common, after Name), empty until you set one; it is saved with the project. A link (Href) can name a page, as before, or an ID: the ID of a page leads to that page, and the ID of an element leads to the page that holds it. This works in the Browser and with the Designer's Navigate tool. Names and IDs compare ignoring case, as page names do. With several objects selected, Properties does not offer ID (each keeps its own), as it does not offer Name. Checked by a script against a copy of a sample project; not by hand.
 
-**Q1: Should a new element get an ID by itself (say `rect-12`, unique in the project), or stay without one until you give it one, as now?**
+Q1: Should a new element get an ID by itself (say `rect-12`, unique in the project), or stay without one until you give it one, as now?
 
 A1: Give it an automatic one.
 
-**Q2: Should the Designer refuse an ID that another element or page already has? Now nothing checks, and a link goes to the first page found that has it.**
+Q2: Should the Designer refuse an ID that another element or page already has? Now nothing checks, and a link goes to the first page found that has it.
 
 A2: Refuse, if it is not too expensive to check. Otherwise the first found link.
 
-**Q3: When a link names an element's ID, the Browser opens the page holding it. Should it also show which element (scroll it into view, mark it briefly)?**
+Q3: When a link names an element's ID, the Browser opens the page holding it. Should it also show which element (scroll it into view, mark it briefly)?
 
 A3: No. Just open the page.
 
-**Q4: Should links keep naming pages by name, or should they name IDs only? Both work now; a page's name is tried first.**
+Q4: Should links keep naming pages by name, or should they name IDs only? Both work now; a page's name is tried first.
 
 A4: IDs only. Change the Hrefs of existing projects accordingly.
+
+Done, as answered. A new element gets an ID by itself, its kind and a number (rect-1, ellipse-2, ...), unique in the project; so does a copy, and a new page gets one made of its name ("Contact Us" gives contact-us). Properties refuses an ID that another element or page already has, and says so. A link leads to the page with that ID, or to the page holding the element with that ID; a page's name alone no longer works. The projects in Data were converted: each page got an ID made of its name (Page 2 is page-2), and each link that named a page by its name now names that page's ID; WireFlow.wf and FirstTest.wf, yours, are converted but not committed (copies from before are kept). New layouts and parts get no ID by themselves, and layers none, as links lead to pages. Checked by a script on a converted copy of WireFlow.wf (14 checks); not by hand. If the Designer had WireFlow.wf open while it was converted, a page it saves afterwards writes back its old links: close it without saving, or convert it again with Documents\upgrade-links-to-ids.cs.
 
 ## Outline Caption and Menu
 

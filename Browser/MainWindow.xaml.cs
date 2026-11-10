@@ -640,8 +640,11 @@ namespace WireFlow
         {
             if (string.IsNullOrWhiteSpace(href))
                 return;
-            // A link names a page, or the ID of a page or of an element on one
-            OpenNode(Engine.PageOfHref(href) ?? href);
+            // A link names the ID of a page, or of an element on one; one that names none leads nowhere
+            var target = Engine.PageOfHref(href);
+            if (target == null)
+                return;
+            OpenNode(target);
             HistoryIndex = 0;
         }
 

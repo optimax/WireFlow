@@ -285,6 +285,8 @@ namespace WireFlow
             DesignerTheme.Apply(DesignerTheme.Parse(Config.Theme));
             InitializeComponent();
             ApplyConfigSettings();
+            // An ID typed in Properties that another node in the project has is refused
+            NodeProperties.IdTaken = (node, id) => CurrentDesigner?.IsIdTaken(node, id) == true;
             UpdateThemeMenu();
             DataContext = this;
             Engine = engine;

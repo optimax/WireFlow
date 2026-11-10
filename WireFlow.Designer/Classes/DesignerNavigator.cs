@@ -511,8 +511,10 @@ namespace WireFlow
             if (href == null)
                 return;
             //TODO: Instead of navigating to page directly, ask the main window to do it, which in turn may call NavigateToPage, but then it may switch to an already open tab.
-            // A link names a page, or the ID of a page or of an element on one
-            OnNavigating(Engine.PageOfHref(href) ?? href);
+            // A link names the ID of a page, or of an element on one; one that names none leads nowhere
+            var target = Engine.PageOfHref(href);
+            if (target != null)
+                OnNavigating(target);
             //NavigateToPage(href) is called by the Navigation Manager, not here!
         }
 
@@ -1008,9 +1010,51 @@ namespace WireFlow
             }
             gestureStepOpen = false;
             history = page == null ? null : new FlowHistory(page);
+            idsOutside = null;
             if (history != null)
+            {
                 history.Changed += HistoryChanged;
+                history.NodeAdded += GiveIds;
+            }
             OnHistoryStateChanged();
+        }
+
+
+        // The IDs of the project's other documents, read once the page needs them
+        private HashSet<string> idsOutside;
+
+
+        private HashSet<string> IdsOutside => idsOutside ??= Engine.IdsOutside(CurrentPage?.Name, CurrentPage is FlowPart);
+
+
+        /// <summary>
+        /// Whether another node than <paramref name="node"/> has the ID, on this page or layout (as it is now) or in the project's
+        /// other documents; an empty ID is never taken. IDs compare ignoring case.
+        /// </summary>
+        public bool IsIdTaken(FlowBase node, string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return false;
+            if (FlowIds.Nodes(CurrentPage).Any(n => n != node && string.Equals(n.Id, id, StringComparison.OrdinalIgnoreCase)))
+                return true;
+            return IdsOutside.Contains(id) || Engine.IsIdGivenElsewhere(id, CurrentPage?.Name);
+        }
+
+
+        // An element put on the page without an ID, or with one another node has (a copy), gets one of its own: its kind and a number
+        private void GiveIds(FlowBase added)
+        {
+            foreach (var node in FlowIds.Nodes(added).OfType<FlowElementBase>().ToList())
+            {
+                if (!string.IsNullOrWhiteSpace(node.Id) && !IsIdTaken(node, node.Id))
+                    continue;
+                var taken = FlowIds.NewSet();
+                taken.UnionWith(IdsOutside);
+                taken.UnionWith(Engine.IdsGivenElsewhere(CurrentPage?.Name));
+                taken.UnionWith(FlowIds.IdsIn(CurrentPage));
+                node.Id = FlowIds.ForKind(node.Type, taken);
+                Engine.NoteIdGiven(node.Id, CurrentPage?.Name);
+            }
         }
 
 

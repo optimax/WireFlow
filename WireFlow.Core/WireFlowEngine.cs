@@ -216,17 +216,14 @@ namespace WireFlow
         }
 
         /// <summary>
-        /// The name of the page a link goes to: the page of that name, else the page with that ID, else the page holding an element
-        /// (or layer) with that ID; null when there is none. Names and IDs compare ignoring case.
+        /// The name of the page a link goes to: a link names an ID, that of a page, else that of an element (or layer) on a page,
+        /// which leads to that page; null when there is none. IDs compare ignoring case.
         /// </summary>
         public string PageOfHref(string href)
         {
             if (string.IsNullOrWhiteSpace(href))
                 return null;
             var names = Pages ?? new List<string>();
-            var named = names.FirstOrDefault(n => string.Equals(n, href, StringComparison.OrdinalIgnoreCase));
-            if (named != null)
-                return named;
             var pages = names.Select(n => (Name: n, Page: GetPage(n))).Where(p => p.Page != null).ToList();
             var withId = pages.FirstOrDefault(p => IsId(p.Page, href));
             if (withId.Page != null)
@@ -248,6 +245,62 @@ namespace WireFlow
             return Repository.GetPage(nodeName);
         }
 
+
+        // IDs given out since the project was opened, which a document not yet saved may hold, with the name of that document
+        private readonly Dictionary<string, string> givenIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+
+        /// <summary>
+        /// The IDs used in the project: those of its pages, layouts and parts and of everything on them, as the repository has them,
+        /// but those of the document named, which the caller has in hand (a part when <paramref name="part"/>, else a page or
+        /// layout); null names none. See also <see cref="IsIdGivenElsewhere"/>.
+        /// </summary>
+        public HashSet<string> IdsOutside(string name, bool part = false)
+        {
+            var ids = FlowIds.NewSet();
+            bool Other(string n, bool isPart) => name == null || isPart != part || !string.Equals(n, name, StringComparison.OrdinalIgnoreCase);
+            foreach (var n in Pages ?? new List<string>())
+                if (Other(n, false))
+                    ids.UnionWith(FlowIds.IdsIn(GetPage(n)));
+            foreach (var n in Layouts ?? new List<string>())
+                if (Other(n, false))
+                    ids.UnionWith(FlowIds.IdsIn(GetMasterPage(n)));
+            foreach (var n in Parts ?? new List<string>())
+                if (Other(n, true))
+                    ids.UnionWith(FlowIds.IdsIn(GetPart(n)));
+            return ids;
+        }
+
+
+        /// <summary>Notes an ID given out to a node of the document named, so that it is not given again while that document is not
+        /// yet saved.</summary>
+        public void NoteIdGiven(string id, string document)
+        {
+            if (!string.IsNullOrWhiteSpace(id))
+                givenIds[id] = document ?? "";
+        }
+
+
+        /// <summary>Whether the ID was given out since the project was opened to a node of another document than the one named.</summary>
+        public bool IsIdGivenElsewhere(string id, string document) =>
+            id != null && givenIds.TryGetValue(id, out var holder) && !string.Equals(holder, document ?? "", StringComparison.OrdinalIgnoreCase);
+
+
+        /// <summary>The IDs given out since the project was opened to nodes of other documents than the one named.</summary>
+        public IEnumerable<string> IdsGivenElsewhere(string document) =>
+            givenIds.Where(p => !string.Equals(p.Value, document ?? "", StringComparison.OrdinalIgnoreCase)).Select(p => p.Key);
+
+
+        // A new page, layout or part gets an ID made of its name
+        private string NewDocumentId(string name)
+        {
+            var taken = IdsOutside(null);
+            taken.UnionWith(givenIds.Keys);
+            string id = FlowIds.ForName(name, taken);
+            NoteIdGiven(id, name);
+            return id;
+        }
+
         public FlowElementBase GetPart(string partName)
         {
             return Repository.GetPart(partName);
@@ -261,7 +314,14 @@ namespace WireFlow
 
         public void CreatePage(string pageName, string layoutName)
         {
+            string id = NewDocumentId(pageName);
             Repository.CreatePage(pageName, layoutName);
+            var page = Repository.GetPage(pageName);
+            if (page != null && string.IsNullOrWhiteSpace(page.Id))
+            {
+                page.Id = id;
+                Repository.SavePage(page);
+            }
         }
 
 
