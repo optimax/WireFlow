@@ -32,7 +32,7 @@ The text boxes are not high-enough.
 
 Fixed. The color picker fixes those boxes at 18 pixels high, and the theme's text box keeps 4 of them for its border and inner margin, which left 14 for text 16 high. The boxes now take the height their text needs (20), on every tab. Checked by a script that measured them and drew the dialog in the light theme; not by hand.
 
-## Stack Panel Behavior
+## [DONE] Stack Panel Behavior
 
 ![pasted](<TO-DO.images/pasted.png>)
 
@@ -41,6 +41,8 @@ Place a rectangle inside a vertical StackPanel. --> The rectangle does not span 
 Fixed by the conversion to a DOM: a rectangle drawn inside a vertical stack panel now spans it (checked by a script: an 800 px wide panel, a rectangle drawn 430 px wide inside it shows 800 px wide at its left edge, and stays so after its node changes). The rectangle keeps its own width in the file, so it comes back if it is taken out of the panel.
 
 TODO: This is not working. The last rectangle in WireFlow > Page 2 still does not span the width of the stack panel. Apparently, only the last object in StackPanel does not get properly stretched.
+
+Fixed. The rectangles did span the panel, but each still showed only as much of itself as its own width: when the panel widened a child, the child was first laid out in a slot of its old width, and WPF kept it clipped to that slot. On Page 2 that hid the right part of the first and the last rectangle (the second, 745 of 796, showed nearly whole). The panel now places each child at its new size itself. Checked by scripts on a copy of WireFlow.wf, Page 2, drawn as the Browser and as the Designer draw it, also after editing, drawing another rectangle into the panel, undo and redo; not by hand.
 
 ## New Layout Dialog Look
 

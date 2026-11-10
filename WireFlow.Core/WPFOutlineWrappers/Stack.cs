@@ -41,6 +41,9 @@ namespace WireFlow
         }
 
 
+        // Each child goes into its place at its new size. The canvas would arrange it at the size it was measured at, before
+        // its size across was set here: a child arranged narrower than its width keeps a layout clip of the old size, and
+        // shows only that much of itself until something lays it out again.
         protected override Size ArrangeOverride(Size arrangeSize)
         {
             var children = InternalChildren.OfType<FrameworkElement>().ToList();
@@ -55,8 +58,19 @@ namespace WireFlow
                     child.Width = places[i].Width;
                 else
                     child.Height = places[i].Height;
+                // Measured again first, as its size changed; a size left automatic takes the size it asks for
+                child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                var size = new Size(double.IsNaN(child.Width) ? child.DesiredSize.Width : child.Width, double.IsNaN(child.Height) ? child.DesiredSize.Height : child.Height);
+                child.Arrange(new Rect(new Point(places[i].X, places[i].Y), size));
             }
-            return base.ArrangeOverride(arrangeSize);
+            // Anything else on the panel, as a canvas places it
+            foreach (UIElement other in InternalChildren)
+                if (!(other is FrameworkElement))
+                    other.Arrange(new Rect(new Point(Coordinate(GetLeft(other)), Coordinate(GetTop(other))), other.DesiredSize));
+            return arrangeSize;
         }
+
+
+        private static double Coordinate(double value) => double.IsNaN(value) ? 0 : value;
     }
 }
