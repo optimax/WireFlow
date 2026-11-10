@@ -76,7 +76,7 @@ A4: IDs only. Change the Hrefs of existing projects accordingly.
 
 Done, as answered. A new element gets an ID by itself, its kind and a number (rect-1, ellipse-2, ...), unique in the project; so does a copy, and a new page gets one made of its name ("Contact Us" gives contact-us). Properties refuses an ID that another element or page already has, and says so. A link leads to the page with that ID, or to the page holding the element with that ID; a page's name alone no longer works. The projects in Data were converted: each page got an ID made of its name (Page 2 is page-2), and each link that named a page by its name now names that page's ID; WireFlow.wf and FirstTest.wf, yours, are converted but not committed (copies from before are kept). New layouts and parts get no ID by themselves, and layers none, as links lead to pages. Checked by a script on a converted copy of WireFlow.wf (14 checks); not by hand. If the Designer had WireFlow.wf open while it was converted, a page it saves afterwards writes back its old links: close it without saving, or convert it again with Documents\upgrade-links-to-ids.cs.
 
-## Outline Caption and Menu
+## [DONE] Outline Caption and Menu
 
 ![pasted-6](<TO-DO.images/pasted-6.png>)
 
@@ -84,9 +84,11 @@ Add an Add Layer and Delete small buttons in the Caption of the Outline, to make
 
 Done. The Outline's caption has two small buttons, where the picture shows them: Add Layer (a new layer, "Layer2" and so on, above the current one, which it becomes) and Delete (the selected objects; with none selected, the layer chosen in the Outline, with what is on it; a page keeps one layer at least, and the layers of its layout cannot be deleted from the page). Both can be undone. A right-click in the Outline offers the same two commands. The layer operations are checked by a script; the buttons and the menu were not tried by hand.
 
-**Q1: By "the Outline menu" I took the menu a right-click in the Outline opens. Did you mean the pane's ▼ menu instead (Float, Dock, Auto Hide...)?**
+Q1: By "the Outline menu" I took the menu a right-click in the Outline opens. Did you mean the pane's ▼ menu instead (Float, Dock, Auto Hide...)?
 
 A1: No, let's keep it just to the context menu for now..
+
+Kept as it is: the two commands are in the Outline's right-click menu only.
 
 ## View Menu Toggles
 
