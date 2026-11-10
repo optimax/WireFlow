@@ -500,9 +500,15 @@ namespace WireFlow
             if (!IsShiftPressed)
                 DeselectAll();
             //CreateElementFn?.Invoke();
-            CreateShape(SelectedDrawingTool);
+            bool drawn = CreateShape(SelectedDrawingTool);
             RemoveRubberband();
+            if (drawn)
+                ElementDrawn?.Invoke(this);
         }
+
+
+        /// <summary>Raised when the tool in use has drawn an object (Tools &gt; Options can then choose the Select tool again).</summary>
+        public event Action<DesignerNavigator> ElementDrawn;
 
 
 
@@ -1407,25 +1413,26 @@ namespace WireFlow
 
 
 
-        void CreateShape(IDrawingTool drawingTool)
+        // Whether it drew an object
+        bool CreateShape(IDrawingTool drawingTool)
         {
             if (drawingTool == null)
-                return;
+                return false;
 
             //SelectDefaultLayer(); DO NOT!
             if (CurrentLayer == null)
-                return;
+                return false;
 
             if (Rubberband == null)
-                return;
+                return false;
 
             // The tool makes the element with its defaults; it goes onto the page as its node, which the view draws
             var element = drawingTool.CreateElement();
             if (element == null)
-                return;
+                return false;
             var node = Engine.ToNode(element);
             if (node == null || !(FlowView.GetNode(CurrentLayer) is FlowLayer layer))
-                return;
+                return false;
 
             node.Width = Rubberband.Width;
             node.Height = Rubberband.Height;
@@ -1453,6 +1460,7 @@ namespace WireFlow
 
             IsModified = true;
             OnElementsChanged();
+            return true;
         }
 
 

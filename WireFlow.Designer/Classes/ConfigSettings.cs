@@ -14,6 +14,8 @@ namespace WireFlow
         public string Theme { get; set; } = "System";
         // Tools > Options: open PreviousProject again when the Designer starts
         public bool ReopenPreviousProject { get; set; } = false;
+        // Tools > Options: the Select tool again after each object drawn, as Esc chooses it
+        public bool SelectAfterDrawing { get; set; } = false;
         // The project open when the settings were last saved, as the Designer closed; null when none was
         public string PreviousProject { get; set; }
         // Its tabs then, in their order, and the index of the one in front (-1: none), reopened with it

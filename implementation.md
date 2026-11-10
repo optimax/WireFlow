@@ -130,6 +130,8 @@ Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' progr
 
 - Files → Reopen the previous project at startup (`ConfigSettings.ReopenPreviousProject`, off by default): `SaveConfigSettings` keeps the project open as the settings are saved, as the Designer closes, in `PreviousProject` (null when none is open), with the tabs of the main document pane in `PreviousTabs` (kind and name, in order) and the one in front in `PreviousTab`. `Window_Loaded` opens it again once the window shows, if it is still there (`ReopenPreviousProject`), without its home page, and reopens the tabs whose page, layout or part it still has; with none, its home page.
 
+- Drawing → Return to the Select tool after drawing an object (`ConfigSettings.SelectAfterDrawing`, off by default): once a tool has drawn an object (`DesignerNavigator.ElementDrawn`, raised when `CreateShape` put one on the page), the window chooses the Select tool, as Esc does (`SelectDefaultTool`), after the mouse is let go.
+
 The settings file is not offered for editing from the dialog (no Edit Settings File button): the Designer writes it as it closes, so edits made to it while the Designer runs would be lost.
 
 ## Publishing

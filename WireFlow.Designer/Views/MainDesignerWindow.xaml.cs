@@ -441,6 +441,14 @@ namespace WireFlow
 
 
         // Esc: the Select tool, in the Tools list and in the current designer
+        // Tools > Options: the Select tool again once an object is drawn, after the mouse is let go
+        private void NavigatorElementDrawnHandler(DesignerNavigator sender)
+        {
+            if (Config.SelectAfterDrawing)
+                Dispatcher.BeginInvoke(new Action(SelectDefaultTool), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+
         private void SelectDefaultTool()
         {
             int index = Tools.Items.IndexOf(DefaultDrawingTool);
@@ -675,6 +683,7 @@ namespace WireFlow
             if (dialog.Answer != OptimaxTools.Options.OptionsAnswer.Ok)
                 return;
             Config.ReopenPreviousProject = dialog.ReopenPreviousProject;
+            Config.SelectAfterDrawing = dialog.SelectAfterDrawing;
             PersistConfigSettings();
         }
 
@@ -1317,6 +1326,7 @@ namespace WireFlow
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
+            navigator.ElementDrawn += NavigatorElementDrawnHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1353,6 +1363,7 @@ namespace WireFlow
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
+            navigator.ElementDrawn += NavigatorElementDrawnHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1384,6 +1395,7 @@ namespace WireFlow
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
+            navigator.ElementDrawn += NavigatorElementDrawnHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
