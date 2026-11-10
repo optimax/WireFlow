@@ -1068,6 +1068,58 @@ namespace WireFlow
         }
 
 
+        // A layer taken away (by undo, say) is no longer current: the top one is
+        private void KeepCurrentLayer()
+        {
+            if (CurrentLayer == null || CurrentLayer.Parent == null)
+                SelectDefaultLayer();
+        }
+
+
+        // The layer drawn for a layer node of the page
+        private Layer LayerViewOf(FlowLayer node) =>
+            CurrentCanvas?.Children.OfType<Layout>().SelectMany(l => l.Children.OfType<Layer>()).FirstOrDefault(l => FlowView.GetNode(l) == node);
+
+
+        /// <summary>Adds a layer to the page or layout open, above the current one, and makes it current.</summary>
+        public void AddLayer()
+        {
+            // A part has no layers
+            var page = CurrentPage as FlowPage;
+            if (page == null)
+                return;
+            int n = page.Layers.Count + 1;
+            while (page.Layers.Any(l => string.Equals(l.Name, $"Layer{n}", StringComparison.OrdinalIgnoreCase)))
+                n++;
+            var layer = new FlowLayer { Name = $"Layer{n}" };
+            var current = FlowView.GetNode(CurrentLayer) as FlowLayer;
+            int index = current != null && page.Layers.Contains(current) ? page.Layers.IndexOf(current) + 1 : page.Layers.Count;
+            DeselectAll();
+            page.Layers.Insert(index, layer);
+            CurrentLayer = LayerViewOf(layer) ?? CurrentLayer;
+            IsModified = true;
+            OnElementsChanged();
+        }
+
+
+        /// <summary>
+        /// Deletes a layer of the page or layout open, with its elements; false if it cannot: a page keeps one layer at least,
+        /// and the layers of the layout a page shows are not the page's.
+        /// </summary>
+        public bool DeleteLayer(Layer view)
+        {
+            var page = CurrentPage as FlowPage;
+            if (page == null || !(FlowView.GetNode(view) is FlowLayer layer) || !page.Layers.Contains(layer) || page.Layers.Count < 2)
+                return false;
+            DeselectAll();
+            page.Layers.Remove(layer);
+            KeepCurrentLayer();
+            IsModified = true;
+            OnElementsChanged();
+            return true;
+        }
+
+
         /// <summary>Undoes the last edit of the page or layout open. The page is unmodified again once every edit since it was opened or saved is undone.</summary>
         public void Undo()
         {
@@ -1078,6 +1130,7 @@ namespace WireFlow
             DeselectAll();
             history.Undo();
             IsModified = history.CanUndo;
+            KeepCurrentLayer();
             OnElementsChanged();
         }
 
@@ -1091,6 +1144,7 @@ namespace WireFlow
             DeselectAll();
             history.Redo();
             IsModified = true;
+            KeepCurrentLayer();
             OnElementsChanged();
         }
 

@@ -108,13 +108,15 @@ Q3: Colors stay text in the DOM (`#AARRGGBB` or a color name), as the files keep
 
 A3: Yes.
 
-## [DONE] Stack Panel Behavior
+## Stack Panel Behavior
 
 ![pasted](<TO-DO.images/pasted.png>)
 
 Place a rectangle inside a vertical StackPanel. --> The rectangle does not span the panel horizontally as it should but seems clipped on the right instead.
 
 Fixed by the conversion to a DOM: a rectangle drawn inside a vertical stack panel now spans it (checked by a script: an 800 px wide panel, a rectangle drawn 430 px wide inside it shows 800 px wide at its left edge, and stays so after its node changes). The rectangle keeps its own width in the file, so it comes back if it is taken out of the panel.
+
+TODO: This is not working. The rectangle in WireFlow > Page 2 still does not span the width of the stack panel.
 
 ## [DONE] Stack Panel Content in Outline
 
@@ -158,11 +160,19 @@ Done, under the assumptions below. Every element, and every page and layout, has
 
 **Q1: Should a new element get an ID by itself (say `rect-12`, unique in the project), or stay without one until you give it one, as now?**
 
+A1: Give it an automatic one.
+
 **Q2: Should the Designer refuse an ID that another element or page already has? Now nothing checks, and a link goes to the first page found that has it.**
+
+A2: Refuse, if it is not too expensive to check. Otherwise the first found link.
 
 **Q3: When a link names an element's ID, the Browser opens the page holding it. Should it also show which element (scroll it into view, mark it briefly)?**
 
+A3: No. Just open the page.
+
 **Q4: Should links keep naming pages by name, or should they name IDs only? Both work now; a page's name is tried first.**
+
+A4: IDs only. Change the Hrefs of existing projects accordingly.
 
 ## [DONE] Property Grid and Arrow Keys
 
@@ -170,11 +180,15 @@ Up and Down arrows should navigate up and down in the property grid, like in a s
 
 Done. Up and Down move to the value of the row above or below, across categories, scrolling as needed; a value typed is set as you leave it, as with Tab. An open drop-down list keeps Up and Down to choose in it, and so does a text of several lines while there are lines to move to. (On the way, the ID row from the item above did not show; it does now.) Checked by a script that presses the keys in a grid; not by hand.
 
-## Outline Caption and Menu
+## [QUESTION] Outline Caption and Menu
 
 ![pasted-6](<TO-DO.images/pasted-6.png>)
 
 Add an Add Layer and Delete small buttons in the Caption of the Outline, to make it possible to insert new Layers and to delete the selected objects. Add corresponding commands to the Outline menu.
+
+Done. The Outline's caption has two small buttons, where the picture shows them: Add Layer (a new layer, "Layer2" and so on, above the current one, which it becomes) and Delete (the selected objects; with none selected, the layer chosen in the Outline, with what is on it; a page keeps one layer at least, and the layers of its layout cannot be deleted from the page). Both can be undone. A right-click in the Outline offers the same two commands. The layer operations are checked by a script; the buttons and the menu were not tried by hand.
+
+**Q1: By "the Outline menu" I took the menu a right-click in the Outline opens. Did you mean the pane's ▼ menu instead (Float, Dock, Auto Hide...)?**
 
 ## Remember Window Position and Panes
 

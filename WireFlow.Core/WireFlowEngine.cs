@@ -948,6 +948,7 @@ namespace WireFlow
                 return;
             foreach (var layer in pageNode.Layers)
                 RenderLayer<LayerType>(pageNode, layer, canvas);
+            FollowLayers<LayerType>(pageNode, canvas);
         }
 
 
@@ -1011,6 +1012,53 @@ namespace WireFlow
             link.OnChildren = (sender, e) => Reconcile(children, panel);
             link.Children.CollectionChanged += link.OnChildren;
             panel.SetValue(ViewLinkProperty, link);
+        }
+
+
+        // Keeps a page's or layout's layers in step with its node's layers
+        private void FollowLayers<LayerType>(FlowPage pageNode, Canvas canvas)
+            where LayerType : Layer, new()
+        {
+            if (!(pageNode.Layers is INotifyCollectionChanged layers))
+                return;
+            var link = canvas.GetValue(ViewLinkProperty) as ViewLink ?? new ViewLink { Node = pageNode };
+            link.Children = layers;
+            link.OnChildren = (sender, e) => ReconcileLayers<LayerType>(pageNode, canvas);
+            layers.CollectionChanged += link.OnChildren;
+            canvas.SetValue(ViewLinkProperty, link);
+        }
+
+
+        // Puts the layers drawn in step with the node's layers: those added are drawn, those taken away removed, all in the nodes' order (bottom first)
+        private void ReconcileLayers<LayerType>(FlowPage pageNode, Canvas canvas)
+            where LayerType : Layer, new()
+        {
+            var shown = new Dictionary<FlowBase, Layer>();
+            foreach (var view in canvas.Children.OfType<Layer>())
+                if (FlowView.GetNode(view) is FlowBase node && !shown.ContainsKey(node))
+                    shown[node] = view;
+            var wanted = new List<UIElement>();
+            foreach (var layer in pageNode.Layers.ToList())
+            {
+                if (!shown.TryGetValue(layer, out var view))
+                {
+                    RenderLayer<LayerType>(pageNode, layer, canvas);
+                    view = canvas.Children.OfType<Layer>().Last(l => FlowView.GetNode(l) == layer);
+                }
+                wanted.Add(view);
+            }
+            for (int i = canvas.Children.Count - 1; i >= 0; i--)
+                if (canvas.Children[i] is Layer view && FlowView.GetNode(view) != null && !wanted.Contains(view))
+                {
+                    Unfollow(view);
+                    canvas.Children.RemoveAt(i);
+                }
+            for (int i = 0; i < wanted.Count; i++)
+                if (canvas.Children.IndexOf(wanted[i]) != i)
+                {
+                    canvas.Children.Remove(wanted[i]);
+                    canvas.Children.Insert(i, wanted[i]);
+                }
         }
 
 

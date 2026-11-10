@@ -17,6 +17,40 @@
         <Style x:Key="TooBarPanelStyle" TargetType="{x:Type ToolBarPanel}">
             <Setter Property="Background" Value="{DynamicResource ToolbarPanelBackgroundBrush}"/>
         </Style>
+        <!-- A small flat button in a pane's caption, as the pane's own menu and pin buttons -->
+        <Style x:Key="PaneCaptionButton" TargetType="Button">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LightLightColorBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- A tool glyph on its 24 x 24 grid in the text color around it, as the Tools list draws them -->
+        <Style x:Key="PaneCaptionGlyph" TargetType="Path">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="StrokeThickness" Value="{StaticResource ToolGlyphStrokeThickness}"/>
+            <Setter Property="StrokeStartLineCap" Value="Round"/>
+            <Setter Property="StrokeEndLineCap" Value="Round"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
+            <Setter Property="Stroke" Value="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
+        </Style>
     </Window.Resources>
 
 
@@ -143,6 +177,30 @@
             BorderThickness="0"
             Background="Transparent"
             >
+
+            <!-- A pane's title; the Outline's has buttons for its commands at its right end -->
+            <dock:DockingManager.AnchorableTitleTemplate>
+                <DataTemplate>
+                    <DockPanel LastChildFill="True">
+                        <StackPanel x:Name="OutlineButtons" DockPanel.Dock="Right" Orientation="Horizontal" Margin="4,0,2,0" Visibility="Collapsed">
+                            <Button Style="{StaticResource PaneCaptionButton}" ToolTip="Add a layer above the current one"
+                                    Command="{Binding DataContext.AddLayerCmd, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Viewbox Width="14" Height="14"><Path Data="{StaticResource ToolGlyph.layer-add}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
+                            </Button>
+                            <Button Style="{StaticResource PaneCaptionButton}" ToolTip="Delete the selected objects, or the layer chosen"
+                                    Command="{Binding DataContext.OutlineDeleteCmd, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Viewbox Width="14" Height="14"><Path Data="{StaticResource ToolGlyph.delete}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock VerticalAlignment="Center" Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding ContentId}" Value="outline">
+                            <Setter TargetName="OutlineButtons" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </dock:DockingManager.AnchorableTitleTemplate>
 
             <dock:DockingManager.DocumentHeaderTemplate>
                 <DataTemplate>
@@ -316,6 +374,12 @@
                                 <!-- Virtualizing: only the entries in view have items. Standard, not Recycling, mode, so that an entry collapsed by hand does not pass that on to another -->
                                 <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged"
                                           VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" ScrollViewer.CanContentScroll="True">
+                                    <TreeView.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Add _Layer" Command="{Binding AddLayerCmd}"/>
+                                            <MenuItem Header="_Delete" Command="{Binding OutlineDeleteCmd}"/>
+                                        </ContextMenu>
+                                    </TreeView.ContextMenu>
                                     <TreeView.Resources>
                                         <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                                             <Setter Property="IsExpanded" Value="True" />

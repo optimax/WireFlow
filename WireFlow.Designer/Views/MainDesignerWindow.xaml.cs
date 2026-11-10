@@ -633,6 +633,25 @@ namespace WireFlow
         }
 
 
+        // The layer chosen in the Outline, when it is one
+        private Layer OutlineLayer => (Outline.SelectedItem as UILayerProxy)?.UIElement as Layer;
+
+
+        private bool CanOutlineDelete() =>
+            CurrentDesigner != null && (CurrentDesigner.HasElementsSelected || (OutlineLayer != null && (CurrentDesigner.CurrentPage as FlowPage)?.Layers.Count > 1));
+
+
+        private void OutlineDelete()
+        {
+            if (CurrentDesigner == null)
+                return;
+            if (CurrentDesigner.HasElementsSelected)
+                CurrentDesigner.DeleteSelectedElements();
+            else if (OutlineLayer is Layer layer)
+                CurrentDesigner.DeleteLayer(layer);
+        }
+
+
         private void Outline_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             var selectedItem = Outline.SelectedItem as UIElementProxy;
@@ -2199,6 +2218,10 @@ namespace WireFlow
         public ICommand ObjectDuplicateCmd { get; set; }
         public ICommand ObjectDeleteCmd { get; set; }
         public ICommand UndoCmd { get; set; }
+        /// <summary>Adds a layer above the current one (the Outline's caption and menu).</summary>
+        public ICommand AddLayerCmd { get; set; }
+        /// <summary>Deletes the elements selected, or else the layer chosen in the Outline (the Outline's caption and menu).</summary>
+        public ICommand OutlineDeleteCmd { get; set; }
         public ICommand RedoCmd { get; set; }
         public ICommand ObjectBringForwardCmd { get; set; }
         public ICommand ObjectSendBackwardCmd { get; set; }
@@ -2272,6 +2295,8 @@ namespace WireFlow
 
             ObjectDuplicateCmd = new RelayCommand(o => CurrentDesigner?.DuplicateSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectDeleteCmd = new RelayCommand(o =>CurrentDesigner?.DeleteSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => CurrentDesigner?.CurrentPage is FlowPage);
+            OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => CanOutlineDelete());
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => CurrentDesigner?.CanUndo ?? false);
             RedoCmd = new RelayCommand(o => CurrentDesigner?.Redo(), o => CurrentDesigner?.CanRedo ?? false);
             ObjectBringForwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectBringForward(), o => CurrentDesigner?.HasElementsSelected ?? false);
