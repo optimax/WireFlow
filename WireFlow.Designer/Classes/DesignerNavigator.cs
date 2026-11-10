@@ -1549,6 +1549,138 @@ namespace WireFlow
         }
 
 
+        /// <summary>The clipboard format of WireFlow's elements: a JSON array of their nodes, as they are saved.</summary>
+        public const string ClipboardFormat = "WireFlow.Elements";
+
+        // How far a paste is moved while it would lie exactly on elements already there
+        private const double PASTE_OFFSET = 10;
+
+
+        /// <summary>
+        /// Puts copies of the selected elements' nodes on the clipboard, each where it shows on the layer (a child of a group or a
+        /// stack panel too), without the ones inside another selected; false when nothing is selected.
+        /// </summary>
+        public bool CopySelectedElements()
+        {
+            if (selectedElements.Count == 0 || CurrentLayer == null)
+                return false;
+            var chosen = selectedElements.Where(e => NodeOf(e) != null).ToList();
+            chosen = chosen.Where(e => !chosen.Any(o => o != e && IsInsideOf(NodeOf(e), NodeOf(o)))).ToList();
+            var copies = new List<string>();
+            foreach (var e in chosen)
+            {
+                var node = NodeOf(e);
+                var copy = FlatFolderRepository.DeserializeFromJSON<FlowElementBase>(FlatFolderRepository.SerializeToJSON(node), node.Name);
+                if (copy == null)
+                    continue;
+                var place = e.TranslatePoint(new Point(0, 0), CurrentLayer);
+                copy.Left = place.X;
+                copy.Top = place.Y;
+                copies.Add(FlatFolderRepository.SerializeToJSON(copy));
+            }
+            if (copies.Count == 0)
+                return false;
+            var data = new DataObject();
+            data.SetData(ClipboardFormat, "[" + string.Join(",", copies) + "]");
+            try
+            {
+                Clipboard.SetDataObject(data, true);
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                // The clipboard is held by another program
+                return false;
+            }
+            return true;
+        }
+
+
+        /// <summary>Copies the selected elements to the clipboard and takes them off the page.</summary>
+        public void CutSelectedElements()
+        {
+            if (CopySelectedElements())
+                DeleteSelectedElements();
+        }
+
+
+        /// <summary>Whether the clipboard holds WireFlow elements to paste.</summary>
+        public static bool ClipboardHasElements()
+        {
+            try
+            {
+                return Clipboard.ContainsData(ClipboardFormat);
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// Puts the elements on the clipboard on the current layer, where they were copied from, or moved down and right by 10 px
+        /// while they would lie exactly on elements of the same kind already there, and selects them. Each gets an ID of its own.
+        /// </summary>
+        public void PasteElements()
+        {
+            if (!(FlowView.GetNode(CurrentLayer) is FlowLayer layer))
+                return;
+            string json;
+            try
+            {
+                json = Clipboard.GetData(ClipboardFormat) as string;
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(json))
+                return;
+            List<FlowElementBase> nodes;
+            try
+            {
+                nodes = Newtonsoft.Json.Linq.JArray.Parse(json)
+                    .Select(item => FlatFolderRepository.DeserializeFromJSON<FlowElementBase>(item.ToString(), "clipboard"))
+                    .Where(n => n != null).ToList();
+            }
+            catch (Newtonsoft.Json.JsonException)
+            {
+                return;
+            }
+            if (nodes.Count == 0)
+                return;
+            bool Covers(double dx, double dy) => nodes.Any(n => layer.Elements.Any(o => o.Type == n.Type
+                && Math.Abs(o.Left - (n.Left + dx)) < 0.5 && Math.Abs(o.Top - (n.Top + dy)) < 0.5));
+            double offset = 0;
+            while (Covers(offset, offset) && offset < 100 * PASTE_OFFSET)
+                offset += PASTE_OFFSET;
+            foreach (var node in nodes)
+            {
+                node.Left += offset;
+                node.Top += offset;
+            }
+
+            DeselectAll();
+            foreach (var node in nodes)
+                layer.Elements.Add(node);
+            selectedElements.AddRange(nodes.Select(n => ViewOf(n, CurrentLayer)).Where(v => v != null));
+            RebuildSelection();
+
+            IsModified = true;
+            OnElementsChanged();
+        }
+
+
+        // Whether a node is held, at any depth, by another
+        private static bool IsInsideOf(FlowBase node, FlowBase other)
+        {
+            for (var parent = node?.Parent; parent != null; parent = parent.Parent)
+                if (parent == other)
+                    return true;
+            return false;
+        }
+
+
         public void DeleteSelectedElements()
         {
             if (selectedElements.Count == 0)

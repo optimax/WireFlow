@@ -74,9 +74,9 @@
                 <MenuItem Header="_Undo" Command="{Binding UndoCmd}" InputGestureText="Ctrl+Z"/>
                 <MenuItem Header="_Redo" Command="{Binding RedoCmd}" InputGestureText="Ctrl+Y"/>
                 <Separator/>
-                <MenuItem Header="Cut"/>
-                <MenuItem Header="Copy"/>
-                <MenuItem Header="Paste"/>
+                <MenuItem Header="Cu_t" Command="{Binding CutCmd}" InputGestureText="Ctrl+X"/>
+                <MenuItem Header="_Copy" Command="{Binding CopyCmd}" InputGestureText="Ctrl+C"/>
+                <MenuItem Header="_Paste" Command="{Binding PasteCmd}" InputGestureText="Ctrl+V"/>
                 <Separator/>
                 <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
             </MenuItem>

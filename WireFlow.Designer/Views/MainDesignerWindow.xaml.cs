@@ -375,6 +375,10 @@ namespace WireFlow
             InputBindings.Add(new KeyBinding(UndoCmd, Key.Z, ModifierKeys.Control));
             InputBindings.Add(new KeyBinding(RedoCmd, Key.Y, ModifierKeys.Control));
             InputBindings.Add(new KeyBinding(RedoCmd, Key.Z, ModifierKeys.Control | ModifierKeys.Shift));
+            // Edit > Cut, Copy, Paste of the page's elements; a text box with the keyboard cuts, copies and pastes its own text first
+            InputBindings.Add(new KeyBinding(CutCmd, Key.X, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(CopyCmd, Key.C, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(PasteCmd, Key.V, ModifierKeys.Control));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             // The panes as they were, before any tab opens: tabs are not kept in the layout
@@ -2394,6 +2398,9 @@ namespace WireFlow
         public ICommand ObjectDuplicateCmd { get; set; }
         public ICommand ObjectDeleteCmd { get; set; }
         public ICommand UndoCmd { get; set; }
+        public ICommand CutCmd { get; set; }
+        public ICommand CopyCmd { get; set; }
+        public ICommand PasteCmd { get; set; }
         /// <summary>Adds a layer above the current one (the Outline's caption and menu).</summary>
         public ICommand AddLayerCmd { get; set; }
         /// <summary>Deletes the elements selected, or else the layer chosen in the Outline (the Outline's caption and menu).</summary>
@@ -2476,6 +2483,10 @@ namespace WireFlow
             AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => CurrentDesigner?.CurrentPage is FlowPage);
             OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => CanOutlineDelete());
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => CurrentDesigner?.CanUndo ?? false);
+            CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            CopyCmd = new RelayCommand(o => CurrentDesigner?.CopySelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            PasteCmd = new RelayCommand(o => CurrentDesigner?.PasteElements(),
+                o => CurrentDesigner?.CurrentLayer != null && DesignerNavigator.ClipboardHasElements());
             RedoCmd = new RelayCommand(o => CurrentDesigner?.Redo(), o => CurrentDesigner?.CanRedo ?? false);
             ObjectBringForwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectBringForward(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectSendBackwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectSendBackward(), o => CurrentDesigner?.HasElementsSelected ?? false);
