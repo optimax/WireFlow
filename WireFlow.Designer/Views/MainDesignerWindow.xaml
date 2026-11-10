@@ -64,6 +64,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
             <Setter Property="Template">
@@ -87,6 +88,47 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+        <!-- A toolbar toggle, as PDFTools' (the Imposer's ToolbarToggleStyle): flat as the buttons, tinted while on -->
+        <Style x:Key="ToolbarToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static themes:Palette.ButtonHover}}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static themes:Palette.ButtonHoverBorder}}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static themes:Palette.ToggleChecked}}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static themes:Palette.ToggleCheckedBorder}}"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsChecked" Value="True"/>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource {x:Static themes:Palette.ToggleCheckedHover}}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static themes:Palette.ToggleCheckedHoverBorder}}"/>
+                </MultiTrigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.4"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
         <Style x:Key="ToolbarIconStyle" TargetType="Path">
             <Setter Property="Stroke" Value="{DynamicResource {x:Static themes:Palette.Ink}}"/>
@@ -146,6 +188,11 @@
             </MenuItem>
             <!-- The panes' items follow the theme's, made as the menu opens (ViewMenuItem_SubmenuOpened) -->
             <MenuItem Header="_View" x:Name="ViewMenuItem" SubmenuOpened="ViewMenuItem_SubmenuOpened">
+                <!-- Design or Navigate mode, as the toolbar's Navigate Mode button -->
+                <MenuItem Header="_Navigate Mode" IsCheckable="True" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}"/>
+                <MenuItem Header="_Back" Command="{Binding NavigateBackCmd}" InputGestureText="Alt+Left"/>
+                <MenuItem Header="_Forward" Command="{Binding NavigateForwardCmd}" InputGestureText="Alt+Right"/>
+                <Separator/>
                 <!-- As in PDFTools; DesignerTheme applies the choice -->
                 <MenuItem Header="_Theme" x:Name="ThemeMenuItem">
                     <MenuItem Header="_System" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.System}" Click="ThemeMenuItem_Click"
@@ -245,6 +292,17 @@
                 </Button>
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveFileCmd}" ToolTip="Save (Ctrl+S)">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.save}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <!-- Design or Navigate mode, and Back and Forward through the pages visited in Navigate mode -->
+                <ToggleButton Style="{StaticResource ToolbarToggleStyle}" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}" ToolTip="Navigate Mode: click links as in WireFlow Browser">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.navigate}"/>
+                </ToggleButton>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding NavigateBackCmd}" ToolTip="Back (Alt+Left)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.back}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding NavigateForwardCmd}" ToolTip="Forward (Alt+Right)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.forward}"/>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCmd}" ToolTip="Undo (Ctrl+Z)">

@@ -235,6 +235,60 @@ namespace WireFlow
 
 
         public IDrawingTool DefaultDrawingTool { get; set; }
+        /// <summary>The Navigate tool, which every page and layout open takes in Navigate mode.</summary>
+        public IDrawingTool NavigateModeTool { get; set; }
+        /// <summary>The tool a page or layout opened now starts with: Navigate in Navigate mode, else Select.</summary>
+        private IDrawingTool ModeDrawingTool => IsNavigateMode ? NavigateModeTool : DefaultDrawingTool;
+
+
+        /// <summary>
+        /// Navigate mode: every page, layout and part open behaves as in WireFlow Browser. A click follows the innermost link
+        /// around what it hits (the Navigate tool), nothing is selected, the Tools list and Properties are off, the commands
+        /// that change a page without a selection are disabled, and Back and Forward go through the pages visited. Leaving it
+        /// gives every page open the Select tool again.
+        /// </summary>
+        public bool IsNavigateMode
+        {
+            get { return isNavigateMode; }
+            set
+            {
+                if (isNavigateMode == value)
+                    return;
+                isNavigateMode = value;
+                ApplyNavigateMode();
+                OnPropertyChanged(nameof(IsNavigateMode));
+            }
+        }
+        private bool isNavigateMode;
+
+        /// <summary>The pages visited since Navigate mode was entered.</summary>
+        public NavigationHistory NavigationHistory { get; } = new NavigationHistory();
+
+
+        private void ApplyNavigateMode()
+        {
+            var tool = ModeDrawingTool;
+            // The Navigate tool deselects as it is chosen
+            foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
+                doc.Navigator.SelectedDrawingTool = tool;
+            int index = Tools.Items.IndexOf(tool);
+            if (index >= 0)
+                SelectedToolIndex = index;
+            Tools.IsEnabled = !IsNavigateMode;
+            PropertyGrid.IsEnabled = !IsNavigateMode;
+            NavigationHistory.Clear();
+            if (IsNavigateMode && CurrentDesigner?.NavigatorDocument?.Kind == DesignerNavigatorDocument.PageKind)
+                NavigationHistory.Visit(CurrentDesigner.PageName);
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+
+        // Back and Forward: the page in front shows the page visited, or the tab that shows it already comes to the front
+        private void ShowVisitedPage(string page)
+        {
+            if (page != null && CurrentDesigner != null)
+                NavigateToPage(CurrentDesigner, page);
+        }
         public IDrawingTool SelectedDrawingTool => CurrentDesigner?.SelectedDrawingTool;
         public Canvas CurrentCanvas => CurrentDesigner?.Designer?.Canvas;
 
@@ -379,6 +433,9 @@ namespace WireFlow
             InputBindings.Add(new KeyBinding(CutCmd, Key.X, ModifierKeys.Control));
             InputBindings.Add(new KeyBinding(CopyCmd, Key.C, ModifierKeys.Control));
             InputBindings.Add(new KeyBinding(PasteCmd, Key.V, ModifierKeys.Control));
+            // Navigate mode: Back and Forward, as in a browser
+            InputBindings.Add(new KeyBinding(NavigateBackCmd, Key.Left, ModifierKeys.Alt));
+            InputBindings.Add(new KeyBinding(NavigateForwardCmd, Key.Right, ModifierKeys.Alt));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             // The panes as they were, before any tab opens: tabs are not kept in the layout
@@ -455,6 +512,9 @@ namespace WireFlow
 
         private void SelectDefaultTool()
         {
+            // Navigate mode keeps the Navigate tool until it is left
+            if (IsNavigateMode)
+                return;
             int index = Tools.Items.IndexOf(DefaultDrawingTool);
             if (index >= 0)
                 SelectedToolIndex = index;
@@ -468,7 +528,7 @@ namespace WireFlow
 
             DefaultDrawingTool = RegisterDrawingTool<SelectDrawingTool>();
             RegisterDrawingTool<PanDrawingTool>();
-            RegisterDrawingTool<NavigateDrawingTool>();
+            NavigateModeTool = RegisterDrawingTool<NavigateDrawingTool>();
 
             RegisterDrawingTool<SeparatorDrawingTool>();
 
@@ -772,7 +832,8 @@ namespace WireFlow
         private void Outline_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             var selectedItem = Outline.SelectedItem as UIElementProxy;
-            if (selectedItem == null)
+            // Navigate mode selects nothing on the page, as the Browser does
+            if (selectedItem == null || IsNavigateMode)
                 return;
             CurrentDesigner.SelectItem(selectedItem.UIElement);
         }
@@ -1334,7 +1395,7 @@ namespace WireFlow
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
-            navigator.SelectedDrawingTool = DefaultDrawingTool;
+            navigator.SelectedDrawingTool = ModeDrawingTool;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1371,7 +1432,7 @@ namespace WireFlow
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
-            navigator.SelectedDrawingTool = DefaultDrawingTool;
+            navigator.SelectedDrawingTool = ModeDrawingTool;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1403,7 +1464,7 @@ namespace WireFlow
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
-            navigator.SelectedDrawingTool = DefaultDrawingTool;
+            navigator.SelectedDrawingTool = ModeDrawingTool;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1419,6 +1480,8 @@ namespace WireFlow
         private void NavigatorNavigatingHandler(DesignerNavigator nav, string href)
         {
             NavigateToPage(nav, href);
+            if (IsNavigateMode)
+                NavigationHistory.Visit(href);
         }
 
 
@@ -1452,6 +1515,8 @@ namespace WireFlow
             var href = (string)e.AddedItems[0];
 
             NavigateToPage(CurrentDesigner, href);
+            if (IsNavigateMode)
+                NavigationHistory.Visit(href);
         }
 
 
@@ -2401,6 +2466,8 @@ namespace WireFlow
         public ICommand CutCmd { get; set; }
         public ICommand CopyCmd { get; set; }
         public ICommand PasteCmd { get; set; }
+        public ICommand NavigateBackCmd { get; set; }
+        public ICommand NavigateForwardCmd { get; set; }
         /// <summary>Adds a layer above the current one (the Outline's caption and menu).</summary>
         public ICommand AddLayerCmd { get; set; }
         /// <summary>Deletes the elements selected, or else the layer chosen in the Outline (the Outline's caption and menu).</summary>
@@ -2480,14 +2547,17 @@ namespace WireFlow
 
             ObjectDuplicateCmd = new RelayCommand(o => CurrentDesigner?.DuplicateSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectDeleteCmd = new RelayCommand(o =>CurrentDesigner?.DeleteSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => CurrentDesigner?.CurrentPage is FlowPage);
-            OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => CanOutlineDelete());
-            UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => CurrentDesigner?.CanUndo ?? false);
+            // Navigate mode leaves the page as it is: the commands that change it without a selection wait for Design mode
+            AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => !IsNavigateMode && CurrentDesigner?.CurrentPage is FlowPage);
+            OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => !IsNavigateMode && CanOutlineDelete());
+            UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => !IsNavigateMode && (CurrentDesigner?.CanUndo ?? false));
+            NavigateBackCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Back()), o => IsNavigateMode && NavigationHistory.CanGoBack);
+            NavigateForwardCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Forward()), o => IsNavigateMode && NavigationHistory.CanGoForward);
             CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
             CopyCmd = new RelayCommand(o => CurrentDesigner?.CopySelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
             PasteCmd = new RelayCommand(o => CurrentDesigner?.PasteElements(),
-                o => CurrentDesigner?.CurrentLayer != null && DesignerNavigator.ClipboardHasElements());
-            RedoCmd = new RelayCommand(o => CurrentDesigner?.Redo(), o => CurrentDesigner?.CanRedo ?? false);
+                o => !IsNavigateMode && CurrentDesigner?.CurrentLayer != null && DesignerNavigator.ClipboardHasElements());
+            RedoCmd = new RelayCommand(o => CurrentDesigner?.Redo(), o => !IsNavigateMode && (CurrentDesigner?.CanRedo ?? false));
             ObjectBringForwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectBringForward(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectSendBackwardCmd = new RelayCommand(o => CurrentDesigner?.ObjectSendBackward(), o => CurrentDesigner?.HasElementsSelected ?? false);
             ObjectBringToFrontCmd = new RelayCommand(o => CurrentDesigner?.ObjectBringToFront(), o => CurrentDesigner?.HasElementsSelected ?? false);
