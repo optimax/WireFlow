@@ -129,13 +129,13 @@ Under the menu, the Designer has the toolbar of PDF Workshop (PDFTools; the Orga
 
 ## Navigate mode
 
-The Designer is in Design mode or in Navigate mode (`MainDesignerWindow.IsNavigateMode`), switched by the toolbar's Navigate Mode toggle (PDFTools' `ToolbarToggleStyle`, tinted while on) and View → Navigate Mode. In Navigate mode every page, layout and part open behaves as in WireFlow Browser:
+The Designer is in Design mode or in Navigate mode (`MainDesignerWindow.IsNavigateMode`). The Navigate tool is the mode: choosing it in the Tools list enters it, and choosing another tool there leaves it with that tool (`SelectedToolIndex`, `SetNavigateMode`); F9 (`NavigateModeCmd`; F5 is Reload from File) and View → Navigate Mode switch it, leaving it with the Select tool. The toolbar's Navigate Mode toggle (PDFTools' `ToolbarToggleStyle`, tinted while on) is left out for now, by the user's decision, and kept as a comment in `MainDesignerWindow.xaml` to be put back. In Navigate mode every page, layout and part open behaves as in WireFlow Browser:
 
 - **Links.** Each document has the Navigate tool (`NavigateModeTool`; one opened meanwhile starts with it, `ModeDrawingTool`), which deselects as it is chosen: a click follows the innermost link around what it hits, in the same tab, or brings forward the tab that shows the page already (`NavigateToPage`); a page chosen in Pages is shown in the tab too. Esc keeps the tool (`SelectDefaultTool`).
-- **Read-only.** Nothing is selected, the Outline selects nothing, and the Tools list and Properties are off; the keys of the page and most commands need a selection, and those that change a page without one (Undo, Redo, Paste, Add Layer, the Outline's Delete) are disabled.
+- **Read-only.** Nothing is selected, the Outline selects nothing, and Properties is off; the keys of the page and most commands need a selection, and those that change a page without one (Undo, Redo, Paste, Add Layer, the Outline's Delete) are disabled.
 - **Back and Forward** (the toolbar's buttons, View → Back and Forward, Alt+Left and Alt+Right) go through the pages visited since Navigate mode was entered, kept as a browser keeps them (`NavigationHistory`: a visit after going back drops the pages ahead); they show the page in the tab in front, as a link does.
 
-Leaving Navigate mode gives every document the Select tool again and forgets the history. The Navigate tool is still in the Tools list, for following a link in Design mode.
+Leaving Navigate mode gives every document the Select tool, or the tool chosen, and forgets the history.
 
 ## Window and panes
 

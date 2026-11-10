@@ -227,8 +227,12 @@ namespace WireFlow
                     return;
                 selectedToolIndex = value;
                 // The ListBox reports -1 when its selection is cleared; keep the designer's current tool then.
-                if (CurrentDesigner != null && selectedToolIndex >= 0 && selectedToolIndex < Tools.Items.Count)
-                    CurrentDesigner.SelectedDrawingTool = Tools.Items[selectedToolIndex] as IDrawingTool;
+                var tool = selectedToolIndex >= 0 && selectedToolIndex < Tools.Items.Count ? Tools.Items[selectedToolIndex] as IDrawingTool : null;
+                if (CurrentDesigner != null && tool != null)
+                    CurrentDesigner.SelectedDrawingTool = tool;
+                // The Navigate tool is Navigate mode: choosing it enters the mode, and choosing another tool leaves it
+                if (tool != null)
+                    SetNavigateMode(tool == NavigateModeTool, tool);
                 OnPropertyChanged(nameof(SelectedToolIndex));
             }
         }
@@ -243,21 +247,15 @@ namespace WireFlow
 
         /// <summary>
         /// Navigate mode: every page, layout and part open behaves as in WireFlow Browser. A click follows the innermost link
-        /// around what it hits (the Navigate tool), nothing is selected, the Tools list and Properties are off, the commands
-        /// that change a page without a selection are disabled, and Back and Forward go through the pages visited. Leaving it
-        /// gives every page open the Select tool again.
+        /// around what it hits (the Navigate tool), nothing is selected, Properties is off, the commands that change a page
+        /// without a selection are disabled, and Back and Forward go through the pages visited. The Navigate tool is the
+        /// mode: choosing it in the Tools list enters it, choosing another tool leaves it, and F9 switches it. Leaving it
+        /// otherwise gives every page open the Select tool again.
         /// </summary>
         public bool IsNavigateMode
         {
             get { return isNavigateMode; }
-            set
-            {
-                if (isNavigateMode == value)
-                    return;
-                isNavigateMode = value;
-                ApplyNavigateMode();
-                OnPropertyChanged(nameof(IsNavigateMode));
-            }
+            set { SetNavigateMode(value, DefaultDrawingTool); }
         }
         private bool isNavigateMode;
 
@@ -265,16 +263,26 @@ namespace WireFlow
         public NavigationHistory NavigationHistory { get; } = new NavigationHistory();
 
 
-        private void ApplyNavigateMode()
+        // Enters or leaves Navigate mode; leaving it gives every document the tool given (Select, or the tool chosen)
+        private void SetNavigateMode(bool on, IDrawingTool designTool)
         {
-            var tool = ModeDrawingTool;
+            if (isNavigateMode == on)
+                return;
+            isNavigateMode = on;
+            ApplyNavigateMode(on ? NavigateModeTool : designTool ?? DefaultDrawingTool);
+            OnPropertyChanged(nameof(IsNavigateMode));
+        }
+
+
+        private void ApplyNavigateMode(IDrawingTool tool)
+        {
             // The Navigate tool deselects as it is chosen
             foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
                 doc.Navigator.SelectedDrawingTool = tool;
+            // The Tools list shows the tool (choosing another tool there leaves Navigate mode)
             int index = Tools.Items.IndexOf(tool);
             if (index >= 0)
                 SelectedToolIndex = index;
-            Tools.IsEnabled = !IsNavigateMode;
             PropertyGrid.IsEnabled = !IsNavigateMode;
             NavigationHistory.Clear();
             if (IsNavigateMode && CurrentDesigner?.NavigatorDocument?.Kind == DesignerNavigatorDocument.PageKind)
@@ -436,6 +444,8 @@ namespace WireFlow
             // Navigate mode: Back and Forward, as in a browser
             InputBindings.Add(new KeyBinding(NavigateBackCmd, Key.Left, ModifierKeys.Alt));
             InputBindings.Add(new KeyBinding(NavigateForwardCmd, Key.Right, ModifierKeys.Alt));
+            // F9: Navigate mode on or off (F5 is Reload from File)
+            InputBindings.Add(new KeyBinding(NavigateModeCmd, Key.F9, ModifierKeys.None));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             // The panes as they were, before any tab opens: tabs are not kept in the layout
@@ -2466,6 +2476,7 @@ namespace WireFlow
         public ICommand CutCmd { get; set; }
         public ICommand CopyCmd { get; set; }
         public ICommand PasteCmd { get; set; }
+        public ICommand NavigateModeCmd { get; set; }
         public ICommand NavigateBackCmd { get; set; }
         public ICommand NavigateForwardCmd { get; set; }
         /// <summary>Adds a layer above the current one (the Outline's caption and menu).</summary>
@@ -2551,6 +2562,7 @@ namespace WireFlow
             AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => !IsNavigateMode && CurrentDesigner?.CurrentPage is FlowPage);
             OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => !IsNavigateMode && CanOutlineDelete());
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => !IsNavigateMode && (CurrentDesigner?.CanUndo ?? false));
+            NavigateModeCmd = new RelayCommand(o => IsNavigateMode = !IsNavigateMode);
             NavigateBackCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Back()), o => IsNavigateMode && NavigationHistory.CanGoBack);
             NavigateForwardCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Forward()), o => IsNavigateMode && NavigationHistory.CanGoForward);
             CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);

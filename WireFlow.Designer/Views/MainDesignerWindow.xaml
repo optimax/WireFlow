@@ -189,7 +189,7 @@
             <!-- The panes' items follow the theme's, made as the menu opens (ViewMenuItem_SubmenuOpened) -->
             <MenuItem Header="_View" x:Name="ViewMenuItem" SubmenuOpened="ViewMenuItem_SubmenuOpened">
                 <!-- Design or Navigate mode, as the toolbar's Navigate Mode button -->
-                <MenuItem Header="_Navigate Mode" IsCheckable="True" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}"/>
+                <MenuItem Header="_Navigate Mode" IsCheckable="True" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}" InputGestureText="F9"/>
                 <MenuItem Header="_Back" Command="{Binding NavigateBackCmd}" InputGestureText="Alt+Left"/>
                 <MenuItem Header="_Forward" Command="{Binding NavigateForwardCmd}" InputGestureText="Alt+Right"/>
                 <Separator/>
@@ -295,9 +295,13 @@
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
                 <!-- Design or Navigate mode, and Back and Forward through the pages visited in Navigate mode -->
-                <ToggleButton Style="{StaticResource ToolbarToggleStyle}" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}" ToolTip="Navigate Mode: click links as in WireFlow Browser">
+                <!-- The Navigate Mode toggle, left out for now (user decision): the Navigate tool, F9 and View > Navigate Mode
+                     switch the mode. To show it again, put this back:
+                <ToggleButton Style="{StaticResource ToolbarToggleStyle}" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}" ToolTip="Navigate Mode (F9): click links as in WireFlow Browser">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.navigate}"/>
                 </ToggleButton>
+                -->
+
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding NavigateBackCmd}" ToolTip="Back (Alt+Left)">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.back}"/>
                 </Button>
