@@ -41,6 +41,17 @@ namespace WireFlow
 
         public virtual ImageSource ImageSource => _imageSource;
 
+        /// <summary>
+        /// The name of the tool glyph the Outline draws before the entry (an SVG of the Designer's Glyphs): a rectangle's and an
+        /// ellipse's are their tools', and an element of another kind without one of its own has "element".
+        /// </summary>
+        public virtual string Glyph => UIElement switch
+        {
+            WireFlowRectangle => "rectangle",
+            WireFlowEllipse => "ellipse",
+            _ => "element"
+        };
+
         public virtual string ContentInfo => string.IsNullOrWhiteSpace(Name)? $"({AutoStr(Left)},{AutoStr(Top)},{AutoStr(Width)},{AutoStr(Height)})": Name;
 
         public override string ToString()

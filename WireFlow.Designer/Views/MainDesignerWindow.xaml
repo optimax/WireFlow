@@ -51,6 +51,7 @@
             <Setter Property="StrokeLineJoin" Value="Round"/>
             <Setter Property="Stroke" Value="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
         </Style>
+        <wireFlow:ToolGlyphConverter x:Key="ToolGlyphConverter"/>
     </Window.Resources>
 
 
@@ -420,7 +421,12 @@
                                             <Grid>
                                                 <Border x:Name="Highlight" Background="{DynamicResource LightLightColorBrush}" CornerRadius="2" Margin="-2,0" Opacity="0"/>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
+                                                    <!-- The tool glyph of the entry's kind, as the Tools list draws it: in the row's text color -->
+                                                    <Viewbox Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                        <Path Width="24" Height="24" Data="{Binding Glyph, Converter={StaticResource ToolGlyphConverter}}"
+                                                              StrokeThickness="{StaticResource ToolGlyphStrokeThickness}" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                              Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
+                                                    </Viewbox>
                                                     <TextBlock>
                                                         <Run Text="{Binding Path=Type,Mode=OneWay}"/>
                                                         <Run Text=":"/>
@@ -442,7 +448,12 @@
                                             <Grid>
                                                 <Border x:Name="Highlight" Background="{DynamicResource LightLightColorBrush}" CornerRadius="2" Margin="-2,0" Opacity="0"/>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Image Source="{Binding Path=ImageSource,Mode=OneWay}" Margin="0,0,5,0" />
+                                                    <!-- The tool glyph of the entry's kind, as the Tools list draws it: in the row's text color -->
+                                                    <Viewbox Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                        <Path Width="24" Height="24" Data="{Binding Glyph, Converter={StaticResource ToolGlyphConverter}}"
+                                                              StrokeThickness="{StaticResource ToolGlyphStrokeThickness}" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                              Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
+                                                    </Viewbox>
                                                     <TextBlock>
                                                         <Run Text="{Binding Path=Type,Mode=OneWay}"/><Run Text=": "/><Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
                                                     </TextBlock>

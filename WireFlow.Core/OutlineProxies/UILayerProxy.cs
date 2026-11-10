@@ -9,6 +9,8 @@ namespace WireFlow
 
         public override ImageSource ImageSource => _imageSource;
 
+        public override string Glyph => "layer";
+
         public UILayerProxy(FrameworkElement element): base(element)
         {
             Type = "Layer";

@@ -10,6 +10,8 @@ namespace WireFlow
 
         public override ImageSource ImageSource => _imageSource;
 
+        public override string Glyph => "text";
+
         public string Text => (UIElement as WireFlowText)?.Text;
 
         public override string ContentInfo => $"\"{Text}\"";

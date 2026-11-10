@@ -7,6 +7,8 @@ namespace WireFlow
     {
         public override ImageSource ImageSource => UIGroupProxy._imageSource;
 
+        public override string Glyph => "stack-panel";
+
         public override string ContentInfo => $"{(UIElement as Stack)?.Direction}, {(UIElement as Stack)?.Children.Count} objects";
 
         public UIStackProxy(FrameworkElement element) : base(element)

@@ -9,6 +9,8 @@ namespace WireFlow
 
         public override ImageSource ImageSource => _imageSource;
 
+        public override string Glyph => "layout";
+
         public string NodeName => (UIElement as Layout)?.NodeName;
 
         public UILayoutProxy(FrameworkElement element): base(element)

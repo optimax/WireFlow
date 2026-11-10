@@ -9,6 +9,8 @@ namespace WireFlow
 
         public override ImageSource ImageSource => _imageSource;
 
+        public override string Glyph => "image";
+
         public string ImageFileName => (UIElement as ImageBox)?.ImageFileName;
 
         public override string ContentInfo => ImageFileName;

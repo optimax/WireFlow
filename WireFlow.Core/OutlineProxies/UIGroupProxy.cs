@@ -10,6 +10,8 @@ namespace WireFlow
 
         public override ImageSource ImageSource => _imageSource;
 
+        public override string Glyph => "group";
+
         public override string ContentInfo => $"{Elements.Count} objects";
 
         public UIGroupProxy(FrameworkElement element): base(element)

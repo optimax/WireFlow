@@ -10,6 +10,8 @@ namespace WireFlow
 
         public override ImageSource ImageSource => _imageSource;
 
+        public override string Glyph => "part";
+
         public string TemplateName => (UIElement as Part)?.TemplateName;
 
         public override string ContentInfo => TemplateName;
