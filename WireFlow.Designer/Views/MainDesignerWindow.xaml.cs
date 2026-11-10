@@ -583,6 +583,34 @@ namespace WireFlow
         }
 
 
+        // The panes in the order the View menu lists them; a pane not named here comes after them
+        private static readonly string[] PaneOrder = { "tools", "pages", "layouts", "parts", "images", "history", "outline", "properties" };
+
+
+        // An item per pane, checked while it shows, made each time the menu opens: restoring a saved layout makes the panes again
+        private void ViewMenuItem_SubmenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource != ViewMenuItem || DockingManager.Layout == null)
+                return;
+            foreach (var old in ViewMenuItem.Items.OfType<MenuItem>().Where(m => m.Tag is LayoutAnchorable).ToList())
+                ViewMenuItem.Items.Remove(old);
+            var panes = DockingManager.Layout.Descendents().OfType<LayoutAnchorable>().Concat(DockingManager.Layout.Hidden).Distinct()
+                .OrderBy(p => Array.IndexOf(PaneOrder, p.ContentId) is int i && i >= 0 ? i : int.MaxValue).ToList();
+            foreach (var pane in panes)
+            {
+                var item = new MenuItem { Header = pane.Title, IsCheckable = true, IsChecked = pane.IsVisible, Tag = pane };
+                item.Click += (s, a) =>
+                {
+                    if (pane.IsVisible)
+                        pane.Hide();
+                    else
+                        pane.Show();
+                };
+                ViewMenuItem.Items.Add(item);
+            }
+        }
+
+
         private LayoutDocumentPane FindDocumentPane() => DockingManager.Layout?.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
 
 

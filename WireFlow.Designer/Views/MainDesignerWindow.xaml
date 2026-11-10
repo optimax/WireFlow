@@ -79,7 +79,8 @@
                 <Separator/>
                 <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
             </MenuItem>
-            <MenuItem Header="_View">
+            <!-- The panes' items follow the theme's, made as the menu opens (ViewMenuItem_SubmenuOpened) -->
+            <MenuItem Header="_View" x:Name="ViewMenuItem" SubmenuOpened="ViewMenuItem_SubmenuOpened">
                 <!-- As in PDFTools; DesignerTheme applies the choice -->
                 <MenuItem Header="_Theme" x:Name="ThemeMenuItem">
                     <MenuItem Header="_System" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.System}" Click="ThemeMenuItem_Click"
@@ -89,6 +90,7 @@
                     <MenuItem Header="_Classic" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.Classic}" Click="ThemeMenuItem_Click"
                               ToolTip="Windows' classic controls instead of the Windows 11 look. Light only."/>
                 </MenuItem>
+                <Separator/>
             </MenuItem>
             <MenuItem Header="Object">
                 <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
@@ -220,7 +222,7 @@
 
 
                         <dock:LayoutAnchorablePane DockHeight="*">
-                            <dock:LayoutAnchorable ContentId="tools" Title="Tools" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable ContentId="tools" Title="Tools" CanHide="True" CanClose="False">
                                 <Grid>
                                     <ListBox Name="Tools" Padding="3" BorderThickness="0" SelectedItem="{Binding Path=SelectedDrawingTool,Mode=OneWay}" SelectedIndex="{Binding SelectedToolIndex}"
                                         ItemsSource="{Binding DrawingTools}">
@@ -241,7 +243,7 @@
                                 </Grid>
                             </dock:LayoutAnchorable>
 
-                            <dock:LayoutAnchorable Title="History" ContentId="history" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="History" ContentId="history" CanHide="True" CanClose="False">
                                 <DockPanel>
                                     <ListBox x:Name="ListBoxHistory" BorderThickness="0"
                                              ItemTemplate="{StaticResource ListOfNamesDataTemplate}">
@@ -252,7 +254,7 @@
                         </dock:LayoutAnchorablePane>
 
                         <dock:LayoutAnchorablePane DockHeight="2*">
-                            <dock:LayoutAnchorable Title="Pages" ContentId="pages" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Pages" ContentId="pages" CanHide="True" CanClose="False">
 
 
                                 <DockPanel>
@@ -285,7 +287,7 @@
 
                             </dock:LayoutAnchorable>
 
-                            <dock:LayoutAnchorable Title="Layouts" ContentId="layouts" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Layouts" ContentId="layouts" CanHide="True" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Orientation="Horizontal">
                                         <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}"
@@ -309,7 +311,7 @@
                             </dock:LayoutAnchorable>
 
 
-                            <dock:LayoutAnchorable Title="Parts" ContentId="parts" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Parts" ContentId="parts" CanHide="True" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
                                         <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
@@ -331,7 +333,7 @@
                             </dock:LayoutAnchorable>
 
 
-                            <dock:LayoutAnchorable Title="Images" ContentId="images" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="Images" ContentId="images" CanHide="True" CanClose="False">
                                 <DockPanel>
                                     <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
                                         <Button Focusable="False" ToolBar.OverflowMode="Never" Background="{DynamicResource DarkDarkDarkBrush}" Margin="1,0,2,0"
@@ -369,7 +371,7 @@
 
                     <dock:LayoutAnchorablePaneGroup DockWidth="300" x:Name="RightPane" Orientation="Vertical">
                         <dock:LayoutAnchorablePane>
-                            <dock:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="True" CanClose="False">
 
                                 <!-- Virtualizing: only the entries in view have items. Standard, not Recycling, mode, so that an entry collapsed by hand does not pass that on to another -->
                                 <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged"
@@ -434,7 +436,7 @@
                             </dock:LayoutAnchorable>
                         </dock:LayoutAnchorablePane>
                         <dock:LayoutAnchorablePane>
-                            <dock:LayoutAnchorable ContentId="properties" Title="Properties" CanHide="False" CanClose="False" AutoHideWidth="240" >
+                            <dock:LayoutAnchorable ContentId="properties" Title="Properties" CanHide="True" CanClose="False" AutoHideWidth="240" >
                                 <pg:PropertyGrid
                                     x:Name="PropertyGrid"
                                     NameColumnWidth="160"
