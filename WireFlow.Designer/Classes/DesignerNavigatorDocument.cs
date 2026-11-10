@@ -25,7 +25,13 @@ namespace WireFlow
             ContentId = contentId;
             Navigator = navigator;
             Content = navigator;
+            // The tab's mark of changes not saved (DocumentHeaderTemplate) follows the navigator
+            navigator.ModifiedChanged += sender => RaisePropertyChanged(nameof(IsModified));
         }
+
+
+        /// <summary>Whether its page, layout or part has changes not saved.</summary>
+        public bool IsModified => Navigator.IsModified;
 
 
         public void TitleChangedHandler(DesignerNavigator sender, string newTitle)

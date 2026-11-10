@@ -170,7 +170,12 @@
             </ToolBar>
         </ToolBarTray>
 
-        <StatusBar DockPanel.Dock="Bottom" Height="22" Background="{DynamicResource ToolbarPanelBackgroundBrush}"></StatusBar>
+        <StatusBar DockPanel.Dock="Bottom" Height="22" Background="{DynamicResource ToolbarPanelBackgroundBrush}">
+            <!-- As MaxPad's: Modified while the page, layout or part in front has changes not saved -->
+            <StatusBarItem Padding="6,0">
+                <TextBlock Text="{Binding DocumentState}" MinWidth="60" ToolTip="Whether the page, layout or part in front has changes not saved"/>
+            </StatusBarItem>
+        </StatusBar>
 
 
         <dock:DockingManager
@@ -222,7 +227,15 @@
                     <StackPanel Orientation="Horizontal">
                         <Image Source="{Binding IconSource}" Margin="0,0,5,0"/>
                         <TextBlock Text="{Binding Title}"  Margin="0,0,5,0" FontSize="15" Foreground="{DynamicResource LightLightColorBrush}"/>
+                        <!-- Changes not saved: a dot after the name, as MaxPad's tabs (MaxServices.Core's TabStripItem) have it -->
+                        <Ellipse x:Name="ModifiedMark" Width="7" Height="7" Margin="0,0,5,0" VerticalAlignment="Center" Fill="#FFC05A00"
+                                 ToolTip="Modified" Visibility="Collapsed"/>
                     </StackPanel>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsModified}" Value="True">
+                            <Setter TargetName="ModifiedMark" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </dock:DockingManager.DocumentHeaderTemplate>
 

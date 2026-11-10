@@ -165,9 +165,19 @@ namespace WireFlow
         }
 
 
+        /// <summary>Raised when the page or layout comes to have changes not saved, and when it no longer has.</summary>
+        public event Action<DesignerNavigator> ModifiedChanged;
+
+
         public bool IsModified {
             get { return Designer.IsModified; }
-            set { Designer.IsModified = value; }
+            set
+            {
+                if (Designer.IsModified == value)
+                    return;
+                Designer.IsModified = value;
+                ModifiedChanged?.Invoke(this);
+            }
         }
 
 

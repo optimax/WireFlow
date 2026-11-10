@@ -103,7 +103,9 @@ namespace WireFlow
             {
                 if (String.IsNullOrWhiteSpace(FileName))
                     return APP_NAME;
-                return string.Format($"[{System.IO.Path.GetFileNameWithoutExtension(FileName)}] {APP_NAME} - {System.IO.Path.GetDirectoryName(FileName)}");
+                // An asterisk while a page, layout or part open has changes not saved, as MaxPad marks its document
+                string modified = SomePageNeedsSaving() ? "*" : "";
+                return string.Format($"[{System.IO.Path.GetFileNameWithoutExtension(FileName)}]{modified} {APP_NAME} - {System.IO.Path.GetDirectoryName(FileName)}");
             }
         }
 
@@ -212,6 +214,7 @@ namespace WireFlow
                     return;
                 currentDesigner = value;
                 OnPropertyChanged(nameof(CurrentDesigner));
+                ShowModified();
             }
         }
 
@@ -1060,8 +1063,25 @@ namespace WireFlow
         }
 
 
+        /// <summary>The status bar's word for the page, layout or part in front: Modified while it has changes not saved, as MaxPad's.</summary>
+        public string DocumentState => CurrentDesigner == null ? "" : CurrentDesigner.IsModified ? "Modified" : "Saved";
+
+
+        private void NavigatorModifiedChangedHandler(DesignerNavigator sender) => ShowModified();
+
+
+        // The caption's asterisk and the status bar follow the documents' changes not saved
+        private void ShowModified()
+        {
+            OnPropertyChanged(nameof(DesignerTitle));
+            OnPropertyChanged(nameof(DocumentState));
+        }
+
+
         private bool SomePageNeedsSaving()
         {
+            if (DocumentPane == null)
+                return false;
             foreach (LayoutContent child in DocumentPane.Children)
             {
                 DesignerNavigatorDocument navDoc = child as DesignerNavigatorDocument;
@@ -1296,6 +1316,7 @@ namespace WireFlow
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
+            navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1331,6 +1352,7 @@ namespace WireFlow
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
+            navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1361,6 +1383,7 @@ namespace WireFlow
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
+            navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;

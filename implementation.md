@@ -120,6 +120,10 @@ The Designer comes back as it was closed: the window's place and size (`ConfigSe
 
 Each pane can be hidden (`CanHide`; none can be closed): its caption's X hides it, and the View menu, under Theme, lists every pane, checked while it shows, in the order of `PaneOrder`; choosing one hides or shows it (`LayoutAnchorable.Hide`, `Show`), and a pane shown again goes back where it was. The items are made each time the menu opens (`ViewMenuItem_SubmenuOpened`), from the panes in the layout and its hidden ones (`Layout.Hidden`), since restoring a saved layout makes the panes again. A pane hidden stays hidden in the layout saved, so the Designer starts with it hidden.
 
+## Changes not saved
+
+A page, layout or part with changes not saved (`DesignerNavigator.IsModified`, which raises `ModifiedChanged` as it changes) is shown as MaxPad shows its documents: its tab has a 7 px dot after its name, in MaxServices.Core's `TabStripItem` color (`#C05A00`; the `DocumentHeaderTemplate`, by the tab's `DesignerNavigatorDocument.IsModified`); the window's caption has an asterisk after the project's name while any document open has changes not saved (`DesignerTitle`); and the status bar says Modified or Saved of the one in front (`DocumentState`).
+
 ## Options
 
 Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' programs: `OptimaxTools.Options` 1.0.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` as MaxServices.Core is. It has no look of its own, so it takes the theme's controls; `Views\DesignerOptionsDialog` derives from it, gives it the theme's colors, and adds the groups of options and their options. OK sets the dialog's results, which `MainDesignerWindow.OptionsMenuItem_Click` puts in `ConfigSettings` and saves; the dialog changes nothing itself. A new option is a setting in `ConfigSettings`, a control in the dialog's constructor, read in its `Apply`, and applied by the window.
