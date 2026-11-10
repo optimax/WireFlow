@@ -180,7 +180,7 @@
             Background="Transparent"
             >
 
-            <!-- A pane's title; the Outline's has buttons for its commands at its right end -->
+            <!-- A pane's title; the Outline's and the Pages' have buttons for their commands at its right end -->
             <dock:DockingManager.AnchorableTitleTemplate>
                 <DataTemplate>
                     <DockPanel LastChildFill="True">
@@ -194,11 +194,24 @@
                                 <Viewbox Width="14" Height="14"><Path Data="{StaticResource ToolGlyph.delete}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
                             </Button>
                         </StackPanel>
+                        <StackPanel x:Name="PagesButtons" DockPanel.Dock="Right" Orientation="Horizontal" Margin="4,0,2,0" Visibility="Collapsed">
+                            <Button Style="{StaticResource PaneCaptionButton}" ToolTip="Move the selected page up; the first page is where the project starts"
+                                    Command="{Binding DataContext.MovePageUpCmd, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Viewbox Width="14" Height="14"><Path Data="{StaticResource ToolGlyph.move-up}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
+                            </Button>
+                            <Button Style="{StaticResource PaneCaptionButton}" ToolTip="Move the selected page down"
+                                    Command="{Binding DataContext.MovePageDownCmd, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Viewbox Width="14" Height="14"><Path Data="{StaticResource ToolGlyph.move-down}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
+                            </Button>
+                        </StackPanel>
                         <TextBlock VerticalAlignment="Center" Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
                     </DockPanel>
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding ContentId}" Value="outline">
                             <Setter TargetName="OutlineButtons" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ContentId}" Value="pages">
+                            <Setter TargetName="PagesButtons" Property="Visibility" Value="Visible"/>
                         </DataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>

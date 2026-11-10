@@ -1,4 +1,8 @@
-﻿namespace WireFlow
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace WireFlow
 {
     public class FlowProject: FlowBase
     {
@@ -13,6 +17,7 @@
         private double height;
         private string background;
         private string home;
+        private List<string> pageOrder;
 
         public long RevisionNo { get => revisionNo; set => Set(ref revisionNo, value); }
         public double Width { get => width; set => Set(ref width, value); }
@@ -20,12 +25,38 @@
         public string Background { get => background; set => Set(ref background, value); }
         public string Home { get => home; set => Set(ref home, value); }
 
+        /// <summary>
+        /// The names of the pages in their order, the first the project's entry point, or null until they are first ordered. It
+        /// may name pages that no longer exist and leave out some that do: <see cref="OrderPages"/> makes the order of the pages.
+        /// </summary>
+        public List<string> PageOrder { get => pageOrder; set => Set(ref pageOrder, value); }
+
         public FlowProject()
         {
             Width = 1024;
             Height = 768;
             Background = DEFAULT_BACKGROUND;
             Home = "index";
+        }
+
+
+        /// <summary>
+        /// The pages named, in the project's order: those <see cref="PageOrder"/> names, in its order, then the others in the order
+        /// given. Without an order, the home page comes first, so that a project ordered never before keeps its entry point.
+        /// Names compare ignoring case.
+        /// </summary>
+        public List<string> OrderPages(IEnumerable<string> pageNames)
+        {
+            var names = pageNames.ToList();
+            var ordered = new List<string>();
+            foreach (string name in PageOrder ?? (string.IsNullOrWhiteSpace(Home) ? new List<string>() : new List<string> { Home }))
+            {
+                string page = names.FirstOrDefault(n => string.Equals(n, name, StringComparison.OrdinalIgnoreCase));
+                if (page != null && !ordered.Contains(page))
+                    ordered.Add(page);
+            }
+            ordered.AddRange(names.Where(n => !ordered.Contains(n)));
+            return ordered;
         }
     }
 }

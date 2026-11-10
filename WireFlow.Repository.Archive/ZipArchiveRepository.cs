@@ -102,6 +102,12 @@ namespace WireFlow.Repository.Archive
             throw new NotImplementedException();
         }
 
+
+        public void SetPageOrder(IList<string> pageNames)
+        {
+            throw new NotImplementedException();
+        }
+
         public void CreateLayout(string nodeName, string layoutName)
         {
             throw new NotImplementedException();

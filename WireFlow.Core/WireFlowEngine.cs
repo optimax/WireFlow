@@ -48,7 +48,11 @@ namespace WireFlow
         public string ProjectFileName => Repository.ProjectFileName;
 
         public IList<string> Layouts => Repository.Layouts;
+        // In the project's order: the first is the entry point (HomePage)
         public IList<string> Pages => Repository.Pages;
+
+        /// <summary>The page the project starts at: the first in the order, else the project's <see cref="FlowProject.Home"/>.</summary>
+        public string HomePage => Pages.FirstOrDefault() ?? Project?.Home;
         public IList<string> Parts => Repository.Parts;
         public IList<string> Images => Repository.Images;
 
@@ -393,6 +397,28 @@ namespace WireFlow
         public void RenamePage(string oldName, string newName)
         {
             Repository.RenamePage(oldName, newName);
+        }
+
+
+        public void SetPageOrder(IList<string> pageNames)
+        {
+            Repository.SetPageOrder(pageNames);
+        }
+
+
+        /// <summary>Moves a page to an index in the order, the first being the entry point; false when it does not move.</summary>
+        public bool MovePage(string pageName, int index)
+        {
+            var order = Pages.ToList();
+            int from = order.FindIndex(n => string.Equals(n, pageName, StringComparison.OrdinalIgnoreCase));
+            index = Math.Max(0, Math.Min(index, order.Count - 1));
+            if (from < 0 || from == index)
+                return false;
+            string name = order[from];
+            order.RemoveAt(from);
+            order.Insert(index, name);
+            Repository.SetPageOrder(order);
+            return true;
         }
 
 

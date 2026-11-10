@@ -287,6 +287,8 @@ namespace WireFlow
             ApplyConfigSettings();
             // An ID typed in Properties that another node in the project has is refused
             NodeProperties.IdTaken = (node, id) => CurrentDesigner?.IsIdTaken(node, id) == true;
+            // Pages are put in order by dragging them, as by the Move Up and Move Down buttons
+            new ListDragReorder(ListBoxPages, MovePage);
             UpdateThemeMenu();
             DataContext = this;
             Engine = engine;
@@ -407,7 +409,7 @@ namespace WireFlow
             }
             if (firstDoc == null)
             {
-                OpenTab(DesignerNavigatorDocument.PageKind, Engine.Project.Home);
+                OpenTab(DesignerNavigatorDocument.PageKind, Engine.HomePage);
                 return;
             }
             if (frontDoc != null)
@@ -969,7 +971,8 @@ namespace WireFlow
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            string homePage = project.Home;
+            // The first page in the order is where the project starts
+            string homePage = Engine.HomePage;
             //string background = Project.Background;
 
 
@@ -1155,6 +1158,36 @@ namespace WireFlow
             NewPageTab(href, Engine.Project.Background, OnNavigatorLoaded);
         }
 
+
+
+        // Moves a page to an index in the order (the first is where the project starts), keeping it selected
+        private void MovePage(string pageName, int index)
+        {
+            if (!Engine.MovePage(pageName, index))
+                return;
+            int from = Pages.IndexOf(pageName);
+            int to = Engine.Pages.IndexOf(pageName);
+            if (from < 0 || to < 0)
+            {
+                Pages = new ObservableCollection<string>(Engine.Pages);
+                return;
+            }
+            // The page selected stays so: opening it on a change of selection is not wanted here
+            suppressPagesChangeNotification = true;
+            try
+            {
+                Pages.Move(from, to);
+                ListBoxPages.SelectedItem = pageName;
+            }
+            finally
+            {
+                suppressPagesChangeNotification = false;
+            }
+            ListBoxPages.ScrollIntoView(pageName);
+        }
+
+
+        private int SelectedPageIndex => ListBoxPages.SelectedItem is string name ? Pages?.IndexOf(name) ?? -1 : -1;
 
 
         private void DeleteSelectedPage()
@@ -2362,6 +2395,8 @@ namespace WireFlow
         public ICommand MoveSelectionRightCmd { get; set; }
 
         public ICommand NewPageCmd { get; set; }
+        public ICommand MovePageUpCmd { get; set; }
+        public ICommand MovePageDownCmd { get; set; }
         public ICommand DeletePageCmd { get; set; }
         public ICommand NewLayoutCmd { get; set; }
         public ICommand DeleteLayoutCmd { get; set; }
@@ -2439,6 +2474,9 @@ namespace WireFlow
             MoveSelectionRightCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionRight(), o => CurrentDesigner?.HasElementsSelected ?? false);
 
             NewPageCmd = new RelayCommand(o => CreateNewPage(), o => IsProjectFileOpen);
+            MovePageUpCmd = new RelayCommand(o => MovePage((string)ListBoxPages.SelectedItem, SelectedPageIndex - 1), o => SelectedPageIndex > 0);
+            MovePageDownCmd = new RelayCommand(o => MovePage((string)ListBoxPages.SelectedItem, SelectedPageIndex + 1),
+                o => SelectedPageIndex >= 0 && SelectedPageIndex < Pages.Count - 1);
             DeletePageCmd = new RelayCommand(o => DeleteSelectedPage(), o => IsPageSelected);
             NewLayoutCmd = new RelayCommand(o => CreateNewLayout(), o => IsProjectFileOpen);
             DeleteLayoutCmd = new RelayCommand(o => DeleteSelectedLayout(), o => IsPageSelected);

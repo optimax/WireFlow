@@ -81,7 +81,8 @@ CREATE TABLE Images (
         private FlowProject Project { get; set; }
 
 
-        public IList<string> Pages => GetNames(PAGE_KIND);
+        // In the project's order (FlowProject.OrderPages), the first the entry point
+        public IList<string> Pages => Project == null ? GetNames(PAGE_KIND) : Project.OrderPages(GetNames(PAGE_KIND));
         public IList<string> Layouts => GetNames(LAYOUT_KIND);
         public IList<string> Parts => GetNames(PART_KIND);
         public IList<string> Images => ReadStrings("SELECT Name FROM Images ORDER BY Name");
@@ -217,11 +218,19 @@ CREATE TABLE Images (
                 Name = "Layer1",
             };
             page.Layers.Add(userLayer);
+            // A new page comes last
+            var order = Pages.Where(n => !string.Equals(n, pageName, StringComparison.OrdinalIgnoreCase)).ToList();
             SavePage(page);
+            order.Add(pageName);
+            SetPageOrder(order);
         }
 
 
-        public void DeletePage(string pageName) => DeleteDocument(PAGE_KIND, pageName);
+        public void DeletePage(string pageName)
+        {
+            DeleteDocument(PAGE_KIND, pageName);
+            SetPageOrder(Pages);
+        }
 
 
         public void SavePage(FlowPage page)
@@ -237,9 +246,23 @@ CREATE TABLE Images (
                 return;
             if (string.IsNullOrWhiteSpace(newName))
                 return;
-            // Its archived versions keep the old name, as the folder's archive files do
+            // It keeps its place in the order. Its archived versions keep the old name, as the folder's archive files do
+            var order = Pages.Select(n => string.Equals(n, oldName, StringComparison.OrdinalIgnoreCase) ? newName : n).ToList();
             Execute("UPDATE Documents SET Name = $newName WHERE Kind = $kind AND Name = $oldName",
                 ("$kind", PAGE_KIND), ("$oldName", oldName), ("$newName", newName));
+            SetPageOrder(order);
+        }
+
+
+        // Written at once, as creating, deleting and renaming a page are, not kept for SaveProject
+        public void SetPageOrder(IList<string> pageNames)
+        {
+            if (Project == null || ProjectFileName == null)
+                return;
+            Project.PageOrder = pageNames.ToList();
+            if (pageNames.Count > 0)
+                Project.Home = pageNames[0];
+            Execute("UPDATE Project SET Json = $json WHERE Id = 1", ("$json", FlatFolderRepository.SerializeToJSON(Project)));
         }
 
 

@@ -34,6 +34,8 @@ namespace WireFlow
         void DeletePage(string pageName);
         void SavePage(FlowPage page);
         void RenamePage(string oldName, string newName);
+        /// <summary>Puts the pages in this order; the first is the project's entry point (<see cref="FlowProject.Home"/>).</summary>
+        void SetPageOrder(IList<string> pageNames);
 
         void CreateLayout(string nodeName, string layoutName);
         void DeleteLayout(string pageName);

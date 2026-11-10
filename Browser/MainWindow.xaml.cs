@@ -514,7 +514,8 @@ namespace WireFlow
                     "WireFlow Browser", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-            string homeNode = Project.Home;
+            // The first page in the order is where the project starts
+            string homeNode = Engine.HomePage;
             string background = Project.Background;
             ResetCanvas(background);
             OpenNode(homeNode);

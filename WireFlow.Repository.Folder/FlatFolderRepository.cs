@@ -383,6 +383,14 @@ namespace WireFlow
 
 
 
+        // As renaming a layout: the folder storage is read only to be converted into a .wf file
+        public void SetPageOrder(IList<string> pageNames)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
         public void SaveProject()
         {
             string fileName;
