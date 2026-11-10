@@ -52,6 +52,70 @@
             <Setter Property="Stroke" Value="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
         </Style>
         <wireFlow:ToolGlyphConverter x:Key="ToolGlyphConverter"/>
+        <!-- The toolbar, as PDFTools' (PDF Workshop's, the Organizer's ToolbarButtonStyle and ToolbarIconStyle): flat buttons
+             that show a frame under the mouse, and line glyphs in the palette's ink. Its buttons take no keyboard focus, so
+             that the keys stay with the page. -->
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static themes:Palette.Text}}"/>
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource {x:Static themes:Palette.ButtonHover}}"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource {x:Static themes:Palette.ButtonHoverBorder}}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource {x:Static themes:Palette.ButtonPressed}}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ToolbarIconStyle" TargetType="Path">
+            <Setter Property="Stroke" Value="{DynamicResource {x:Static themes:Palette.Ink}}"/>
+            <Setter Property="StrokeThickness" Value="{StaticResource ToolGlyphStrokeThickness}"/>
+            <Setter Property="StrokeStartLineCap" Value="Round"/>
+            <Setter Property="StrokeEndLineCap" Value="Round"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
+            <Setter Property="Fill" Value="Transparent"/>
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+        </Style>
+        <Style x:Key="ToolbarSeparatorStyle" TargetType="Border">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Margin" Value="6,0"/>
+            <Setter Property="Background" Value="{DynamicResource {x:Static themes:Palette.Separator}}"/>
+        </Style>
+        <!-- The Open button's manila folder, as PDFTools draws it -->
+        <Geometry x:Key="IconOpenFolderBack">M1.5,16.5 L1.5,1.5 L8,1.5 L10,4.5 L20.5,4.5 L20.5,16.5 Z</Geometry>
+        <Geometry x:Key="IconOpenFolderFront">M1.5,16.5 L1.5,12 L4.5,6.5 L22.5,6.5 L20.5,16.5 Z</Geometry>
+        <SolidColorBrush x:Key="ManilaFolderBrush" Color="#FFF6E6B4"/>
+        <SolidColorBrush x:Key="ManilaFolderBackBrush" Color="#FFE3D29C"/>
+        <Style x:Key="OpenFolderIconStyle" TargetType="Path">
+            <Setter Property="Stroke" Value="{DynamicResource {x:Static themes:Palette.Ink}}"/>
+            <Setter Property="StrokeThickness" Value="{StaticResource ToolGlyphStrokeThickness}"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
+            <Setter Property="Stretch" Value="None"/>
+        </Style>
     </Window.Resources>
 
 
@@ -163,13 +227,92 @@
             </MenuItem>
         </Menu>
 
-        <ToolBarTray DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" >
-            <ToolBar Name="ButtonBar" Visibility="Hidden">
-                <RadioButton Name="btnNone" Margin="3" Content="None" Style="{StaticResource {x:Type ToggleButton}}" IsChecked="True" Focusable="False"/>
-                <RadioButton Name="btnRectangle" Margin="3" Content="Rectangle" Style="{StaticResource {x:Type ToggleButton}}" Focusable="False"/>
-                <RadioButton Name="btnEllipse" Margin="3" Content="Ellipse" Style="{StaticResource {x:Type ToggleButton}}" Focusable="False"/>
-            </ToolBar>
-        </ToolBarTray>
+        <!-- The toolbar, as PDF Workshop's: under the menu, between two lines in the palette's chrome border, on the window's
+             background; its buttons run the menus' commands, and are enabled as those are -->
+        <Border x:Name="MainToolbar" DockPanel.Dock="Top" Background="Transparent" BorderBrush="{DynamicResource {x:Static themes:Palette.ChromeBorder}}" BorderThickness="0,1,0,1">
+            <StackPanel Orientation="Horizontal" Height="32" Margin="8,0" VerticalAlignment="Center">
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding NewFileCmd}" ToolTip="New Project">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.new}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Width="Auto" Command="{Binding OpenFileCmd}" ToolTip="Open Project">
+                    <StackPanel Orientation="Horizontal" Margin="6,0">
+                        <Canvas Width="24" Height="18" VerticalAlignment="Center">
+                            <Path Style="{StaticResource OpenFolderIconStyle}" Fill="{StaticResource ManilaFolderBackBrush}" Data="{StaticResource IconOpenFolderBack}"/>
+                            <Path Style="{StaticResource OpenFolderIconStyle}" Fill="{StaticResource ManilaFolderBrush}" Data="{StaticResource IconOpenFolderFront}"/>
+                        </Canvas>
+                        <TextBlock Text="Open" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveFileCmd}" ToolTip="Save (Ctrl+S)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.save}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCmd}" ToolTip="Undo (Ctrl+Z)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.undo}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCmd}" ToolTip="Redo (Ctrl+Y)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.redo}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding CutCmd}" ToolTip="Cut (Ctrl+X)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.cut}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding CopyCmd}" ToolTip="Copy (Ctrl+C)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.copy}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding PasteCmd}" ToolTip="Paste (Ctrl+V)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.paste}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ObjectDeleteCmd}" ToolTip="Delete (Del)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.delete}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding GroupSelectedCmd}" ToolTip="Group">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.group}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UngroupSelectedCmd}" ToolTip="Ungroup">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.ungroup}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ObjectBringToFrontCmd}" ToolTip="Bring to Front">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.bring-to-front}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ObjectSendToBackCmd}" ToolTip="Send to Back">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.send-to-back}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignLeftsCmd}" ToolTip="Align Left">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-left}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignCentersHorizontallyCmd}" ToolTip="Center Horizontally">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-center-h}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignRightsCmd}" ToolTip="Align Right">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-right}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignTopsCmd}" ToolTip="Align Top">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-top}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignCentersVerticallyCmd}" ToolTip="Center Vertically">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-center-v}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignBottomsCmd}" ToolTip="Align Bottom">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-bottom}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding DistributeHorizontallyCmd}" ToolTip="Distribute Horizontally">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.distribute-h}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding DistributeVerticallyCmd}" ToolTip="Distribute Vertically">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.distribute-v}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding MakeSameWidthCmd}" ToolTip="Make Same Width">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.same-width}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding MakeSameHeightCmd}" ToolTip="Make Same Height">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.same-height}"/>
+                </Button>
+            </StackPanel>
+        </Border>
 
         <StatusBar DockPanel.Dock="Bottom" Height="22" Background="{DynamicResource ToolbarPanelBackgroundBrush}">
             <!-- As MaxPad's: Modified while the page, layout or part in front has changes not saved -->

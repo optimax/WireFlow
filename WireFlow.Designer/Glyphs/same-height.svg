@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Make Same Height: two bars of one height beside a span arrow -->
+  <path d="M4 5v14"/>
+  <path d="M2 7l2-2 2 2M2 17l2 2 2-2"/>
+  <rect x="9" y="5" width="4" height="14" rx="1"/>
+  <rect x="16" y="5" width="5" height="14" rx="1"/>
+</svg>
