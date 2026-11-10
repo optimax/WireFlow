@@ -37,6 +37,9 @@ namespace WireFlow
             SelectImageViewModel vm = new SelectImageViewModel(engine);
             SelectImageDlg dlg = new SelectImageDlg(Application.Current.MainWindow, vm);
             var userResponse = dlg.ShowDialog();
+            // Images imported or deleted in the dialog show in the Images pane, whether one was chosen or not
+            if (vm.ImagesChanged)
+                (Application.Current.MainWindow as MainDesignerWindow)?.ReloadImages();
             if (userResponse != true)
                 return null;
             string selectedImage = vm.SelectedImage;

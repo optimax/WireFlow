@@ -9,7 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <DockPanel>
             <ToolBarPanel DockPanel.Dock="Top" Background="{DynamicResource ToolbarPanelBackgroundBrush}" Orientation="Horizontal">
@@ -28,9 +28,9 @@
         </DockPanel>
 
         <DockPanel Grid.Row="1" HorizontalAlignment="Stretch">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right" Margin="0,0,20,0">
-                <Button Content="OK" Width="42" Margin="5" Click="ButtonOK_Click"/>
-                <Button Content="Cancel" Width="42" Margin="5" Click="ButtonCancel_Click" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right" Margin="0,6,10,10">
+                <Button Content="OK" MinWidth="80" Margin="5,0" IsDefault="True" Click="ButtonOK_Click"/>
+                <Button Content="Cancel" MinWidth="80" Margin="5,0" IsCancel="True" Click="ButtonCancel_Click" />
             </StackPanel>
         </DockPanel>
     </Grid>

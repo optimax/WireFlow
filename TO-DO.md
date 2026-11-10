@@ -8,27 +8,13 @@ Title: TO-DO
 >
 > ---
 
-## [DONE] Remember Window Position and Panes
-
-Make sure that the window position, layout (the open panes), and the splitter positions are remembered from run to run.
-
-Done. The Designer saves, as it closes, the window's place and size (and whether it is maximized), and the docking layout: which panes are docked where, floating, auto-hidden or closed, and the sizes the splitters give them. The next run opens the window where it was, before it shows, and puts the panes back. A window last placed on a screen no longer attached opens where Windows puts it. The restore of the old window position never worked (its test was the wrong way round); it does now. The History pane had the same pane ID as Layouts, which a saved layout cannot tell apart; it has its own now. A script saved a layout and read it back (sizes and a closed pane survive); the real window was not tried by hand.
-
-BUG: Splitter positions are note being saved.
-
-The Designer you tried was the build published before this change (19:45): the settings it wrote at 21:26 hold no layout. The build published at 21:48 saves the panes and the sizes the splitters give them (a drag of a splitter sets the size the layout keeps, and a script showed sizes surviving a save and a restore). Please try that one: drag a splitter, close the Designer, start it again.
-
-## [DONE] BUG: Float a Pane Crashes App
-
-Setting a pane to Float, crashes the application.
-
-Fixed. The crash came as a floating pane was dragged, when the Designer shows the drop targets: WPF's Fluent theme gives every window shown without a style of its own Fluent's plain window look, which replaced the look of the docking windows, so the drop-target window lacked its parts. The floating windows were affected too. The docking windows now name their own look before they show. Checked by a script that reproduced the crash with the Designer's themes and then, fixed, showed the drop targets and a floated pane in their own look, light and dark; not by hand.
-
-## BUG: Adding Images to Project
+## [DONE] BUG: Adding Images to Project
 
 ![pasted-8](<TO-DO.images/pasted-8.png>)
 
 There is no way to add an image to the project. Also, OK and Cancel buttons are clipped rendering their text almost invisible.
+
+Fixed. The dialog's + and − did nothing: they were copied from the Images pane without the commands behind them. Now + imports image files into the project (several at once) and selects the first, and − deletes the selected image after asking; the Images pane shows the change. OK and Cancel are full size (Enter is OK, Esc Cancel). Checked by a script that opened the dialog with the Designer's theme (both buttons enabled as they should be, OK and Cancel whole); the file dialog and the delete were not tried by hand.
 
 ## BUG: Color Selection Dialog Controls
 
@@ -120,6 +106,10 @@ Should be the same as that of Pages in any theme, including Light and System.
 ## Settings Toggle to Select Pointer Tool
 
 Add a toggle setting to auto-reset the tool to plain "Select" after each object is placed (without having to press Esc).
+
+## Copy/Paste, Cut/Paste
+
+Make these sequences work. Right now they don't seem to.
 
 ## Toolbar Buttons
 

@@ -1061,6 +1061,15 @@ namespace WireFlow
 
 
 
+        /// <summary>Brings the Images pane up to date with the project's images, as after the image dialog imported or deleted some.</summary>
+        public void ReloadImages()
+        {
+            if (Engine != null)
+                Images = new ObservableCollection<string>(Engine.Images);
+        }
+
+
+
         private void DeleteImages()
         {
             var numImages = ListBoxImages.SelectedItems.Count;
