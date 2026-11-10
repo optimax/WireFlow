@@ -16,7 +16,7 @@ There is no way to add an image to the project. Also, OK and Cancel buttons are 
 
 Fixed. The dialog's + and − did nothing: they were copied from the Images pane without the commands behind them. Now + imports image files into the project (several at once) and selects the first, and − deletes the selected image after asking; the Images pane shows the change. OK and Cancel are full size (Enter is OK, Esc Cancel). Checked by a script that opened the dialog with the Designer's theme (both buttons enabled as they should be, OK and Cancel whole); the file dialog and the delete were not tried by hand.
 
-## BUG: Color Selection Dialog Controls
+## [DONE] BUG: Color Selection Dialog Controls
 
 Color Selection Dialog (Fill, Background, Stroke, etc.) overlaps color component textboxes. Also, it does not provide enough room for the "Web color" box, especially, when the focus is on it and the clear-X appears.
 
@@ -29,6 +29,8 @@ BUG STILL THERE:
 ![pasted-7](<TO-DO.images/pasted-7.png>)
 
 The text boxes are not high-enough.
+
+Fixed. The color picker fixes those boxes at 18 pixels high, and the theme's text box keeps 4 of them for its border and inner margin, which left 14 for text 16 high. The boxes now take the height their text needs (20), on every tab. Checked by a script that measured them and drew the dialog in the light theme; not by hand.
 
 ## Stack Panel Behavior
 

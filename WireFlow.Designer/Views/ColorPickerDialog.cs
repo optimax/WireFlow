@@ -68,6 +68,9 @@ namespace WireFlow.Views
             compact.Setters.Add(new Setter(MinHeightProperty, 0.0));
             compact.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(2, 1, 2, 1)));
             compact.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Center));
+            // ... and their template fixes them at 18 high, which the theme's border and inner margin leave too little of for a line
+            // of text: as each loads (those of the other tabs too, as they are shown), it takes the height its text needs
+            compact.Setters.Add(new EventSetter(LoadedEvent, new RoutedEventHandler((s, e) => ((TextBox)s).Height = double.NaN)));
             sliders.Resources[typeof(TextBox)] = compact;
             BindingOperations.SetBinding(sliders, PickerControlBase.ColorStateProperty,
                 new Binding(nameof(PickerControlBase.ColorState)) { Source = picker, Mode = BindingMode.TwoWay });
