@@ -44,11 +44,14 @@ TODO: This is not working. The last rectangle in WireFlow > Page 2 still does no
 
 Fixed. The rectangles did span the panel, but each still showed only as much of itself as its own width: when the panel widened a child, the child was first laid out in a slot of its old width, and WPF kept it clipped to that slot. On Page 2 that hid the right part of the first and the last rectangle (the second, 745 of 796, showed nearly whole). The panel now places each child at its new size itself. Checked by scripts on a copy of WireFlow.wf, Page 2, drawn as the Browser and as the Designer draw it, also after editing, drawing another rectangle into the panel, undo and redo; not by hand.
 
-## New Layout Dialog Look
+## [DONE] New Layout Dialog Look
 
 The New Layout dialog does not give its controls sufficient height, making the text clipped.
 
 ![pasted-9](<TO-DO.images/pasted-9.png>)
+
+Fixed. The dialog had a fixed height and rows and buttons sized for the old theme; it now takes the height its fields need, with OK and Cancel at the right, full size. New Layout and New Page are the same dialog, and New Part, which had the same fault, is fixed too. Checked by a script that opened them with the theme (every field and button whole) and drew New Layout; not by hand.
+
 ## ID Property
 
 In addition to Name, every element should define a common property ID. The ID should be the target/content of an Href link.

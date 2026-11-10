@@ -5,8 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WireFlow.Views"
         mc:Ignorable="d"
-        Title="New Part" Height="180" Width="400" WindowStartupLocation="CenterOwner"
-        MaxHeight="230" MinHeight="180">
+        Title="New Part" Width="400" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <ControlTemplate x:Key="validationErrorTemplate">
             <DockPanel>
@@ -15,38 +14,22 @@
             </DockPanel>
         </ControlTemplate>
     </Window.Resources>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="1*"/>
-            <RowDefinition Height="2*"/>
-            <RowDefinition Height="2*"/>
-            <RowDefinition Height="1*"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="5*"/>
-            <ColumnDefinition Width="1*"/>
-        </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,5">
-            <TextBlock  Text="Name:"/>
-            <TextBox Name="NameBox" Padding="2" Validation.ErrorTemplate="{StaticResource validationErrorTemplate}">
-                <TextBox.Text>
-                    <Binding Path="Name" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
-                        <Binding.ValidationRules>
-                            <local:NameValidator></local:NameValidator>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
+    <!-- The window takes the height of its content, so that the theme's controls (32 high in Fluent) are not cut off -->
+    <StackPanel Margin="20,16,20,16">
+        <TextBlock Text="Name:" Margin="0,0,0,4"/>
+        <TextBox Name="NameBox" Validation.ErrorTemplate="{StaticResource validationErrorTemplate}">
+            <TextBox.Text>
+                <Binding Path="Name" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
+                    <Binding.ValidationRules>
+                        <local:NameValidator></local:NameValidator>
+                    </Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
+        <!-- OK and Cancel at the right, as large as the theme's buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="OK" IsDefault="True" MinWidth="80" Click="ButtonOK_Click"/>
+            <Button Content="Cancel" IsCancel="True" MinWidth="80" Margin="8,0,0,0"/>
         </StackPanel>
-        <StackPanel Grid.Column="1" Grid.Row="2"  Margin="0,5"/>
-        <Grid Grid.Column="1" Grid.Row="2" Width="220" Margin="0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="OK" IsDefault="True" Width="75" Height="24" Margin="0,0,10,0" Click="ButtonOK_Click"/>
-            <Button Grid.Column="1" Content="Cancel" IsCancel="True" Width="75" Height="24"/>
-        </Grid>
-    </Grid>
+    </StackPanel>
 </Window>
