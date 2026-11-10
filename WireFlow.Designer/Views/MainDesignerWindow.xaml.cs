@@ -284,6 +284,7 @@ namespace WireFlow
             LoadConfigSettings();
             DesignerTheme.Apply(DesignerTheme.Parse(Config.Theme));
             InitializeComponent();
+            ApplyConfigSettings();
             UpdateThemeMenu();
             DataContext = this;
             Engine = engine;
@@ -369,7 +370,8 @@ namespace WireFlow
             InputBindings.Add(new KeyBinding(RedoCmd, Key.Z, ModifierKeys.Control | ModifierKeys.Shift));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
-            ApplyConfigSettings();
+            // The panes as they were, before any tab opens: tabs are not kept in the layout
+            RestoreDockLayout();
             // Once the window shows, so that it is there while the project loads and behind any message about it
             Dispatcher.BeginInvoke(new Action(ReopenPreviousProject), System.Windows.Threading.DispatcherPriority.ContextIdle);
 
@@ -526,33 +528,100 @@ namespace WireFlow
 
 
 
+        // The window where it was, at its size, maximized or not; a place no longer on any screen (a screen taken away) is left to Windows
         private void ApplyConfigSettings()
         {
-            //TODO: This doesn't actually work
-
-            if (Config.Maximized)
-                this.WindowState = WindowState.Maximized;
-            else
+            if (!double.IsNaN(Config.Width) && !double.IsNaN(Config.Height) && Config.Width > 100 && Config.Height > 100)
             {
-                WindowStartupLocation = WindowStartupLocation.Manual;
-                this.Left = double.IsNaN(Config.Left) ? Config.Left: this.Left;
-                this.Top = double.IsNaN(Config.Top) ? Config.Top : this.Top;
-                this.Width = double.IsNaN(Config.Width) ? Config.Width : this.Width;
-                this.Height = double.IsNaN(Config.Height) ? Config.Height : this.Height;
+                Width = Config.Width;
+                Height = Config.Height;
             }
+            if (!double.IsNaN(Config.Left) && !double.IsNaN(Config.Top))
+            {
+                var visible = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+                var bounds = new Rect(Config.Left, Config.Top, Width, Height);
+                if (visible.IntersectsWith(bounds) && visible.Contains(new Point(Config.Left + Math.Min(100, Width / 2), Config.Top + 10)))
+                {
+                    WindowStartupLocation = WindowStartupLocation.Manual;
+                    Left = Config.Left;
+                    Top = Config.Top;
+                }
+            }
+            if (Config.Maximized)
+                WindowState = WindowState.Maximized;
+        }
+
+
+        // The panes as the Designer was last closed: docked, floating or hidden, and their sizes. The layout read replaces the
+        // layout objects, so the document pane is found again; a layout without one is not used.
+        private void RestoreDockLayout()
+        {
+            if (string.IsNullOrWhiteSpace(Config.DockLayout))
+                return;
+            string builtIn = SerializeDockLayout();
+            try
+            {
+                DeserializeDockLayout(Config.DockLayout);
+                if (FindDocumentPane() == null && builtIn != null)
+                    DeserializeDockLayout(builtIn);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"The docking layout could not be restored: {ex.Message}");
+                if (builtIn != null)
+                    DeserializeDockLayout(builtIn);
+            }
+            var pane = FindDocumentPane();
+            if (pane != null && pane != DocumentPane)
+            {
+                DocumentPane.PropertyChanged -= DocumentPane_PropertyChanged;
+                DocumentPane = pane;
+                DocumentPane.PropertyChanged += DocumentPane_PropertyChanged;
+            }
+        }
+
+
+        private LayoutDocumentPane FindDocumentPane() => DockingManager.Layout?.Descendents().OfType<LayoutDocumentPane>().FirstOrDefault();
+
+
+        private string SerializeDockLayout()
+        {
+            try
+            {
+                using (var writer = new StringWriter())
+                {
+                    new DockLayoutSerializer(DockingManager).Serialize(writer);
+                    return writer.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"The docking layout could not be kept: {ex.Message}");
+                return null;
+            }
+        }
+
+
+        private void DeserializeDockLayout(string xml)
+        {
+            using (var reader = new StringReader(xml))
+                new DockLayoutSerializer(DockingManager).Deserialize(reader);
         }
 
 
         private void SaveConfigSettings()
         {
             Config.Maximized = this.WindowState == WindowState.Maximized;
-            if (!Config.Maximized)
+            // Maximized or minimized, the place it goes back to
+            var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+            if (!bounds.IsEmpty)
             {
-                Config.Left = this.Left;
-                Config.Top = this.Top;
-                Config.Width = this.Width;
-                Config.Height = this.Height;
+                Config.Left = bounds.Left;
+                Config.Top = bounds.Top;
+                Config.Width = bounds.Width;
+                Config.Height = bounds.Height;
             }
+            Config.DockLayout = SerializeDockLayout() ?? Config.DockLayout;
             // The project to reopen at startup, when Tools > Options says so, and its tabs in the main pane
             Config.PreviousProject = string.IsNullOrWhiteSpace(FileName) ? null : FileName;
             var tabs = Config.PreviousProject == null ? new List<DesignerNavigatorDocument>()

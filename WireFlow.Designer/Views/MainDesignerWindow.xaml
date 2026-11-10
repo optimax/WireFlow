@@ -241,7 +241,7 @@
                                 </Grid>
                             </dock:LayoutAnchorable>
 
-                            <dock:LayoutAnchorable Title="History" ContentId="layouts" CanHide="False" CanClose="False">
+                            <dock:LayoutAnchorable Title="History" ContentId="history" CanHide="False" CanClose="False">
                                 <DockPanel>
                                     <ListBox x:Name="ListBoxHistory" BorderThickness="0"
                                              ItemTemplate="{StaticResource ListOfNamesDataTemplate}">

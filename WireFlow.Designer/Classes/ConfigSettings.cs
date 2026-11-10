@@ -21,6 +21,9 @@ namespace WireFlow
         public int PreviousTab { get; set; } = -1;
         // The colors last chosen in the color dialog, the latest first, as #AARRGGBB (ColorPickerDialog.RecentColors)
         public List<string> RecentColors { get; set; } = new List<string>();
+
+        /// <summary>The docking layout of the panes as the Designer was last closed (XML, <see cref="DockLayoutSerializer"/>); null for the one built in.</summary>
+        public string DockLayout { get; set; }
     }
 
 
