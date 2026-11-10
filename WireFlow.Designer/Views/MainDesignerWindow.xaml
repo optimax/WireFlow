@@ -251,7 +251,8 @@
                         <dock:LayoutAnchorablePane DockHeight="*">
                             <dock:LayoutAnchorable ContentId="tools" Title="Tools" CanHide="True" CanClose="False">
                                 <Grid>
-                                    <ListBox Name="Tools" Padding="3" BorderThickness="0" SelectedItem="{Binding Path=SelectedDrawingTool,Mode=OneWay}" SelectedIndex="{Binding SelectedToolIndex}"
+                                    <!-- The background of Pages (EditableListBox's style), in every theme -->
+                                    <ListBox Name="Tools" Padding="3" BorderThickness="0" Background="{DynamicResource ListBackgroundBrush}" SelectedItem="{Binding Path=SelectedDrawingTool,Mode=OneWay}" SelectedIndex="{Binding SelectedToolIndex}"
                                         ItemsSource="{Binding DrawingTools}">
                                         <ListBox.Resources>
                                             <!-- The tool's glyph, drawn on its 24 x 24 grid in the row's text color, and its title -->
@@ -401,7 +402,8 @@
                             <dock:LayoutAnchorable ContentId="outline" Title="Outline"  CanHide="True" CanClose="False">
 
                                 <!-- Virtualizing: only the entries in view have items. Standard, not Recycling, mode, so that an entry collapsed by hand does not pass that on to another -->
-                                <TreeView Name="Outline" BorderThickness="0" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged"
+                                <!-- The background of Pages (EditableListBox's style), in every theme -->
+                                <TreeView Name="Outline" BorderThickness="0" Background="{DynamicResource ListBackgroundBrush}" ItemsSource="{Binding LayerOutline}" SelectedItemChanged="Outline_SelectedItemChanged"
                                           VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" ScrollViewer.CanContentScroll="True">
                                     <TreeView.ContextMenu>
                                         <ContextMenu>
