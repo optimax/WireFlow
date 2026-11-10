@@ -8,13 +8,15 @@ Title: TO-DO
 >
 > ---
 
-## Remember Window Position and Panes
+## [DONE] Remember Window Position and Panes
 
 Make sure that the window position, layout (the open panes), and the splitter positions are remembered from run to run.
 
 Done. The Designer saves, as it closes, the window's place and size (and whether it is maximized), and the docking layout: which panes are docked where, floating, auto-hidden or closed, and the sizes the splitters give them. The next run opens the window where it was, before it shows, and puts the panes back. A window last placed on a screen no longer attached opens where Windows puts it. The restore of the old window position never worked (its test was the wrong way round); it does now. The History pane had the same pane ID as Layouts, which a saved layout cannot tell apart; it has its own now. A script saved a layout and read it back (sizes and a closed pane survive); the real window was not tried by hand.
 
 BUG: Splitter positions are note being saved.
+
+The Designer you tried was the build published before this change (19:45): the settings it wrote at 21:26 hold no layout. The build published at 21:48 saves the panes and the sizes the splitters give them (a drag of a splitter sets the size the layout keeps, and a script showed sizes surviving a save and a restore). Please try that one: drag a splitter, close the Designer, start it again.
 
 ## BUG: Float a Pane Crashes App
 
