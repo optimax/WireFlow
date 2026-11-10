@@ -21,6 +21,9 @@ namespace WireFlow
         public static FontStretch ToWpf(this FlowFontStretch value) =>
             value >= FlowFontStretch.UltraCondensed && value <= FlowFontStretch.UltraExpanded ? FontStretch.FromOpenTypeStretch((int)value) : FontStretches.Normal;
 
+        public static FontStyle ToWpf(this FlowFontStyle value) =>
+            value switch { FlowFontStyle.Italic => FontStyles.Italic, FlowFontStyle.Oblique => FontStyles.Oblique, _ => FontStyles.Normal };
+
         public static FlowHorizontalAlignment ToFlow(this HorizontalAlignment value) => (FlowHorizontalAlignment)value;
         public static FlowVerticalAlignment ToFlow(this VerticalAlignment value) => (FlowVerticalAlignment)value;
         public static FlowTextAlignment ToFlow(this TextAlignment value) => (FlowTextAlignment)value;
@@ -28,5 +31,8 @@ namespace WireFlow
         public static FlowStretch ToFlow(this Stretch value) => (FlowStretch)value;
         public static FlowOrientation ToFlow(this Orientation value) => (FlowOrientation)value;
         public static FlowFontStretch ToFlow(this FontStretch value) => (FlowFontStretch)value.ToOpenTypeStretch();
+
+        public static FlowFontStyle ToFlow(this FontStyle value) =>
+            value == FontStyles.Italic ? FlowFontStyle.Italic : value == FontStyles.Oblique ? FlowFontStyle.Oblique : FlowFontStyle.Normal;
     }
 }

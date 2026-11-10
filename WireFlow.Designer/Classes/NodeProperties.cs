@@ -34,7 +34,7 @@ namespace WireFlow
         private static readonly Shown[] Font =
         {
             P("Color", "Text", "Foreground"), P("Font", "Text", "FontFamily"), P("FontSize", "Text"), P("FontWeight", "Text"),
-            P("FontStretch", "Text"), P("LineHeight", "Text"), P("Text", "Text"), P("TextAlignment", "Text"),
+            P("FontStretch", "Text"), P("FontStyle", "Text"), P("LineHeight", "Text"), P("Text", "Text"), P("TextAlignment", "Text"),
             P("VerticalAlignment", "Text", "TextVerticalAlignment"), P("TextWrapping", "Text"),
         };
 

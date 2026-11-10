@@ -790,6 +790,7 @@ namespace WireFlow
                 FontSize = box.FontSize,
                 FontWeight = box.FontWeight.ToOpenTypeWeight(),
                 FontStretch = box.FontStretch.ToFlow(),
+                FontStyle = box.FontStyle.ToFlow(),
                 HorizontalAlignment = box.TextHorizontalAlignment.ToFlow(),
                 VerticalAlignment = box.TextVerticalAlignment.ToFlow(),
                 LineHeight = box.LineHeight,
@@ -830,6 +831,7 @@ namespace WireFlow
                 FontSize = text.FontSize,
                 FontStretch = text.FontStretch.ToFlow(),
                 FontWeight = text.FontWeight.ToOpenTypeWeight(),
+                FontStyle = text.FontStyle.ToFlow(),
                 HorizontalAlignment = text.HorizontalAlignment.ToFlow(),
                 VerticalAlignment = text.TextVerticalAlignment.ToFlow(),
                 LineHeight = text.LineHeight,
@@ -1351,6 +1353,7 @@ namespace WireFlow
             text.FontSize = element.FontSize;
             text.FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight);
             text.FontStretch = element.FontStretch.ToWpf();
+            text.FontStyle = element.FontStyle.ToWpf();
             text.Foreground = ColorUtils.StringToBrush(element.Color);
             // A text's VerticalAlignment is where its lines lie down its frame (Stretch, as earlier texts have, is Top)
             text.TextVerticalAlignment = element.VerticalAlignment.ToWpf();
@@ -1429,6 +1432,7 @@ namespace WireFlow
             box.FontSize = element.FontSize;
             box.FontStretch = element.FontStretch.ToWpf();
             box.FontWeight = FontWeight.FromOpenTypeWeight(element.FontWeight);
+            box.FontStyle = element.FontStyle.ToWpf();
             box.TextVerticalAlignment = element.VerticalAlignment.ToWpf();
             box.TextHorizontalAlignment = element.HorizontalAlignment.ToWpf();
             box.TextAlignment = element.TextAlignment.ToWpf();

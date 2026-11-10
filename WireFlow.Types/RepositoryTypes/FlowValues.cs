@@ -52,6 +52,14 @@ namespace WireFlow
         UltraExpanded = 9,
     }
 
+    /// <summary>Whether a font's letters are upright or slanted: as WPF's FontStyles name them.</summary>
+    public enum FlowFontStyle
+    {
+        Normal = 0,
+        Oblique = 1,
+        Italic = 2,
+    }
+
     /// <summary>How an image fills its frame: as WPF's Stretch.</summary>
     public enum FlowStretch
     {

@@ -45,6 +45,8 @@
     <PackageReference Include="PixiEditor.ColorPicker" Version="3.4.2.3" />
     <!-- Tools > Options: the Options dialog of MarkdownTools' and PDFTools' programs, from LocalPackages -->
     <PackageReference Include="OptimaxTools.Options" Version="1.0.0" />
+    <!-- The font dialog of MarkdownTools' programs (MaxPad, MaxWrite), from LocalPackages -->
+    <PackageReference Include="OptimaxTools.FontSelection" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>

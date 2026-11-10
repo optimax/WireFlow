@@ -16,6 +16,7 @@
         private double fontSize;
         private FlowFontStretch fontStretch;
         private int fontWeight;
+        private FlowFontStyle fontStyle;
         private double lineHeight;
         private FlowVerticalAlignment verticalAlignment;
         private FlowHorizontalAlignment horizontalAlignment;
@@ -32,6 +33,8 @@
         public double FontSize { get => fontSize; set => Set(ref fontSize, value); }
         public FlowFontStretch FontStretch { get => fontStretch; set => Set(ref fontStretch, value); }
         public int FontWeight { get => fontWeight; set => Set(ref fontWeight, value); }
+        // Italic or oblique; a file written before it has none, which reads as Normal
+        public FlowFontStyle FontStyle { get => fontStyle; set => Set(ref fontStyle, value); }
         public double LineHeight { get => lineHeight; set => Set(ref lineHeight, value); }
         public FlowVerticalAlignment VerticalAlignment { get => verticalAlignment; set => Set(ref verticalAlignment, value); }
         public FlowHorizontalAlignment HorizontalAlignment { get => horizontalAlignment; set => Set(ref horizontalAlignment, value); }
@@ -52,6 +55,7 @@
                 TextWrapping = FlowTextWrapping.Wrap,
                 FontWeight = 400,
                 FontStretch = FlowFontStretch.Normal,
+                FontStyle = FlowFontStyle.Normal,
                 Font = "Segoe UI",
                 Color = "Black",
                 FontSize = 12,
@@ -74,6 +78,7 @@
             Font = defaults.Font;
             FontWeight = defaults.FontWeight;
             FontStretch = defaults.FontStretch;
+            FontStyle = defaults.FontStyle;
             FontSize = defaults.FontSize;
             Color = defaults.Color;
             LineHeight = defaults.LineHeight;

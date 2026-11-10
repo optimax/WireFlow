@@ -17,6 +17,8 @@ namespace WireFlow
             ColorPropertyEditor.Register();
             // The TextAlignment of texts and boxes is chosen as a position in the frame, as in PDFTools
             TextPositionPropertyEditor.Register();
+            // The font of texts and boxes is chosen in the font dialog of Optimax's programs
+            FontPropertyEditor.Register();
 
             // Opening a folder project (.project) converts it into a .wf file beside it
             Repository = new SqliteRepository() { ConvertFolderProjects = true };
