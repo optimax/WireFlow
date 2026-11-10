@@ -18,9 +18,11 @@ BUG: Splitter positions are note being saved.
 
 The Designer you tried was the build published before this change (19:45): the settings it wrote at 21:26 hold no layout. The build published at 21:48 saves the panes and the sizes the splitters give them (a drag of a splitter sets the size the layout keeps, and a script showed sizes surviving a save and a restore). Please try that one: drag a splitter, close the Designer, start it again.
 
-## BUG: Float a Pane Crashes App
+## [DONE] BUG: Float a Pane Crashes App
 
 Setting a pane to Float, crashes the application.
+
+Fixed. The crash came as a floating pane was dragged, when the Designer shows the drop targets: WPF's Fluent theme gives every window shown without a style of its own Fluent's plain window look, which replaced the look of the docking windows, so the drop-target window lacked its parts. The floating windows were affected too. The docking windows now name their own look before they show. Checked by a script that reproduced the crash with the Designer's themes and then, fixed, showed the drop targets and a floated pane in their own look, light and dark; not by hand.
 
 ## BUG: Adding Images to Project
 

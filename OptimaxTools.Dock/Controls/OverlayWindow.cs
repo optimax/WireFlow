@@ -77,6 +77,9 @@ namespace OptimaxTools.Dock.Controls
 		{
 			_host = host;
 			UpdateThemeResources();
+			// WireFlow: the style of its own type, set before it shows: with WPF's Fluent theme on, a window shown without a
+			// style gets Fluent's Window style, whose template has none of the drop targets this window needs.
+			SetResourceReference(StyleProperty, DefaultStyleKey);
 		}
 
 		/// <summary>

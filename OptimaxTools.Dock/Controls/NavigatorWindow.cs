@@ -44,6 +44,9 @@ namespace OptimaxTools.Dock.Controls
 		/// <param name="manager">The manager.</param>
 		internal NavigatorWindow(DockingManager manager)
 		{
+			// WireFlow: the style of its own type, set before it shows: with WPF's Fluent theme on, a window shown without a
+			// style gets Fluent's Window style instead.
+			SetResourceReference(StyleProperty, DefaultStyleKey);
 			_manager = manager;
 			_internalSetSelectedDocument = true;
 			SetAnchorables(_manager.Layout.Descendents()

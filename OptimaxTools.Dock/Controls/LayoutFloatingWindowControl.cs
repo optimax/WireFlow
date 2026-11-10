@@ -82,6 +82,9 @@ namespace OptimaxTools.Dock.Controls
 			Closing += OnClosing;
 			SizeChanged += OnSizeChanged;
 			_model = model;
+			// WireFlow: the style of its own type, set before it shows: with WPF's Fluent theme on, a window shown without a
+			// style gets Fluent's Window style, whose template has none of the floating window's parts.
+			SetResourceReference(StyleProperty, DefaultStyleKey);
 		}
 
 		/// <summary>
