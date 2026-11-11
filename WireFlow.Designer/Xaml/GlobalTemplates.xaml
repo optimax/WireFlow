@@ -7,7 +7,7 @@
         </Grid>
     </DataTemplate>
 
-    <!-- The Pages list: its items are the pages' keys, shown by their names -->
+    <!-- The Pages and Layouts lists: their items are the documents' keys, shown by their names -->
     <wireFlow:PageNameConverter x:Key="PageNameConverter" />
     <DataTemplate x:Key="ListOfPagesDataTemplate">
         <Grid Margin="0">

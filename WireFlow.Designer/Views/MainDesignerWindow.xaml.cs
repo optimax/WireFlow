@@ -355,11 +355,12 @@ namespace WireFlow
             ApplyConfigSettings();
             // An ID typed in Properties that another node in the project has is refused
             NodeProperties.IdTaken = (node, id) => CurrentDesigner?.IsIdTaken(node, id) == true;
-            // A page's name set in Properties renames it in the project; a changed ID or page name carries the links naming it
+            // A page's or layout's name set in Properties renames it in the project; a changed ID or name carries the links (or
+            // the layouts set on pages) naming it
             NodeProperties.RenamePage = (page, name) => RenamePage(page.Key, name, page);
             NodeProperties.LinkTargetChanged = (node, before, after) => RetargetLinks(node, before, after);
-            // The Pages list holds the pages' keys and shows their names
-            PageNameConverter.Lookup = key => Engine?.PageName(key);
+            // The Pages and Layouts lists hold keys and show names
+            PageNameConverter.Lookup = key => Engine?.PageName(key) ?? Engine?.LayoutName(key);
             // Pages are put in order by dragging them, as by the Move Up and Move Down buttons
             new ListDragReorder(ListBoxPages, MovePage);
             UpdateThemeMenu();
@@ -512,6 +513,9 @@ namespace WireFlow
                         name = Engine.PageKey(name);
                     return Has(Pages) ? NewPageTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
                 case DesignerNavigatorDocument.LayoutKind:
+                    // A layout by its key; settings written before layouts had keys name it by its name
+                    if (!Has(Layouts))
+                        name = Engine.LayoutKey(name);
                     return Has(Layouts) ? NewLayoutTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
                 case DesignerNavigatorDocument.PartKind:
                     return Has(Parts) ? NewPartTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
@@ -1316,38 +1320,46 @@ namespace WireFlow
 
 
         /// <summary>
-        /// Renames the page with this key, in the project, its tabs and the Pages list, and makes the links that named it by
-        /// its old name name it by the new one (unless the old name is also an ID, which links name first). The node given is the
-        /// one Properties is setting the name of, which takes it after. Gives the reason it cannot be renamed, or null.
+        /// Renames the page or layout with this key, in the project, its tabs and its list, and makes what named it by its old
+        /// name name it by the new one: the links to a page, the layout set on pages and layouts (<see cref="FlowPage.Master"/>)
+        /// to a layout; unless the old name is also an ID, which both name first. The node given is the one Properties is setting
+        /// the name of, which takes it after. Gives the reason it cannot be renamed, or null.
         /// </summary>
         private string RenamePage(string key, string newName, FlowPage settingNode = null)
         {
             newName = newName?.Trim();
-            string oldName = Engine.PageName(key);
+            bool layout = Engine.PageName(key) == null && Engine.LayoutName(key) != null;
+            string what = layout ? "layout" : "page";
+            string oldName = layout ? Engine.LayoutName(key) : Engine.PageName(key);
             if (oldName == null)
-                return "The page is not in the project.";
+                return $"The {what} is not in the project.";
             if (string.IsNullOrWhiteSpace(newName))
-                return "A page needs a name.";
+                return $"A {what} needs a name.";
             if (newName == oldName)
                 return null;
-            string other = Engine.PageKey(newName);
+            string other = layout ? Engine.LayoutKey(newName) : Engine.PageKey(newName);
             if (other != null && other != key)
-                return $"The project has a page named \"{newName}\" already.";
-            Engine.RenamePage(key, newName);
+                return $"The project has a {what} named \"{newName}\" already.";
+            if (layout)
+                Engine.RenameLayout(key, newName);
+            else
+                Engine.RenamePage(key, newName);
+            string kind = layout ? DesignerNavigatorDocument.LayoutKind : DesignerNavigatorDocument.PageKind;
             foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
             {
-                if (doc.Kind != DesignerNavigatorDocument.PageKind || doc.Navigator.PageName != key)
+                if (doc.Kind != kind || doc.Navigator.PageName != key)
                     continue;
                 doc.Title = newName;
                 if (doc.Navigator.CurrentPage is FlowPage page && page != settingNode)
                     page.Name = newName;
             }
-            int index = Pages?.IndexOf(key) ?? -1;
+            var list = layout ? Layouts : Pages;
+            int index = list?.IndexOf(key) ?? -1;
             if (index >= 0)
-                Pages[index] = key;
-            // A name set in Properties carries its links there, once the node has it (NodeProperties.LinkTargetChanged)
+                list[index] = key;
+            // A name set in Properties carries what names it there, once the node has it (NodeProperties.LinkTargetChanged)
             if (settingNode == null)
-                RetargetLinks(null, oldName, newName);
+                RetargetLinks(layout ? Engine.GetMasterPage(key) : null, oldName, newName);
             return null;
         }
 
@@ -1361,6 +1373,8 @@ namespace WireFlow
         {
             if (Engine == null || string.IsNullOrWhiteSpace(before) || string.IsNullOrWhiteSpace(after))
                 return;
+            // A layout's name or ID is named by the layout set on pages and layouts, anything else's by links
+            bool layout = node is FlowPage named && !string.IsNullOrEmpty(named.Key) && Engine.Layouts.Contains(named.Key, StringComparer.OrdinalIgnoreCase);
             bool isName = node == null || (node is FlowPage page && string.Equals(page.Name, after, StringComparison.Ordinal) && !string.Equals(page.Id, after, StringComparison.Ordinal));
             var docs = DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>().ToList();
             if (isName)
@@ -1378,9 +1392,15 @@ namespace WireFlow
                 if (root == null)
                     continue;
                 open.Add((root as FlowPage)?.Key ?? root.Name);
-                FlowIds.RetargetLinks(root, before, after);
+                if (layout)
+                    FlowIds.RetargetMaster(root as FlowPage, before, after);
+                else
+                    FlowIds.RetargetLinks(root, before, after);
             }
-            Engine.RetargetLinks(before, after, open);
+            if (layout)
+                Engine.RetargetMasters(before, after, open);
+            else
+                Engine.RetargetLinks(before, after, open);
         }
 
 
@@ -1466,6 +1486,11 @@ namespace WireFlow
                 return;
             //    return this.ShowDialogResult(result);
             //Debug.WriteLine($"CREATING LAYOUT: {dlg.PageName}");
+            if (Engine.LayoutKey(dlg.PageName) != null)
+            {
+                MessageBox.Show($"The project has a layout named \"{dlg.PageName}\" already.", "New Layout", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             Engine.CreateLayout(dlg.PageName, dlg.LayoutName);
             var layouts = Engine.Layouts;
             Layouts = new ObservableCollection<string>(layouts);
@@ -1476,12 +1501,12 @@ namespace WireFlow
 
         private void DeleteSelectedLayout()
         {
-            string layoutName = CurrentLayoutName;
+            string layoutName = Engine.LayoutName(CurrentLayoutName) ?? CurrentLayoutName;
             var msgResult = MessageBox.Show($"Delete the selected layout \"{layoutName}\"?", "Delete Layout",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (msgResult != MessageBoxResult.Yes)
                 return;
-            Engine.DeleteLayout(layoutName);
+            Engine.DeleteLayout(CurrentLayoutName);
             var layouts = Engine.Layouts;
             Layouts = new ObservableCollection<string>(layouts);
         }

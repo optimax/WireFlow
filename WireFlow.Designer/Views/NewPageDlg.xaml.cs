@@ -55,7 +55,7 @@ namespace WireFlow.Views
 
         private void PopulateLayouts()
         {
-            LayoutNameBox.ItemsSource = layoutsProvider.Layouts;
+            LayoutNameBox.ItemsSource = layoutsProvider.LayoutNames;
         }
 
     }

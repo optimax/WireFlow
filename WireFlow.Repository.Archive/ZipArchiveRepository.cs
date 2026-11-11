@@ -118,7 +118,17 @@ namespace WireFlow.Repository.Archive
             throw new NotImplementedException();
         }
 
-        public void CreateLayout(string nodeName, string layoutName)
+        public string LayoutName(string layoutKey)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string LayoutKey(string layoutName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string CreateLayout(string nodeName, string layoutName)
         {
             throw new NotImplementedException();
         }

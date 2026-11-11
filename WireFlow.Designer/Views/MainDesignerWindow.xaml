@@ -537,7 +537,7 @@
                                     <ListBox Name="ListBoxLayouts" BorderThickness="0"
                                              ItemsSource="{Binding Layouts}"
                                              SelectedItem="{Binding CurrentLayoutName}"
-                                             ItemTemplate="{StaticResource ListOfNamesDataTemplate}"
+                                             ItemTemplate="{StaticResource ListOfPagesDataTemplate}"
                                              MouseDoubleClick="ListBoxLayouts_MouseDoubleClick">
                                     </ListBox>
                                 </DockPanel>

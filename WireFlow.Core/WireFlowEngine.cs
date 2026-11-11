@@ -47,7 +47,35 @@ namespace WireFlow
         public string DefaultIndexNode => Repository.DefaultIndexNode;
         public string ProjectFileName => Repository.ProjectFileName;
 
+        // The layouts' keys (FlowPage.Key), by name
         public IList<string> Layouts => Repository.Layouts;
+
+        /// <summary>The name of the layout with this key; null when there is none.</summary>
+        public string LayoutName(string layoutKey) => Repository.LayoutName(layoutKey);
+
+        /// <summary>The layouts' names, by name.</summary>
+        public IList<string> LayoutNames => (Layouts ?? new List<string>()).Select(LayoutName).Where(n => n != null).ToList();
+
+        /// <summary>The key of the layout with this name, ignoring case; null when there is none.</summary>
+        public string LayoutKey(string layoutName) => Repository.LayoutKey(layoutName);
+
+        /// <summary>
+        /// The key of the layout a page's or layout's <see cref="FlowPage.Master"/> names: a layout with that ID, else one of
+        /// that name (ignoring case), else the layout of that key; null when it names none.
+        /// </summary>
+        public string LayoutOf(string reference)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+                return null;
+            var keys = Layouts ?? new List<string>();
+            foreach (var key in keys)
+                if (string.Equals(GetMasterPage(key)?.Id, reference, StringComparison.OrdinalIgnoreCase))
+                    return key;
+            return LayoutKey(reference) ?? keys.FirstOrDefault(k => string.Equals(k, reference, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>The layout a page's or layout's <see cref="FlowPage.Master"/> names (<see cref="LayoutOf"/>).</summary>
+        public FlowPage GetLayoutOf(string reference) => GetMasterPage(LayoutOf(reference));
         // The pages' keys (FlowPage.Key), in the project's order: the first is the entry point (HomePage)
         public IList<string> Pages => Repository.Pages;
 
@@ -220,9 +248,9 @@ namespace WireFlow
             return Project;
         }
 
-        public FlowPage GetMasterPage(string nodeName)
+        public FlowPage GetMasterPage(string layoutKey)
         {
-            return Repository.GetMasterPage(nodeName);
+            return Repository.GetMasterPage(layoutKey);
         }
 
         /// <summary>
@@ -252,30 +280,46 @@ namespace WireFlow
         /// (<paramref name="skip"/>: the keys of pages, the names of layouts and parts), which it changes itself. Gives the number
         /// of links changed.
         /// </summary>
-        public int RetargetLinks(string oldTarget, string newTarget, ICollection<string> skip)
+        public int RetargetLinks(string oldTarget, string newTarget, ICollection<string> skip) =>
+            Retarget(oldTarget, newTarget, skip, true, false);
+
+
+        /// <summary>
+        /// Makes every page and layout whose layout (<see cref="FlowPage.Master"/>) names <paramref name="oldTarget"/> name
+        /// <paramref name="newTarget"/>, as <see cref="RetargetLinks"/> does links; gives the number changed.
+        /// </summary>
+        public int RetargetMasters(string oldTarget, string newTarget, ICollection<string> skip) =>
+            Retarget(oldTarget, newTarget, skip, false, true);
+
+
+        private int Retarget(string oldTarget, string newTarget, ICollection<string> skip, bool links, bool masters)
         {
             int count = 0;
             bool Skip(string document) => skip != null && skip.Contains(document, StringComparer.OrdinalIgnoreCase);
+            int Change(FlowPage page) => (links ? FlowIds.RetargetLinks(page, oldTarget, newTarget) : 0)
+                + (masters && FlowIds.RetargetMaster(page, oldTarget, newTarget) ? 1 : 0);
             foreach (var key in Pages ?? new List<string>())
             {
                 if (Skip(key))
                     continue;
                 var page = GetPage(key);
-                int changed = FlowIds.RetargetLinks(page, oldTarget, newTarget);
+                int changed = Change(page);
                 if (changed > 0)
                     SavePage(page);
                 count += changed;
             }
-            foreach (var name in Layouts ?? new List<string>())
+            foreach (var key in Layouts ?? new List<string>())
             {
-                if (Skip(name))
+                if (Skip(key))
                     continue;
-                var layout = GetMasterPage(name);
-                int changed = FlowIds.RetargetLinks(layout, oldTarget, newTarget);
+                var layout = GetMasterPage(key);
+                int changed = Change(layout);
                 if (changed > 0)
                     SaveLayout(layout);
                 count += changed;
             }
+            if (!links)
+                return count;
             foreach (var name in Parts ?? new List<string>())
             {
                 if (Skip(name))
@@ -396,15 +440,25 @@ namespace WireFlow
 
 
 
-        public void CreateLayout(string pageName, string layoutName)
+        /// <summary>Creates a layout of this name, on the layout named, with an ID made of its name, and gives its key.</summary>
+        public string CreateLayout(string layoutName, string masterName)
         {
-            Repository.CreateLayout(pageName, layoutName);
+            string id = NewDocumentId(layoutName);
+            string key = Repository.CreateLayout(layoutName, masterName);
+            var layout = Repository.GetMasterPage(key);
+            if (layout != null && string.IsNullOrWhiteSpace(layout.Id))
+            {
+                layout.Id = id;
+                Repository.SaveLayout(layout);
+            }
+            NoteIdGiven(id, key);
+            return key;
         }
 
 
-        public void DeleteLayout(string pageName)
+        public void DeleteLayout(string layoutKey)
         {
-            Repository.DeleteLayout(pageName);
+            Repository.DeleteLayout(layoutKey);
         }
 
         public void SaveLayout(FlowPage page)
@@ -412,9 +466,9 @@ namespace WireFlow
             Repository.SaveLayout(page);
         }
 
-        public void RenameLayout(string oldName, string newName)
+        public void RenameLayout(string layoutKey, string newName)
         {
-           Repository.RenameLayout(oldName, newName);
+           Repository.RenameLayout(layoutKey, newName);
         }
 
 
@@ -574,16 +628,16 @@ namespace WireFlow
         public Size InheritedPageSize(FlowPage page)
         {
             double width = double.NaN, height = double.NaN;
-            var master = Repository.GetMasterPage(page?.Master);
+            var master = GetLayoutOf(page?.Master);
             // A layout that names itself or an earlier one as its layout ends the search
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page?.Name ?? "" };
-            while (master != null && seen.Add(master.Name ?? "") && (double.IsNaN(width) || double.IsNaN(height)))
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page?.Key ?? page?.Name ?? "" };
+            while (master != null && seen.Add(master.Key ?? master.Name ?? "") && (double.IsNaN(width) || double.IsNaN(height)))
             {
                 if (double.IsNaN(width))
                     width = master.Width;
                 if (double.IsNaN(height))
                     height = master.Height;
-                master = Repository.GetMasterPage(master.Master);
+                master = GetLayoutOf(master.Master);
             }
             return new Size(double.IsNaN(width) ? Project.Width : width, double.IsNaN(height) ? Project.Height : height);
         }
@@ -596,14 +650,14 @@ namespace WireFlow
         /// </summary>
         public string InheritedPageBackground(FlowPage page)
         {
-            var master = Repository.GetMasterPage(page?.Master);
+            var master = GetLayoutOf(page?.Master);
             // A layout that names itself or an earlier one as its layout ends the search
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page?.Name ?? "" };
-            while (master != null && seen.Add(master.Name ?? ""))
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page?.Key ?? page?.Name ?? "" };
+            while (master != null && seen.Add(master.Key ?? master.Name ?? ""))
             {
                 if (!string.IsNullOrWhiteSpace(master.Background))
                     return master.Background;
-                master = Repository.GetMasterPage(master.Master);
+                master = GetLayoutOf(master.Master);
             }
             return Project.Background;
         }
@@ -986,7 +1040,7 @@ namespace WireFlow
 
             layerNo = 0;
 
-            RenderMasterPages(pageNode.Master, canvas);
+            RenderMasterPages(pageNode.Master, canvas, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { pageNode.Key ?? pageNode.Name ?? "" });
             RenderUserPage(pageNode, canvas);
             RenderGrids(canvas);
 
@@ -1042,15 +1096,17 @@ namespace WireFlow
 
 
 
-        private void RenderMasterPages(string nodeName, Canvas canvas)
+        // The layouts under a page, the farthest first; nodeName names one by ID or name (LayoutOf). A layout seen already in
+        // the chain (a cycle) ends it.
+        private void RenderMasterPages(string nodeName, Canvas canvas, HashSet<string> seen)
         {
-            var node = Repository.GetMasterPage(nodeName);
-            if (node == null)
+            var node = GetLayoutOf(nodeName);
+            if (node == null || !seen.Add(node.Key ?? node.Name ?? ""))
                 return;
             Debug.Assert(!string.IsNullOrWhiteSpace(node.Name), "Repository returned master page without a name.");
             node.IsMaster = true;
             if (node.Master != null)
-                RenderMasterPages(node.Master, canvas);
+                RenderMasterPages(node.Master, canvas, seen);
 
             Layout layout = new Layout()
             {

@@ -311,7 +311,14 @@ namespace WireFlow
 
 
 
-        public void CreateLayout(string nodeName, string layoutName)
+        public string LayoutName(string layoutKey) => Layouts.FirstOrDefault(n => string.Equals(n, layoutKey, StringComparison.OrdinalIgnoreCase));
+
+
+        public string LayoutKey(string layoutName) => LayoutName(layoutName);
+
+
+        // A folder's layout is named by its file, so its key is its name
+        public string CreateLayout(string nodeName, string layoutName)
         {
             FlowPage page = new FlowPage()
             {
@@ -325,6 +332,7 @@ namespace WireFlow
             };
             page.Layers.Add(userLayer);
             SaveLayout(page);
+            return nodeName;
         }
 
 

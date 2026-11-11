@@ -85,6 +85,18 @@ namespace WireFlow
         }
 
 
+        /// <summary>Makes a page's or layout's layout (<see cref="FlowPage.Master"/>) name <paramref name="newTarget"/> if it named
+        /// <paramref name="oldTarget"/> (ignoring case); true when it did.</summary>
+        public static bool RetargetMaster(FlowPage page, string oldTarget, string newTarget)
+        {
+            if (page == null || string.IsNullOrWhiteSpace(oldTarget) || string.IsNullOrWhiteSpace(newTarget)
+                || !string.Equals(page.Master, oldTarget, StringComparison.OrdinalIgnoreCase))
+                return false;
+            page.Master = newTarget;
+            return true;
+        }
+
+
         /// <summary>The IDs of a node and the nodes under it that have one.</summary>
         public static IEnumerable<string> IdsIn(FlowBase root) => Nodes(root).Select(n => n.Id).Where(id => !string.IsNullOrWhiteSpace(id));
 

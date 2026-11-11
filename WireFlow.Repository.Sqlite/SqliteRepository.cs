@@ -89,7 +89,8 @@ CREATE TABLE Images (
 
         // The pages' keys, in the project's order (FlowProject.OrderPages), the first the entry point
         public IList<string> Pages => Project == null ? GetKeys(PAGE_KIND) : Project.OrderPages(GetKeys(PAGE_KIND));
-        public IList<string> Layouts => GetNames(LAYOUT_KIND);
+        // The layouts' keys, by name
+        public IList<string> Layouts => GetKeys(LAYOUT_KIND);
         public IList<string> Parts => GetNames(PART_KIND);
         public IList<string> Images => ReadStrings("SELECT Name FROM Images ORDER BY Name");
 
@@ -183,42 +184,80 @@ CREATE TABLE Images (
 
 
 
-        public FlowPage GetMasterPage(string nodeName)
+        public FlowPage GetMasterPage(string layoutKey)
         {
-            if (string.IsNullOrWhiteSpace(nodeName))
-                return null;
-            // The saved version, as the folder's .master file
-            var master = ReadDocument<FlowPage>(LAYOUT_KIND, nodeName, "Saved");
-            if (master != null)
-                master.Name = nodeName;
-            return master;
+            // As a page: the unsaved edits if any, otherwise the saved version, so that a layout's edits show on the pages set on it
+            return ReadKeyed(LAYOUT_KIND, layoutKey, "COALESCE(Draft, Saved)");
         }
+
+
+        public string LayoutName(string layoutKey) => NameOf(LAYOUT_KIND, layoutKey);
+
+
+        public string LayoutKey(string layoutName) => KeyOf(LAYOUT_KIND, layoutName);
 
 
 
         public FlowPage GetPage(string pageKey)
         {
             // The unsaved edits if any, as the folder's .new file, otherwise the saved version
-            if (string.IsNullOrWhiteSpace(pageKey))
+            return ReadKeyed(PAGE_KIND, pageKey, "COALESCE(Draft, Saved)");
+        }
+
+
+        public string PageName(string pageKey) => NameOf(PAGE_KIND, pageKey);
+
+
+        public string PageKey(string pageName) => KeyOf(PAGE_KIND, pageName);
+
+
+        // A page or layout by its key, with its name and key
+        private FlowPage ReadKeyed(string kind, string key, string column)
+        {
+            if (string.IsNullOrWhiteSpace(key))
                 return null;
-            var row = ReadRow("SELECT Name, COALESCE(Draft, Saved) FROM Documents WHERE Kind = $kind AND Key = $key",
-                ("$kind", PAGE_KIND), ("$key", pageKey));
-            var page = row.Json == null ? null : FlatFolderRepository.DeserializeFromJSON<FlowPage>(row.Json, PAGE_KIND + "|" + row.Name);
+            var row = ReadRow($"SELECT Name, {column} FROM Documents WHERE Kind = $kind AND Key = $key", ("$kind", kind), ("$key", key));
+            var page = row.Json == null ? null : FlatFolderRepository.DeserializeFromJSON<FlowPage>(row.Json, kind + "|" + row.Name);
             if (page != null)
             {
                 page.Name = row.Name;
-                page.Key = pageKey;
+                page.Key = key;
             }
             return page;
         }
 
 
-        public string PageName(string pageKey) => string.IsNullOrWhiteSpace(pageKey) ? null :
-            ExecuteScalar("SELECT Name FROM Documents WHERE Kind = $kind AND Key = $key", ("$kind", PAGE_KIND), ("$key", pageKey)) as string;
+        private string NameOf(string kind, string key) => string.IsNullOrWhiteSpace(key) ? null :
+            ExecuteScalar("SELECT Name FROM Documents WHERE Kind = $kind AND Key = $key", ("$kind", kind), ("$key", key)) as string;
 
 
-        public string PageKey(string pageName) => string.IsNullOrWhiteSpace(pageName) ? null :
-            ExecuteScalar("SELECT Key FROM Documents WHERE Kind = $kind AND Name = $name", ("$kind", PAGE_KIND), ("$name", pageName)) as string;
+        private string KeyOf(string kind, string name) => string.IsNullOrWhiteSpace(name) ? null :
+            ExecuteScalar("SELECT Key FROM Documents WHERE Kind = $kind AND Name = $name", ("$kind", kind), ("$name", name)) as string;
+
+
+        // A page's or layout's draft, under its key, with its name; one without a key (read elsewhere) is the one of its name, or a new one
+        private void SaveKeyed(string kind, FlowPage page)
+        {
+            Debug.Assert(page != null);
+            if (string.IsNullOrWhiteSpace(page.Key))
+                page.Key = KeyOf(kind, page.Name) ?? NewKey();
+            string json = FlatFolderRepository.SerializeToJSON(page);
+            // A document that cannot be serialized keeps its previous draft
+            if (json == null)
+                return;
+            Execute("INSERT INTO Documents (Key, Kind, Name, Draft) VALUES ($key, $kind, $name, $json) " +
+                    "ON CONFLICT (Key) DO UPDATE SET Name = excluded.Name, Draft = excluded.Draft",
+                ("$key", page.Key), ("$kind", kind), ("$name", page.Name), ("$json", json));
+        }
+
+
+        // Its key stays, and with it its place, the tabs showing it and what refers to it by key. Its archived versions keep their names.
+        private void RenameKeyed(string kind, string key, string newName)
+        {
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(newName))
+                return;
+            Execute("UPDATE Documents SET Name = $newName WHERE Kind = $kind AND Key = $key", ("$kind", kind), ("$key", key), ("$newName", newName));
+        }
 
 
 
@@ -259,30 +298,10 @@ CREATE TABLE Images (
         }
 
 
-        // Under its key, with its name; a page without a key (one read elsewhere) is the page of its name, or a new one
-        public void SavePage(FlowPage page)
-        {
-            Debug.Assert(page != null);
-            if (string.IsNullOrWhiteSpace(page.Key))
-                page.Key = PageKey(page.Name) ?? NewKey();
-            string json = FlatFolderRepository.SerializeToJSON(page);
-            // A document that cannot be serialized keeps its previous draft
-            if (json == null)
-                return;
-            Execute("INSERT INTO Documents (Key, Kind, Name, Draft) VALUES ($key, $kind, $name, $json) " +
-                    "ON CONFLICT (Key) DO UPDATE SET Name = excluded.Name, Draft = excluded.Draft",
-                ("$key", page.Key), ("$kind", PAGE_KIND), ("$name", page.Name), ("$json", json));
-        }
+        public void SavePage(FlowPage page) => SaveKeyed(PAGE_KIND, page);
 
 
-        // Its key, and so its place in the order and the tabs showing it, stay. Its archived versions keep the name they had.
-        public void RenamePage(string pageKey, string newName)
-        {
-            if (string.IsNullOrWhiteSpace(pageKey) || string.IsNullOrWhiteSpace(newName))
-                return;
-            Execute("UPDATE Documents SET Name = $newName WHERE Kind = $kind AND Key = $key",
-                ("$kind", PAGE_KIND), ("$key", pageKey), ("$newName", newName));
-        }
+        public void RenamePage(string pageKey, string newName) => RenameKeyed(PAGE_KIND, pageKey, newName);
 
 
         // Written at once, as creating and deleting a page are, not kept for SaveProject
@@ -298,12 +317,13 @@ CREATE TABLE Images (
 
 
 
-        public void CreateLayout(string nodeName, string layoutName)
+        public string CreateLayout(string layoutName, string masterName)
         {
             FlowPage page = new FlowPage()
             {
-                Name = nodeName,
-                Master = layoutName,
+                Key = NewKey(),
+                Name = layoutName,
+                Master = masterName,
             };
             FlowLayer userLayer = new FlowLayer()
             {
@@ -311,24 +331,19 @@ CREATE TABLE Images (
             };
             page.Layers.Add(userLayer);
             SaveLayout(page);
+            return page.Key;
         }
 
 
-        public void DeleteLayout(string pageName) => DeleteDocument(LAYOUT_KIND, pageName);
+        public void DeleteLayout(string layoutKey) =>
+            Execute("DELETE FROM Documents WHERE Kind = $kind AND Key = $key", ("$kind", LAYOUT_KIND), ("$key", layoutKey));
 
 
-        public void SaveLayout(FlowPage page)
-        {
-            Debug.Assert(page != null);
-            SaveDraft(LAYOUT_KIND, page.Name, page);
-        }
+        public void SaveLayout(FlowPage page) => SaveKeyed(LAYOUT_KIND, page);
 
 
-        public void RenameLayout(string oldName, string newName)
-        {
-            // As in FlatFolderRepository: pages refer to their layout by name
-            throw new NotImplementedException();
-        }
+        // What refers to the layout by its name (a page's Master) is the caller's to change (WireFlowEngine.RetargetMasters)
+        public void RenameLayout(string layoutKey, string newName) => RenameKeyed(LAYOUT_KIND, layoutKey, newName);
 
 
 

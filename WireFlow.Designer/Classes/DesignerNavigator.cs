@@ -643,9 +643,9 @@ namespace WireFlow
             var result = OpenLayoutNode(href);
             if (result != MessageBoxResult.OK)
                 return;
-            // Tab name change
+            // Tab name change: a layout is named by its key, and its tab shows its name
             PageName = href;
-            NavigatorDocument.Title = href;
+            NavigatorDocument.Title = CurrentPage?.Name ?? href;
 
 
             ////TODO: Notify Pages Listbox of selection change

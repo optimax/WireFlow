@@ -12,6 +12,7 @@ namespace WireFlow
         string ProjectFileName { get; }
 
 
+        /// <summary>The keys of the layouts (<see cref="FlowPage.Key"/>), by name.</summary>
         IList<string> Layouts { get; }
         /// <summary>The keys of the pages (<see cref="FlowPage.Key"/>), in the project's order; the first is the entry point.</summary>
         IList<string> Pages { get; }
@@ -21,7 +22,12 @@ namespace WireFlow
 
         FlowProject NewProject(string docName);
         FlowProject OpenProject(string projectFileName);
-        FlowPage GetMasterPage(string nodeName);
+        /// <summary>The layout with this key, with its unsaved edits, as a page.</summary>
+        FlowPage GetMasterPage(string layoutKey);
+        /// <summary>The name of the layout with this key; null when there is none.</summary>
+        string LayoutName(string layoutKey);
+        /// <summary>The key of the layout with this name, ignoring case; null when there is none.</summary>
+        string LayoutKey(string layoutName);
 
 
         FlowPage GetPage(string pageKey);
@@ -43,10 +49,11 @@ namespace WireFlow
         /// <summary>Puts the pages, named by key, in this order; the first is the project's entry point (<see cref="FlowProject.Home"/>).</summary>
         void SetPageOrder(IList<string> pageKeys);
 
-        void CreateLayout(string nodeName, string layoutName);
-        void DeleteLayout(string pageName);
+        /// <summary>Creates a layout of this name, on the layout named, and gives its key.</summary>
+        string CreateLayout(string layoutName, string masterName);
+        void DeleteLayout(string layoutKey);
         void SaveLayout(FlowPage page);
-        void RenameLayout(string oldName, string newName);
+        void RenameLayout(string layoutKey, string newName);
 
         void CreatePart(string partName);
         void DeletePart(string partName);

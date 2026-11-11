@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace WireFlow
 {
+    /// <summary>What the New Page and New Layout dialogs offer as the layout of a new page or layout.</summary>
     public interface ILayoutListProvider
     {
-        IList<string> Layouts { get; }
+        /// <summary>The names of the layouts.</summary>
+        IList<string> LayoutNames { get; }
     }
 }
