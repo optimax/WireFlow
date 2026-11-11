@@ -157,7 +157,7 @@ Each pane can be hidden (`CanHide`; none can be closed): its caption's X hides i
 
 ## Changes not saved
 
-A page, layout or part with changes not saved (`DesignerNavigator.IsModified`, which raises `ModifiedChanged` as it changes) is shown as MaxPad shows its documents: its tab has a 7 px dot after its name, in MaxServices.Core's `TabStripItem` color (`#C05A00`; the `DocumentHeaderTemplate`, by the tab's `DesignerNavigatorDocument.IsModified`); the window's caption has an asterisk after the project's name while any document open has changes not saved (`DesignerTitle`); and the status bar says Modified or Saved of the one in front (`DocumentState`).
+A page, layout or part with changes not saved (`DesignerNavigator.IsModified`, which raises `ModifiedChanged` as it changes) is shown as MaxPad shows its documents: its tab has a 7 px dot after its name, in MaxServices.Core's `TabStripItem` color (`#C05A00`; the `DocumentHeaderTemplate`, by the tab's `DesignerNavigatorDocument.IsModified`); the window's caption has an asterisk after the project's name while any document open has changes not saved (`DesignerTitle`); and the status bar says Modified or Saved of the one in front (`DocumentState`). Save Project, and Yes when the Designer asks as it closes, save each document open with changes as what it is (`DesignerNavigator.SaveCurrentDocument`, by the tab's `Kind`): a layout saved as a page would become a page of its name, which is how a page named `NormalLayout` came to be in `Data/WireFlow.wf`.
 
 ## Options
 

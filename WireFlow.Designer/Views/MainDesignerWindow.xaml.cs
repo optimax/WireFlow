@@ -1208,6 +1208,7 @@ namespace WireFlow
 
 
 
+        // Each page, layout and part open with changes, as what it is
         void SaveModifiedPages()
         {
             foreach (var tab in DocumentPane.Children)
@@ -1216,7 +1217,7 @@ namespace WireFlow
                 if (navDoc == null)
                     continue;
                 var nav = navDoc.Navigator;
-                nav.SaveCurrentPage();
+                nav.SaveCurrentDocument();
             }
         }
 

@@ -680,6 +680,27 @@ namespace WireFlow
         }
 
 
+        /// <summary>
+        /// Saves the page, layout or part this tab shows as what it is (its <see cref="DesignerNavigatorDocument.Kind"/>): a
+        /// layout saved as a page would become a page of its name.
+        /// </summary>
+        public void SaveCurrentDocument()
+        {
+            switch (NavigatorDocument?.Kind)
+            {
+                case DesignerNavigatorDocument.LayoutKind:
+                    SaveCurrentLayout();
+                    break;
+                case DesignerNavigatorDocument.PartKind:
+                    SaveCurrentPart();
+                    break;
+                default:
+                    SaveCurrentPage();
+                    break;
+            }
+        }
+
+
         public void SaveCurrentPage()
         {
             if (CurrentPage == null || !IsModified)
