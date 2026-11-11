@@ -24,16 +24,20 @@ namespace WireFlow
         // PRAGMA application_id: "WFLW", marks the file as WireFlow's
         public const int APPLICATION_ID = 0x57464C57;
 
-        // PRAGMA user_version: the file format. 2 is the JSON of FlowJson, without .NET type names; the programs open
-        // format 2 only. Format 1 files, with $type tags, were upgraded once by Documents\upgrade-wf-to-format-2.cs.
-        public const int FORMAT_VERSION = 2;
+        // PRAGMA user_version: the file format. 2 is the JSON of FlowJson, without .NET type names; 3 adds each document's
+        // Key, which the project's page order names. A format 2 file is upgraded to 3 as it is opened (UpgradeToFormat3).
+        // Format 1 files, with $type tags, were upgraded once by Documents\upgrade-wf-to-format-2.cs.
+        public const int FORMAT_VERSION = 3;
+        private const int FORMAT_2 = 2;
 
         public const string PROJECT_KIND = "project";
         public const string PAGE_KIND = "page";
         public const string LAYOUT_KIND = "layout";
         public const string PART_KIND = "part";
 
-        // Format 1. Names compare as file names did, ignoring case.
+        // Format 3. Key is a document's own, a GUID of 32 hex digits the program gives it, which never changes and is never
+        // shown; Name is what the user calls it, and may change. Archive keeps the key and the name of each version.
+        // Names compare as file names did, ignoring case.
         // Documents: Saved is the JSON of the saved version (NULL until the first SaveProject), Draft the JSON of the unsaved
         // edits (NULL if none). Archive: the version that the save of project revision RevisionNo replaced.
         private const string SCHEMA = @"
@@ -42,17 +46,19 @@ CREATE TABLE Project (
     Json TEXT NOT NULL
 );
 CREATE TABLE Documents (
+    Key TEXT NOT NULL PRIMARY KEY,
     Kind TEXT NOT NULL CHECK (Kind IN ('page', 'layout', 'part')),
     Name TEXT NOT NULL COLLATE NOCASE,
     Saved TEXT,
     Draft TEXT,
-    PRIMARY KEY (Kind, Name)
+    UNIQUE (Kind, Name)
 );
 CREATE TABLE Archive (
     Kind TEXT NOT NULL CHECK (Kind IN ('project', 'page', 'layout', 'part')),
     Name TEXT NOT NULL COLLATE NOCASE,
     RevisionNo INTEGER NOT NULL,
     Json TEXT NOT NULL,
+    Key TEXT,
     PRIMARY KEY (Kind, Name, RevisionNo)
 );
 CREATE TABLE Images (
@@ -81,8 +87,8 @@ CREATE TABLE Images (
         private FlowProject Project { get; set; }
 
 
-        // In the project's order (FlowProject.OrderPages), the first the entry point
-        public IList<string> Pages => Project == null ? GetNames(PAGE_KIND) : Project.OrderPages(GetNames(PAGE_KIND));
+        // The pages' keys, in the project's order (FlowProject.OrderPages), the first the entry point
+        public IList<string> Pages => Project == null ? GetKeys(PAGE_KIND) : Project.OrderPages(GetKeys(PAGE_KIND));
         public IList<string> Layouts => GetNames(LAYOUT_KIND);
         public IList<string> Parts => GetNames(PART_KIND);
         public IList<string> Images => ReadStrings("SELECT Name FROM Images ORDER BY Name");
@@ -149,7 +155,10 @@ CREATE TABLE Images (
             {
                 using (var connection = Connect(projectFileName, SqliteOpenMode.ReadWrite))
                 {
-                    if (!IsWireFlowFile(connection))
+                    int format = FormatOf(connection);
+                    if (format == FORMAT_2)
+                        UpgradeToFormat3(connection);
+                    else if (format != FORMAT_VERSION)
                     {
                         Debug.WriteLine($"{projectFileName} is not a WireFlow file of format {FORMAT_VERSION}");
                         return null;
@@ -187,14 +196,29 @@ CREATE TABLE Images (
 
 
 
-        public FlowPage GetPage(string nodeName)
+        public FlowPage GetPage(string pageKey)
         {
             // The unsaved edits if any, as the folder's .new file, otherwise the saved version
-            var page = ReadDocument<FlowPage>(PAGE_KIND, nodeName, "COALESCE(Draft, Saved)");
+            if (string.IsNullOrWhiteSpace(pageKey))
+                return null;
+            var row = ReadRow("SELECT Name, COALESCE(Draft, Saved) FROM Documents WHERE Kind = $kind AND Key = $key",
+                ("$kind", PAGE_KIND), ("$key", pageKey));
+            var page = row.Json == null ? null : FlatFolderRepository.DeserializeFromJSON<FlowPage>(row.Json, PAGE_KIND + "|" + row.Name);
             if (page != null)
-                page.Name = nodeName;
+            {
+                page.Name = row.Name;
+                page.Key = pageKey;
+            }
             return page;
         }
+
+
+        public string PageName(string pageKey) => string.IsNullOrWhiteSpace(pageKey) ? null :
+            ExecuteScalar("SELECT Name FROM Documents WHERE Kind = $kind AND Key = $key", ("$kind", PAGE_KIND), ("$key", pageKey)) as string;
+
+
+        public string PageKey(string pageName) => string.IsNullOrWhiteSpace(pageName) ? null :
+            ExecuteScalar("SELECT Key FROM Documents WHERE Kind = $kind AND Name = $name", ("$kind", PAGE_KIND), ("$name", pageName)) as string;
 
 
 
@@ -206,10 +230,11 @@ CREATE TABLE Images (
 
 
 
-        public void CreatePage(string pageName, string layoutName)
+        public string CreatePage(string pageName, string layoutName)
         {
             FlowPage page = new FlowPage()
             {
+                Key = NewKey(),
                 Name = pageName,
                 Master = layoutName,
             };
@@ -219,49 +244,55 @@ CREATE TABLE Images (
             };
             page.Layers.Add(userLayer);
             // A new page comes last
-            var order = Pages.Where(n => !string.Equals(n, pageName, StringComparison.OrdinalIgnoreCase)).ToList();
+            var order = Pages.ToList();
             SavePage(page);
-            order.Add(pageName);
+            order.Add(page.Key);
             SetPageOrder(order);
+            return page.Key;
         }
 
 
-        public void DeletePage(string pageName)
+        public void DeletePage(string pageKey)
         {
-            DeleteDocument(PAGE_KIND, pageName);
+            Execute("DELETE FROM Documents WHERE Kind = $kind AND Key = $key", ("$kind", PAGE_KIND), ("$key", pageKey));
             SetPageOrder(Pages);
         }
 
 
+        // Under its key, with its name; a page without a key (one read elsewhere) is the page of its name, or a new one
         public void SavePage(FlowPage page)
         {
             Debug.Assert(page != null);
-            SaveDraft(PAGE_KIND, page.Name, page);
+            if (string.IsNullOrWhiteSpace(page.Key))
+                page.Key = PageKey(page.Name) ?? NewKey();
+            string json = FlatFolderRepository.SerializeToJSON(page);
+            // A document that cannot be serialized keeps its previous draft
+            if (json == null)
+                return;
+            Execute("INSERT INTO Documents (Key, Kind, Name, Draft) VALUES ($key, $kind, $name, $json) " +
+                    "ON CONFLICT (Key) DO UPDATE SET Name = excluded.Name, Draft = excluded.Draft",
+                ("$key", page.Key), ("$kind", PAGE_KIND), ("$name", page.Name), ("$json", json));
         }
 
 
-        public void RenamePage(string oldName, string newName)
+        // Its key, and so its place in the order and the tabs showing it, stay. Its archived versions keep the name they had.
+        public void RenamePage(string pageKey, string newName)
         {
-            if (string.IsNullOrWhiteSpace(oldName))
+            if (string.IsNullOrWhiteSpace(pageKey) || string.IsNullOrWhiteSpace(newName))
                 return;
-            if (string.IsNullOrWhiteSpace(newName))
-                return;
-            // It keeps its place in the order. Its archived versions keep the old name, as the folder's archive files do
-            var order = Pages.Select(n => string.Equals(n, oldName, StringComparison.OrdinalIgnoreCase) ? newName : n).ToList();
-            Execute("UPDATE Documents SET Name = $newName WHERE Kind = $kind AND Name = $oldName",
-                ("$kind", PAGE_KIND), ("$oldName", oldName), ("$newName", newName));
-            SetPageOrder(order);
+            Execute("UPDATE Documents SET Name = $newName WHERE Kind = $kind AND Key = $key",
+                ("$kind", PAGE_KIND), ("$key", pageKey), ("$newName", newName));
         }
 
 
-        // Written at once, as creating, deleting and renaming a page are, not kept for SaveProject
-        public void SetPageOrder(IList<string> pageNames)
+        // Written at once, as creating and deleting a page are, not kept for SaveProject
+        public void SetPageOrder(IList<string> pageKeys)
         {
             if (Project == null || ProjectFileName == null)
                 return;
-            Project.PageOrder = pageNames.ToList();
-            if (pageNames.Count > 0)
-                Project.Home = pageNames[0];
+            Project.PageOrder = pageKeys.ToList();
+            if (pageKeys.Count > 0)
+                Project.Home = pageKeys[0];
             Execute("UPDATE Project SET Json = $json WHERE Id = 1", ("$json", FlatFolderRepository.SerializeToJSON(Project)));
         }
 
@@ -346,8 +377,8 @@ CREATE TABLE Images (
 INSERT OR REPLACE INTO Archive (Kind, Name, RevisionNo, Json)
     SELECT $projectKind, $projectName, $revisionNo, Json FROM Project WHERE Id = 1;
 UPDATE Project SET Json = $json WHERE Id = 1;
-INSERT OR REPLACE INTO Archive (Kind, Name, RevisionNo, Json)
-    SELECT Kind, Name, $revisionNo, Saved FROM Documents WHERE Draft IS NOT NULL AND Saved IS NOT NULL;
+INSERT OR REPLACE INTO Archive (Kind, Name, RevisionNo, Json, Key)
+    SELECT Kind, Name, $revisionNo, Saved, Key FROM Documents WHERE Draft IS NOT NULL AND Saved IS NOT NULL;
 UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                         ("$projectKind", PROJECT_KIND), ("$projectName", projectName), ("$revisionNo", Project.RevisionNo),
                         ("$json", FlatFolderRepository.SerializeToJSON(Project)));
@@ -447,6 +478,8 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                 ConvertArchive(connection, transaction, PAGE_KIND, Path.Combine(folder, FlatFolderRepository.PAGES_ARCHIVE_FOLDER));
                 ConvertArchive(connection, transaction, LAYOUT_KIND, Path.Combine(folder, FlatFolderRepository.LAYOUTS_ARCHIVE_FOLDER));
                 ConvertArchive(connection, transaction, PART_KIND, Path.Combine(folder, FlatFolderRepository.PARTS_ARCHIVE_FOLDER));
+                KeyArchive(connection, transaction);
+                KeyPageOrder(connection, transaction);
 
                 foreach (var imageFile in EnumerateFiles(Path.Combine(folder, FlatFolderRepository.IMAGES_FOLDER)))
                 {
@@ -471,10 +504,64 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                 else
                     continue;
                 ExecuteNonQuery(connection, transaction,
-                    $"INSERT INTO Documents (Kind, Name, {column}) VALUES ($kind, $name, $json) " +
+                    $"INSERT INTO Documents (Key, Kind, Name, {column}) VALUES ($key, $kind, $name, $json) " +
                     $"ON CONFLICT (Kind, Name) DO UPDATE SET {column} = excluded.{column}",
-                    ("$kind", kind), ("$name", Path.GetFileNameWithoutExtension(file)), ("$json", CurrentJson(kind, file)));
+                    ("$key", NewKey()), ("$kind", kind), ("$name", Path.GetFileNameWithoutExtension(file)), ("$json", CurrentJson(kind, file)));
             }
+        }
+
+
+        /// <summary>A document's key: a GUID of 32 hex digits, without hyphens or braces.</summary>
+        public static string NewKey() => Guid.NewGuid().ToString("N");
+
+
+        // Format 2 to 3, in place, in one transaction: each document gets a key, its archived versions too, and the project's
+        // page order and home page name pages by key
+        private static void UpgradeToFormat3(SqliteConnection connection)
+        {
+            using (var transaction = connection.BeginTransaction())
+            {
+                ExecuteNonQuery(connection, transaction, @"
+CREATE TABLE Documents3 (
+    Key TEXT NOT NULL PRIMARY KEY,
+    Kind TEXT NOT NULL CHECK (Kind IN ('page', 'layout', 'part')),
+    Name TEXT NOT NULL COLLATE NOCASE,
+    Saved TEXT,
+    Draft TEXT,
+    UNIQUE (Kind, Name)
+);
+INSERT INTO Documents3 (Key, Kind, Name, Saved, Draft) SELECT lower(hex(randomblob(16))), Kind, Name, Saved, Draft FROM Documents;
+DROP TABLE Documents;
+ALTER TABLE Documents3 RENAME TO Documents;
+ALTER TABLE Archive ADD COLUMN Key TEXT;");
+                KeyArchive(connection, transaction);
+                KeyPageOrder(connection, transaction);
+                ExecuteNonQuery(connection, transaction, $"PRAGMA user_version = {FORMAT_VERSION};");
+                transaction.Commit();
+            }
+        }
+
+
+        // The archived versions of each document get its key, by kind and name
+        private static void KeyArchive(SqliteConnection connection, SqliteTransaction transaction) =>
+            ExecuteNonQuery(connection, transaction,
+                "UPDATE Archive SET Key = (SELECT d.Key FROM Documents d WHERE d.Kind = Archive.Kind AND d.Name = Archive.Name) WHERE Key IS NULL");
+
+
+        // The project's page order and home page, which named pages, name them by key; names of no page are dropped
+        private static void KeyPageOrder(SqliteConnection connection, SqliteTransaction transaction)
+        {
+            string json = ExecuteScalar(connection, transaction, "SELECT Json FROM Project WHERE Id = 1") as string;
+            var project = json == null ? null : FlatFolderRepository.DeserializeFromJSON<FlowProject>(json, "project");
+            if (project == null)
+                return;
+            string KeyOf(string name) => string.IsNullOrWhiteSpace(name) ? null : ExecuteScalar(connection, transaction,
+                "SELECT Key FROM Documents WHERE Kind = $kind AND Name = $name", ("$kind", PAGE_KIND), ("$name", name)) as string;
+            if (project.PageOrder != null)
+                project.PageOrder = project.PageOrder.Select(KeyOf).Where(k => k != null).Distinct().ToList();
+            project.Home = KeyOf(project.Home) ?? project.PageOrder?.FirstOrDefault() ?? project.Home;
+            ExecuteNonQuery(connection, transaction, "UPDATE Project SET Json = $json WHERE Id = 1",
+                ("$json", FlatFolderRepository.SerializeToJSON(project)));
         }
 
 
@@ -567,11 +654,28 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
         }
 
 
-        private static bool IsWireFlowFile(SqliteConnection connection)
+        // The format of a WireFlow file, or -1 for another file
+        private static int FormatOf(SqliteConnection connection)
         {
             long applicationId = (long)ExecuteScalar(connection, null, "PRAGMA application_id");
             long formatVersion = (long)ExecuteScalar(connection, null, "PRAGMA user_version");
-            return applicationId == APPLICATION_ID && formatVersion == FORMAT_VERSION;
+            return applicationId == APPLICATION_ID ? (int)formatVersion : -1;
+        }
+
+
+        // A row's name and JSON
+        private (string Name, string Json) ReadRow(string sql, params (string Name, object Value)[] parameters)
+        {
+            if (ProjectFileName == null)
+                return (null, null);
+            using (var connection = Connect(ProjectFileName, SqliteOpenMode.ReadWrite))
+            using (var command = CreateCommand(connection, null, sql, parameters))
+            using (var reader = command.ExecuteReader())
+            {
+                if (!reader.Read())
+                    return (null, null);
+                return (reader.GetString(0), reader.IsDBNull(1) ? null : reader.GetString(1));
+            }
         }
 
 
@@ -591,9 +695,9 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
             // A document that cannot be serialized keeps its previous draft
             if (json == null)
                 return;
-            Execute("INSERT INTO Documents (Kind, Name, Draft) VALUES ($kind, $name, $json) " +
+            Execute("INSERT INTO Documents (Key, Kind, Name, Draft) VALUES ($key, $kind, $name, $json) " +
                     "ON CONFLICT (Kind, Name) DO UPDATE SET Draft = excluded.Draft",
-                ("$kind", kind), ("$name", name), ("$json", json));
+                ("$key", NewKey()), ("$kind", kind), ("$name", name), ("$json", json));
         }
 
 
@@ -610,6 +714,11 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
 
         private IList<string> GetNames(string kind) =>
             ReadStrings("SELECT Name FROM Documents WHERE Kind = $kind ORDER BY Name", ("$kind", kind));
+
+
+        // By name, as the order of the pages ends with the pages it does not name
+        private IList<string> GetKeys(string kind) =>
+            ReadStrings("SELECT Key FROM Documents WHERE Kind = $kind ORDER BY Name", ("$kind", kind));
 
 
         private IList<string> ReadStrings(string sql, params (string Name, object Value)[] parameters)

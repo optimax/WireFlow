@@ -1,8 +1,17 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:wireFlow="clr-namespace:WireFlow">
     <DataTemplate x:Key="ListOfNamesDataTemplate">
         <Grid Margin="0">
             <TextBlock Text="{Binding}" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- The Pages list: its items are the pages' keys, shown by their names -->
+    <wireFlow:PageNameConverter x:Key="PageNameConverter" />
+    <DataTemplate x:Key="ListOfPagesDataTemplate">
+        <Grid Margin="0">
+            <TextBlock Text="{Binding Converter={StaticResource PageNameConverter}}" />
         </Grid>
     </DataTemplate>
 

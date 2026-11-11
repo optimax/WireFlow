@@ -255,7 +255,8 @@ namespace WireFlow
 
 
 
-        public void CreatePage(string pageName, string layoutName)
+        // A folder's page is named by its file, so its key is its name
+        public string CreatePage(string pageName, string layoutName)
         {
             FlowPage page = new FlowPage()
             {
@@ -269,7 +270,14 @@ namespace WireFlow
             };
             page.Layers.Add(userLayer);
             SavePage(page);
+            return pageName;
         }
+
+
+        public string PageName(string pageKey) => Pages.FirstOrDefault(n => string.Equals(n, pageKey, StringComparison.OrdinalIgnoreCase));
+
+
+        public string PageKey(string pageName) => PageName(pageName);
 
 
 

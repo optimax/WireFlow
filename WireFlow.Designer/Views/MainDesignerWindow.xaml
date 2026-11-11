@@ -505,7 +505,7 @@
 
                                     <wireFlow:EditableListBox x:Name="ListBoxPages" BorderThickness="0" Padding="0"
                                          ItemsSource="{Binding Pages}" SelectedItem="{Binding CurrentPageName}" MouseDoubleClick="ListBoxPages_MouseDoubleClick"
-                                         ItemTemplate="{StaticResource ListOfNamesDataTemplate}" SelectionChanged="ListBoxPages_SelectionChanged"
+                                         ItemTemplate="{StaticResource ListOfPagesDataTemplate}" SelectionChanged="ListBoxPages_SelectionChanged"
                                          PreviewMouseLeftButtonDown="ListBoxPages_PreviewMouseLeftButtonDown" >
                                         <ListBox.ContextMenu>
                                             <ContextMenu>

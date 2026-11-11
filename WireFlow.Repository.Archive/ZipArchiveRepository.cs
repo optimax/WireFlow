@@ -34,7 +34,17 @@ namespace WireFlow.Repository.Archive
             throw new NotImplementedException();
         }
 
-        public void CreatePage(string nodeName, string layoutName)
+        public string CreatePage(string nodeName, string layoutName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string PageName(string pageKey)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string PageKey(string pageName)
         {
             throw new NotImplementedException();
         }

@@ -64,6 +64,27 @@ namespace WireFlow
         }
 
 
+        /// <summary>
+        /// Makes every link under a node that names <paramref name="oldTarget"/> (ignoring case) name <paramref name="newTarget"/>,
+        /// and gives the number of links changed.
+        /// </summary>
+        public static int RetargetLinks(FlowBase root, string oldTarget, string newTarget)
+        {
+            if (string.IsNullOrWhiteSpace(oldTarget) || string.IsNullOrWhiteSpace(newTarget) || oldTarget == newTarget)
+                return 0;
+            int count = 0;
+            foreach (var element in Nodes(root).OfType<FlowElementBase>().ToList())
+            {
+                if (string.Equals(element.Href, oldTarget, StringComparison.OrdinalIgnoreCase))
+                {
+                    element.Href = newTarget;
+                    count++;
+                }
+            }
+            return count;
+        }
+
+
         /// <summary>The IDs of a node and the nodes under it that have one.</summary>
         public static IEnumerable<string> IdsIn(FlowBase root) => Nodes(root).Select(n => n.Id).Where(id => !string.IsNullOrWhiteSpace(id));
 

@@ -23,7 +23,8 @@ namespace WireFlow
         private const int FUDGE_PIXELS = 2;
 
 
-        public void BeginEdit(Action<string, string> onSuccess)
+        // The text edited is the item's, or the text given (the name of an item that is a key)
+        public void BeginEdit(Action<string, string> onSuccess, string text = null)
         {
             if (IsEditing)
                 return;
@@ -40,7 +41,7 @@ namespace WireFlow
             var aLayer = AdornerLayer.GetAdornerLayer(selectedContainer);
             adorner = new TextEditingAdorner(selectedContainer, this,
                 new Rect(Padding.Left, 0, this.ActualWidth - Padding.Right - Padding.Left - FUDGE_PIXELS, selectedContainer.DesiredSize.Height),
-                (string)item);
+                text ?? (string)item);
 
             adorner.CancelEditEvent += (a) => CancelEdit();
             adorner.CommitEditEvent += (a, oldName, newName) => CommitEdit(oldName, newName);

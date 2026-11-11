@@ -48,11 +48,17 @@ namespace WireFlow
         public string ProjectFileName => Repository.ProjectFileName;
 
         public IList<string> Layouts => Repository.Layouts;
-        // In the project's order: the first is the entry point (HomePage)
+        // The pages' keys (FlowPage.Key), in the project's order: the first is the entry point (HomePage)
         public IList<string> Pages => Repository.Pages;
 
-        /// <summary>The page the project starts at: the first in the order, else the project's <see cref="FlowProject.Home"/>.</summary>
+        /// <summary>The key of the page the project starts at: the first in the order, else the project's <see cref="FlowProject.Home"/>.</summary>
         public string HomePage => Pages.FirstOrDefault() ?? Project?.Home;
+
+        /// <summary>The name of the page with this key; null when there is none.</summary>
+        public string PageName(string pageKey) => Repository.PageName(pageKey);
+
+        /// <summary>The key of the page with this name, ignoring case; null when there is none.</summary>
+        public string PageKey(string pageName) => Repository.PageKey(pageName);
         public IList<string> Parts => Repository.Parts;
         public IList<string> Images => Repository.Images;
 
@@ -220,20 +226,67 @@ namespace WireFlow
         }
 
         /// <summary>
-        /// The name of the page a link goes to: a link names an ID, that of a page, else that of an element (or layer) on a page,
-        /// which leads to that page; null when there is none. IDs compare ignoring case.
+        /// The key of the page a link goes to: a link names an ID, that of a page, else that of an element (or layer) on a page,
+        /// which leads to that page, else the name of a page; null when there is none. IDs and names compare ignoring case.
         /// </summary>
         public string PageOfHref(string href)
         {
             if (string.IsNullOrWhiteSpace(href))
                 return null;
-            var names = Pages ?? new List<string>();
-            var pages = names.Select(n => (Name: n, Page: GetPage(n))).Where(p => p.Page != null).ToList();
+            var keys = Pages ?? new List<string>();
+            var pages = keys.Select(k => (Key: k, Page: GetPage(k))).Where(p => p.Page != null).ToList();
             var withId = pages.FirstOrDefault(p => IsId(p.Page, href));
             if (withId.Page != null)
-                return withId.Name;
+                return withId.Key;
             var holding = pages.FirstOrDefault(p => p.Page.Layers?.Any(layer => IsId(layer, href) || HoldsId(layer.Elements, href)) == true);
-            return holding.Page != null ? holding.Name : null;
+            if (holding.Page != null)
+                return holding.Key;
+            var named = pages.FirstOrDefault(p => string.Equals(p.Page.Name, href, StringComparison.OrdinalIgnoreCase));
+            return named.Page != null ? named.Key : null;
+        }
+
+
+        /// <summary>
+        /// Makes every link in the project that names <paramref name="oldTarget"/> name <paramref name="newTarget"/>, in the
+        /// pages, layouts and parts as the repository has them, saving each changed as a draft, but those the caller has in hand
+        /// (<paramref name="skip"/>: the keys of pages, the names of layouts and parts), which it changes itself. Gives the number
+        /// of links changed.
+        /// </summary>
+        public int RetargetLinks(string oldTarget, string newTarget, ICollection<string> skip)
+        {
+            int count = 0;
+            bool Skip(string document) => skip != null && skip.Contains(document, StringComparer.OrdinalIgnoreCase);
+            foreach (var key in Pages ?? new List<string>())
+            {
+                if (Skip(key))
+                    continue;
+                var page = GetPage(key);
+                int changed = FlowIds.RetargetLinks(page, oldTarget, newTarget);
+                if (changed > 0)
+                    SavePage(page);
+                count += changed;
+            }
+            foreach (var name in Layouts ?? new List<string>())
+            {
+                if (Skip(name))
+                    continue;
+                var layout = GetMasterPage(name);
+                int changed = FlowIds.RetargetLinks(layout, oldTarget, newTarget);
+                if (changed > 0)
+                    SaveLayout(layout);
+                count += changed;
+            }
+            foreach (var name in Parts ?? new List<string>())
+            {
+                if (Skip(name))
+                    continue;
+                var part = GetPart(name) as FlowPart;
+                int changed = FlowIds.RetargetLinks(part, oldTarget, newTarget);
+                if (changed > 0)
+                    SavePart(part);
+                count += changed;
+            }
+            return count;
         }
 
 
@@ -244,9 +297,9 @@ namespace WireFlow
             elements?.Any(e => IsId(e, id) || (e is FlowGroup group && HoldsId(group.Children, id))) == true;
 
 
-        public FlowPage GetPage(string nodeName)
+        public FlowPage GetPage(string pageKey)
         {
-            return Repository.GetPage(nodeName);
+            return Repository.GetPage(pageKey);
         }
 
 
@@ -256,8 +309,8 @@ namespace WireFlow
 
         /// <summary>
         /// The IDs used in the project: those of its pages, layouts and parts and of everything on them, as the repository has them,
-        /// but those of the document named, which the caller has in hand (a part when <paramref name="part"/>, else a page or
-        /// layout); null names none. See also <see cref="IsIdGivenElsewhere"/>.
+        /// but those of the document named, which the caller has in hand (a part when <paramref name="part"/>, else a page, by
+        /// key, or a layout, by name); null names none. See also <see cref="IsIdGivenElsewhere"/>.
         /// </summary>
         public HashSet<string> IdsOutside(string name, bool part = false)
         {
@@ -300,9 +353,7 @@ namespace WireFlow
         {
             var taken = IdsOutside(null);
             taken.UnionWith(givenIds.Keys);
-            string id = FlowIds.ForName(name, taken);
-            NoteIdGiven(id, name);
-            return id;
+            return FlowIds.ForName(name, taken);
         }
 
         public FlowElementBase GetPart(string partName)
@@ -316,22 +367,25 @@ namespace WireFlow
         }
 
 
-        public void CreatePage(string pageName, string layoutName)
+        /// <summary>Creates a page of this name, last in the order, with an ID made of its name, and gives its key.</summary>
+        public string CreatePage(string pageName, string layoutName)
         {
             string id = NewDocumentId(pageName);
-            Repository.CreatePage(pageName, layoutName);
-            var page = Repository.GetPage(pageName);
+            string key = Repository.CreatePage(pageName, layoutName);
+            var page = Repository.GetPage(key);
             if (page != null && string.IsNullOrWhiteSpace(page.Id))
             {
                 page.Id = id;
                 Repository.SavePage(page);
             }
+            NoteIdGiven(id, key);
+            return key;
         }
 
 
-        public void DeletePage(string pageName)
+        public void DeletePage(string pageKey)
         {
-            Repository.DeletePage(pageName);
+            Repository.DeletePage(pageKey);
         }
 
 
@@ -394,23 +448,23 @@ namespace WireFlow
         }
 
 
-        public void RenamePage(string oldName, string newName)
+        public void RenamePage(string pageKey, string newName)
         {
-            Repository.RenamePage(oldName, newName);
+            Repository.RenamePage(pageKey, newName);
         }
 
 
-        public void SetPageOrder(IList<string> pageNames)
+        public void SetPageOrder(IList<string> pageKeys)
         {
-            Repository.SetPageOrder(pageNames);
+            Repository.SetPageOrder(pageKeys);
         }
 
 
-        /// <summary>Moves a page to an index in the order, the first being the entry point; false when it does not move.</summary>
-        public bool MovePage(string pageName, int index)
+        /// <summary>Moves a page, by key, to an index in the order, the first being the entry point; false when it does not move.</summary>
+        public bool MovePage(string pageKey, int index)
         {
             var order = Pages.ToList();
-            int from = order.FindIndex(n => string.Equals(n, pageName, StringComparison.OrdinalIgnoreCase));
+            int from = order.FindIndex(n => string.Equals(n, pageKey, StringComparison.OrdinalIgnoreCase));
             index = Math.Max(0, Math.Min(index, order.Count - 1));
             if (from < 0 || from == index)
                 return false;

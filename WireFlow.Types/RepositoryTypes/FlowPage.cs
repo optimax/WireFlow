@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace WireFlow
 {
@@ -18,6 +20,14 @@ namespace WireFlow
             layers = new FlowNodeCollection<FlowLayer>(this);
         }
 
+
+        /// <summary>
+        /// The page's key in the project, which the repository gives it and which never changes: what the project's page order,
+        /// tabs and history name it by, whatever its name. Not shown, and not written into the page's JSON (the repository keeps
+        /// it beside it); null for a page that is not a project's.
+        /// </summary>
+        [Browsable(false), IgnoreDataMember]
+        public string Key { get; set; }
 
         //public string Title { get; set; }
         public string Master { get => master; set => Set(ref master, value); }

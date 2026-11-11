@@ -355,6 +355,11 @@ namespace WireFlow
             ApplyConfigSettings();
             // An ID typed in Properties that another node in the project has is refused
             NodeProperties.IdTaken = (node, id) => CurrentDesigner?.IsIdTaken(node, id) == true;
+            // A page's name set in Properties renames it in the project; a changed ID or page name carries the links naming it
+            NodeProperties.RenamePage = (page, name) => RenamePage(page.Key, name, page);
+            NodeProperties.LinkTargetChanged = (node, before, after) => RetargetLinks(node, before, after);
+            // The Pages list holds the pages' keys and shows their names
+            PageNameConverter.Lookup = key => Engine?.PageName(key);
             // Pages are put in order by dragging them, as by the Move Up and Move Down buttons
             new ListDragReorder(ListBoxPages, MovePage);
             UpdateThemeMenu();
@@ -502,6 +507,9 @@ namespace WireFlow
             switch (kind)
             {
                 case DesignerNavigatorDocument.PageKind:
+                    // A page by its key; settings written before pages had keys name it by its name
+                    if (!Has(Pages))
+                        name = Engine.PageKey(name);
                     return Has(Pages) ? NewPageTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
                 case DesignerNavigatorDocument.LayoutKind:
                     return Has(Layouts) ? NewLayoutTab(name, Engine.Project.Background, OnNavigatorLoaded) : null;
@@ -1296,9 +1304,83 @@ namespace WireFlow
             var result = dlg.ShowDialog();
             if (result != true)
                 return;
+            if (Engine.PageKey(dlg.PageName) != null)
+            {
+                MessageBox.Show($"The project has a page named \"{dlg.PageName}\" already.", "New Page", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             Engine.CreatePage(dlg.PageName, dlg.LayoutName);
             var pages = Engine.Pages;
             Pages = new ObservableCollection<string>(pages);
+        }
+
+
+        /// <summary>
+        /// Renames the page with this key, in the project, its tabs and the Pages list, and makes the links that named it by
+        /// its old name name it by the new one (unless the old name is also an ID, which links name first). The node given is the
+        /// one Properties is setting the name of, which takes it after. Gives the reason it cannot be renamed, or null.
+        /// </summary>
+        private string RenamePage(string key, string newName, FlowPage settingNode = null)
+        {
+            newName = newName?.Trim();
+            string oldName = Engine.PageName(key);
+            if (oldName == null)
+                return "The page is not in the project.";
+            if (string.IsNullOrWhiteSpace(newName))
+                return "A page needs a name.";
+            if (newName == oldName)
+                return null;
+            string other = Engine.PageKey(newName);
+            if (other != null && other != key)
+                return $"The project has a page named \"{newName}\" already.";
+            Engine.RenamePage(key, newName);
+            foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
+            {
+                if (doc.Kind != DesignerNavigatorDocument.PageKind || doc.Navigator.PageName != key)
+                    continue;
+                doc.Title = newName;
+                if (doc.Navigator.CurrentPage is FlowPage page && page != settingNode)
+                    page.Name = newName;
+            }
+            int index = Pages?.IndexOf(key) ?? -1;
+            if (index >= 0)
+                Pages[index] = key;
+            // A name set in Properties carries its links there, once the node has it (NodeProperties.LinkTargetChanged)
+            if (settingNode == null)
+                RetargetLinks(null, oldName, newName);
+            return null;
+        }
+
+
+        /// <summary>
+        /// Makes the links that name what was <paramref name="before"/> (a node's ID, or a page's name) name it as
+        /// <paramref name="after"/>: in the documents open, as edits of each, and in the others as the repository has them. A
+        /// page's old name is left in links when it is also an ID, as links name IDs first.
+        /// </summary>
+        private void RetargetLinks(FlowBase node, string before, string after)
+        {
+            if (Engine == null || string.IsNullOrWhiteSpace(before) || string.IsNullOrWhiteSpace(after))
+                return;
+            bool isName = node == null || (node is FlowPage page && string.Equals(page.Name, after, StringComparison.Ordinal) && !string.Equals(page.Id, after, StringComparison.Ordinal));
+            var docs = DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>().ToList();
+            if (isName)
+            {
+                var ids = Engine.IdsOutside(null);
+                foreach (var doc in docs)
+                    ids.UnionWith(FlowIds.IdsIn(doc.Navigator.CurrentPage));
+                if (ids.Contains(before))
+                    return;
+            }
+            var open = new List<string>();
+            foreach (var doc in docs)
+            {
+                var root = doc.Navigator.CurrentPage;
+                if (root == null)
+                    continue;
+                open.Add((root as FlowPage)?.Key ?? root.Name);
+                FlowIds.RetargetLinks(root, before, after);
+            }
+            Engine.RetargetLinks(before, after, open);
         }
 
 
@@ -1355,7 +1437,7 @@ namespace WireFlow
 
         private void DeleteSelectedPage()
         {
-            string layoutName = CurrentPageName;
+            string layoutName = Engine.PageName(CurrentPageName) ?? CurrentPageName;
 
             var msgResult = MessageBox.Show($"Delete the selected page \"{layoutName}\"?", "Delete Page",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -2701,15 +2783,13 @@ namespace WireFlow
             if (ListBoxPages.SelectedIndex < 0)
                 return;
 
-            var item = ListBoxPages.SelectedItem;
-            var href = ListBoxPages.Items[ListBoxPages.SelectedIndex] as string;
-
-
+            var key = ListBoxPages.SelectedItem as string;
             ListBoxPages.BeginEdit((oldName, newName) =>
             {
-                Engine.RenamePage(oldName, newName);
-                Pages[ListBoxPages.SelectedIndex] = newName;
-            });
+                string refusal = RenamePage(key, newName);
+                if (refusal != null)
+                    MessageBox.Show(refusal, "Rename Page", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }, Engine.PageName(key));
 
         }
 

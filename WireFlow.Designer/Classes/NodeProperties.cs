@@ -23,6 +23,15 @@ namespace WireFlow
         /// <summary>Whether another node has an ID; an ID typed in that another has is refused (the row shows why).</summary>
         public static Func<FlowBase, string, bool> IdTaken { get; set; }
 
+        /// <summary>
+        /// Renames a page of the project (one with a key) to the name typed in, before its node takes it: gives the reason it
+        /// cannot (the name is taken, or empty), or null once it is renamed.
+        /// </summary>
+        public static Func<FlowPage, string, string> RenamePage { get; set; }
+
+        /// <summary>Tells that a node's ID or a page's name changed (the node, the old and the new), for the links naming it.</summary>
+        public static Action<FlowBase, string, string> LinkTargetChanged { get; set; }
+
 
         private static Shown P(string property, string category, string name = null, bool readOnly = false) =>
             new Shown { Property = property, Name = name ?? property, Category = category, ReadOnly = readOnly };
@@ -73,7 +82,7 @@ namespace WireFlow
 
         private static readonly Shown[] Page =
         {
-            P("Name", "Common", readOnly: true), P("Id", "Common", "ID"), P("Master", "Common", "Layout", readOnly: true),
+            P("Name", "Common"), P("Id", "Common", "ID"), P("Master", "Common", "Layout", readOnly: true),
             P("Width", "Layout"), P("Height", "Layout"), P("Background", "Appearance"),
         };
 
@@ -337,12 +346,29 @@ namespace WireFlow
 
             public override void SetValue(object component, object value)
             {
-                if (inner.Name == nameof(FlowBase.Id) && value is string id && IdTaken?.Invoke(NodeOf(component), id.Trim()) == true)
+                var node = NodeOf(component);
+                if (inner.Name == nameof(FlowBase.Id) && value is string id && IdTaken?.Invoke(node, id.Trim()) == true)
                     throw new ArgumentException($"The ID \"{id.Trim()}\" is already used in the project.");
+                bool isTarget = inner.Name == nameof(FlowBase.Id) || (inner.Name == nameof(FlowBase.Name) && node is FlowPage);
+                string before = isTarget ? inner.GetValue(node) as string : null;
+                if (inner.Name == nameof(FlowBase.Name) && node is FlowPage page && !string.IsNullOrEmpty(page.Key))
+                {
+                    // A page's name is also what the project lists it by: it is renamed there first, or not at all
+                    string name = (value as string)?.Trim();
+                    if (string.Equals(name, page.Name, StringComparison.Ordinal))
+                        return;
+                    string refusal = RenamePage?.Invoke(page, name);
+                    if (refusal != null)
+                        throw new ArgumentException(refusal);
+                    value = name;
+                }
                 if (set != null)
-                    set(NodeOf(component), value);
+                    set(node, value);
                 else
-                    inner.SetValue(NodeOf(component), value);
+                    inner.SetValue(node, value);
+                string after = isTarget ? inner.GetValue(node) as string : null;
+                if (isTarget && !string.IsNullOrWhiteSpace(before) && !string.IsNullOrWhiteSpace(after) && !string.Equals(before, after, StringComparison.Ordinal))
+                    LinkTargetChanged?.Invoke(node, before, after);
             }
 
 

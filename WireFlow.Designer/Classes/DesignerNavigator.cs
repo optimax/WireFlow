@@ -602,9 +602,9 @@ namespace WireFlow
             var result = OpenPageNode(href);
             if (result != MessageBoxResult.OK)
                 return;
-            // Tab name change
+            // Tab name change: a page is named by its key, and its tab shows its name
             PageName = href;
-            NavigatorDocument.Title = href;
+            NavigatorDocument.Title = CurrentPage?.Name ?? href;
 
 
             ////TODO: Notify Pages Listbox of selection change
@@ -1076,7 +1076,10 @@ namespace WireFlow
         private HashSet<string> idsOutside;
 
 
-        private HashSet<string> IdsOutside => idsOutside ??= Engine.IdsOutside(CurrentPage?.Name, CurrentPage is FlowPart);
+        // What the engine names the document by: a page by its key, a layout or part by its name
+        private string DocumentKey => (CurrentPage as FlowPage)?.Key ?? CurrentPage?.Name;
+
+        private HashSet<string> IdsOutside => idsOutside ??= Engine.IdsOutside(DocumentKey, CurrentPage is FlowPart);
 
 
         /// <summary>
@@ -1089,7 +1092,7 @@ namespace WireFlow
                 return false;
             if (FlowIds.Nodes(CurrentPage).Any(n => n != node && string.Equals(n.Id, id, StringComparison.OrdinalIgnoreCase)))
                 return true;
-            return IdsOutside.Contains(id) || Engine.IsIdGivenElsewhere(id, CurrentPage?.Name);
+            return IdsOutside.Contains(id) || Engine.IsIdGivenElsewhere(id, DocumentKey);
         }
 
 
@@ -1102,10 +1105,10 @@ namespace WireFlow
                     continue;
                 var taken = FlowIds.NewSet();
                 taken.UnionWith(IdsOutside);
-                taken.UnionWith(Engine.IdsGivenElsewhere(CurrentPage?.Name));
+                taken.UnionWith(Engine.IdsGivenElsewhere(DocumentKey));
                 taken.UnionWith(FlowIds.IdsIn(CurrentPage));
                 node.Id = FlowIds.ForKind(node.Type, taken);
-                Engine.NoteIdGiven(node.Id, CurrentPage?.Name);
+                Engine.NoteIdGiven(node.Id, DocumentKey);
             }
         }
 
