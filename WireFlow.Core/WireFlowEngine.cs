@@ -1044,8 +1044,13 @@ namespace WireFlow
             RenderUserPage(pageNode, canvas);
             RenderGrids(canvas);
 
-            // The page's size and background follow its node
-            PropertyChangedEventHandler onPage = (sender, e) => ApplyPage(pageNode, canvas);
+            // The page's size and background follow its node, and its layouts the layout set on it
+            PropertyChangedEventHandler onPage = (sender, e) =>
+            {
+                if (e.PropertyName == nameof(FlowPage.Master))
+                    RedrawLayouts(pageNode, canvas);
+                ApplyPage(pageNode, canvas);
+            };
             pageNode.PropertyChanged += onPage;
             canvas.SetValue(ViewLinkProperty, new ViewLink { Node = pageNode, OnProperty = onPage });
         }
@@ -1094,6 +1099,31 @@ namespace WireFlow
             RenderNode<Layer>(node, layout);
         }
 
+
+
+        /// <summary>
+        /// Draws a page's layouts again under its own layers, as its layout (<see cref="FlowPage.Master"/>) names them now, or
+        /// as they are now in the project.
+        /// </summary>
+        public void RedrawLayouts(FlowPage pageNode, Canvas canvas)
+        {
+            if (pageNode == null || canvas == null)
+                return;
+            foreach (var old in canvas.Children.OfType<Layout>().Where(l => l.Name == "Master").ToList())
+            {
+                Unfollow(old);
+                canvas.Children.Remove(old);
+            }
+            int before = canvas.Children.Count;
+            RenderMasterPages(pageNode.Master, canvas, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { pageNode.Key ?? pageNode.Name ?? "" });
+            // Under the page's own layers, the farthest first, as RenderPage puts them
+            var added = canvas.Children.Cast<UIElement>().Skip(before).ToList();
+            for (int i = 0; i < added.Count; i++)
+            {
+                canvas.Children.Remove(added[i]);
+                canvas.Children.Insert(i, added[i]);
+            }
+        }
 
 
         // The layouts under a page, the farthest first; nodeName names one by ID or name (LayoutOf). A layout seen already in

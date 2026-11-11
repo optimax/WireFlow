@@ -29,6 +29,12 @@ namespace WireFlow
         /// </summary>
         public static Func<FlowPage, string, string> RenamePage { get; set; }
 
+        /// <summary>
+        /// Checks a layout typed or chosen for a page or layout (its <see cref="FlowPage.Master"/>, a layout's name or ID): gives
+        /// the reason it cannot be set (it names no layout, or makes layouts set on each other in a circle), or null.
+        /// </summary>
+        public static Func<FlowPage, string, string> CheckLayout { get; set; }
+
         /// <summary>Tells that a node's ID or a page's name changed (the node, the old and the new), for the links naming it.</summary>
         public static Action<FlowBase, string, string> LinkTargetChanged { get; set; }
 
@@ -82,7 +88,7 @@ namespace WireFlow
 
         private static readonly Shown[] Page =
         {
-            P("Name", "Common"), P("Id", "Common", "ID"), P("Master", "Common", "Layout", readOnly: true),
+            P("Name", "Common"), P("Id", "Common", "ID"), P("Master", "Common", "Layout"),
             P("Width", "Layout"), P("Height", "Layout"), P("Background", "Appearance"),
         };
 
@@ -351,6 +357,15 @@ namespace WireFlow
                     throw new ArgumentException($"The ID \"{id.Trim()}\" is already used in the project.");
                 bool isTarget = inner.Name == nameof(FlowBase.Id) || (inner.Name == nameof(FlowBase.Name) && node is FlowPage);
                 string before = isTarget ? inner.GetValue(node) as string : null;
+                if (inner.Name == nameof(FlowPage.Master) && node is FlowPage onLayout)
+                {
+                    // None is null; a layout named is kept as typed, by name or by ID
+                    string master = (value as string)?.Trim();
+                    value = string.IsNullOrEmpty(master) ? null : master;
+                    string refusal = value == null ? null : CheckLayout?.Invoke(onLayout, master);
+                    if (refusal != null)
+                        throw new ArgumentException(refusal);
+                }
                 if (inner.Name == nameof(FlowBase.Name) && node is FlowPage page && !string.IsNullOrEmpty(page.Key))
                 {
                     // A page's name is also what the project lists it by: it is renamed there first, or not at all

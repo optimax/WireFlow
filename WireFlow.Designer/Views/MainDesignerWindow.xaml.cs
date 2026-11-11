@@ -359,6 +359,9 @@ namespace WireFlow
             // the layouts set on pages) naming it
             NodeProperties.RenamePage = (page, name) => RenamePage(page.Key, name, page);
             NodeProperties.LinkTargetChanged = (node, before, after) => RetargetLinks(node, before, after);
+            // A page's layout set in Properties must name a layout, and not one on it (a circle)
+            NodeProperties.CheckLayout = (page, master) => CheckLayout(page, master);
+            LayoutPropertyEditor.LayoutNames = () => Engine?.LayoutNames ?? new List<string>();
             // The Pages and Layouts lists hold keys and show names
             PageNameConverter.Lookup = key => Engine?.PageName(key) ?? Engine?.LayoutName(key);
             // Pages are put in order by dragging them, as by the Move Up and Move Down buttons
@@ -1360,6 +1363,29 @@ namespace WireFlow
             // A name set in Properties carries what names it there, once the node has it (NodeProperties.LinkTargetChanged)
             if (settingNode == null)
                 RetargetLinks(layout ? Engine.GetMasterPage(key) : null, oldName, newName);
+            return null;
+        }
+
+
+        /// <summary>
+        /// Whether a page or layout can be set on the layout <paramref name="master"/> names (by name or ID): gives the reason it
+        /// cannot, or null. A layout cannot be set on itself, nor on a layout that is set on it, nearer or farther: layouts form
+        /// a chain, never a circle.
+        /// </summary>
+        private string CheckLayout(FlowPage page, string master)
+        {
+            string key = Engine.LayoutOf(master);
+            if (key == null)
+                return $"The project has no layout named \"{master}\" or with that ID.";
+            if (string.IsNullOrEmpty(page?.Key) || !Engine.Layouts.Contains(page.Key, StringComparer.OrdinalIgnoreCase))
+                return null;
+            // The chain from the layout named, as the project has it; the layout being set is this page itself
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (string next = key; next != null && seen.Add(next); next = Engine.LayoutOf(Engine.GetMasterPage(next)?.Master))
+            {
+                if (string.Equals(next, page.Key, StringComparison.OrdinalIgnoreCase))
+                    return next == key ? "A layout cannot be set on itself." : $"\"{Engine.LayoutName(key)}\" is set on this layout already, nearer or farther: layouts cannot be set on each other in a circle.";
+            }
             return null;
         }
 

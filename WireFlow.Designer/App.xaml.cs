@@ -19,6 +19,7 @@ namespace WireFlow
             TextPositionPropertyEditor.Register();
             // The font of texts and boxes is chosen in the font dialog of Optimax's programs
             FontPropertyEditor.Register();
+            LayoutPropertyEditor.Register();
 
             // Opening a folder project (.project) converts it into a .wf file beside it
             Repository = new SqliteRepository() { ConvertFolderProjects = true };
