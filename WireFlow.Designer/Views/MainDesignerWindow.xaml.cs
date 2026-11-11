@@ -278,7 +278,10 @@ namespace WireFlow
         {
             // The Navigate tool deselects as it is chosen
             foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
+            {
                 doc.Navigator.SelectedDrawingTool = tool;
+                doc.Navigator.ShowNavigateBadge = IsNavigateMode;
+            }
             // The Tools list shows the tool (choosing another tool there leaves Navigate mode)
             int index = Tools.Items.IndexOf(tool);
             if (index >= 0)
@@ -639,6 +642,7 @@ namespace WireFlow
             if (Config.Maximized)
                 WindowState = WindowState.Maximized;
             ApplyPropertyHighlight();
+            ApplyNavigateBadgeColors();
         }
 
 
@@ -761,8 +765,35 @@ namespace WireFlow
             Config.SelectAfterDrawing = dialog.SelectAfterDrawing;
             Config.HighlightSelectedProperty = dialog.HighlightSelectedProperty;
             Config.SelectedPropertyColor = dialog.SelectedPropertyColor;
+            Config.NavigateBadgeColor = dialog.NavigateBadgeColor;
+            Config.NavigateBadgeTextColor = dialog.NavigateBadgeTextColor;
             ApplyPropertyHighlight();
+            ApplyNavigateBadgeColors();
             PersistConfigSettings();
+        }
+
+
+        // Tools > Options: the colors of the Navigate mode badge, as the application's resources that every page's badge refers to
+        private void ApplyNavigateBadgeColors()
+        {
+            Brush Solid(string text, Color fallback)
+            {
+                Color color = fallback;
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(text))
+                        color = (Color)ColorConverter.ConvertFromString(text);
+                }
+                catch (FormatException)
+                {
+                    // A color typed into the settings file that is none: the default
+                }
+                var brush = new SolidColorBrush(color);
+                brush.Freeze();
+                return brush;
+            }
+            Application.Current.Resources["NavigateBadgeBrush"] = Solid(Config.NavigateBadgeColor, Color.FromRgb(0xE8, 0x59, 0x0C));
+            Application.Current.Resources["NavigateBadgeTextBrush"] = Solid(Config.NavigateBadgeTextColor, Colors.White);
         }
 
 
@@ -1434,6 +1465,7 @@ namespace WireFlow
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
             navigator.SelectedDrawingTool = ModeDrawingTool;
+            navigator.ShowNavigateBadge = IsNavigateMode;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1471,6 +1503,7 @@ namespace WireFlow
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
             navigator.SelectedDrawingTool = ModeDrawingTool;
+            navigator.ShowNavigateBadge = IsNavigateMode;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1503,6 +1536,7 @@ namespace WireFlow
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
             navigator.SelectedDrawingTool = ModeDrawingTool;
+            navigator.ShowNavigateBadge = IsNavigateMode;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 

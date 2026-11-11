@@ -59,6 +59,38 @@ namespace WireFlow
 
         public DesignerPanel Designer { get; set; }
 
+        /// <summary>
+        /// Whether the badge saying the Designer is in Navigate mode shows over the page. Its colors are the application's
+        /// NavigateBadgeBrush and NavigateBadgeTextBrush, which Tools > Options sets.
+        /// </summary>
+        public bool ShowNavigateBadge
+        {
+            get { return navigateBadge.Visibility == Visibility.Visible; }
+            set { navigateBadge.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
+        }
+        private Border navigateBadge;
+
+
+        // A tab hanging from the top edge of the area, at its center, with its lower corners rounded; clicks go through it to
+        // the page under it
+        private Border CreateNavigateBadge()
+        {
+            var text = new TextBlock { Text = "Navigate Mode", FontWeight = FontWeights.SemiBold, FontSize = 12 };
+            text.SetResourceReference(TextBlock.ForegroundProperty, "NavigateBadgeTextBrush");
+            navigateBadge = new Border
+            {
+                Child = text,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
+                CornerRadius = new CornerRadius(0, 0, 8, 8),
+                Padding = new Thickness(16, 3, 16, 4),
+                IsHitTestVisible = false,
+                Visibility = Visibility.Collapsed,
+            };
+            navigateBadge.SetResourceReference(Border.BackgroundProperty, "NavigateBadgeBrush");
+            return navigateBadge;
+        }
+
 
         private FlowBase _currentPage;
 
@@ -286,7 +318,11 @@ namespace WireFlow
         private void SetupDesigner()
         {
             Designer = new DesignerPanel();
-            Content = Designer;
+            // The page, with the Navigate mode badge over it, hanging from the top at the center
+            var content = new Grid();
+            content.Children.Add(Designer);
+            content.Children.Add(CreateNavigateBadge());
+            Content = content;
 
             //var content = Content as Grid;
             //if (Content == null)

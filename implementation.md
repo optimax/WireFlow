@@ -136,6 +136,8 @@ The Designer is in Design mode or in Navigate mode (`MainDesignerWindow.IsNaviga
 - **Read-only.** Nothing is selected, the Outline selects nothing, and Properties is off; the keys of the page and most commands need a selection, and those that change a page without one (Undo, Redo, Paste, Add Layer, the Outline's Delete) are disabled.
 - **Back and Forward** (the toolbar's buttons, View → Back and Forward, Alt+Left and Alt+Right) go through the pages visited since Navigate mode was entered, kept as a browser keeps them (`NavigationHistory`: a visit after going back drops the pages ahead); they show the page in the tab in front, as a link does.
 
+- **Indicator.** A badge reading "Navigate Mode" hangs from the top edge of each document, at its center, under the tabs, with its lower corners rounded (`DesignerNavigator.ShowNavigateBadge`; the navigator's content is a grid holding the `DesignerPanel` and the badge over it). Clicks go through it to the page. Its colors are the application's `NavigateBadgeBrush` and `NavigateBadgeTextBrush`, which `MainDesignerWindow.ApplyNavigateBadgeColors` sets from the settings, so a change in Tools → Options reaches every badge open.
+
 Leaving Navigate mode gives every document the Select tool, or the tool chosen, and forgets the history.
 
 ## Window and panes
@@ -157,6 +159,8 @@ Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' progr
 - Drawing → Return to the Select tool after drawing an object (`ConfigSettings.SelectAfterDrawing`, off by default): once a tool has drawn an object (`DesignerNavigator.ElementDrawn`, raised when `CreateShape` put one on the page), the window chooses the Select tool, as Esc does (`SelectDefaultTool`), after the mouse is let go.
 
 - Properties → Highlight the row being edited (`ConfigSettings.HighlightSelectedProperty`, on by default) and Highlight color (`SelectedPropertyColor`: null for the Windows accent, else `#AARRGGBB`), a list of named colors, partly transparent so that the text shows in every theme, as PDF Workshop offers its focus frame's colors; a color typed into the settings file is offered as Custom.
+
+- Navigate Mode → Indicator color and Indicator text color (`ConfigSettings.NavigateBadgeColor`, orange `#FFE8590C` by default, and `NavigateBadgeTextColor`, white): lists of named opaque colors, with a color typed into the settings file offered as Custom (`DesignerOptionsDialog.ColorNames`).
 
 The settings file is not offered for editing from the dialog (no Edit Settings File button): the Designer writes it as it closes, so edits made to it while the Designer runs would be lost.
 

@@ -20,6 +20,9 @@ namespace WireFlow
         public bool HighlightSelectedProperty { get; set; } = true;
         // Its color, #AARRGGBB; null for the Windows accent color, partly transparent
         public string SelectedPropertyColor { get; set; }
+        // Tools > Options: the badge over the page in Navigate mode, its color and the color of its text, #AARRGGBB
+        public string NavigateBadgeColor { get; set; } = "#FFE8590C";
+        public string NavigateBadgeTextColor { get; set; } = "#FFFFFFFF";
         // The project open when the settings were last saved, as the Designer closed; null when none was
         public string PreviousProject { get; set; }
         // Its tabs then, in their order, and the index of the one in front (-1: none), reopened with it
