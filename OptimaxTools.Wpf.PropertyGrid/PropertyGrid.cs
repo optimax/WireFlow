@@ -41,6 +41,12 @@ namespace OptimaxTools.Wpf
         public static readonly DependencyProperty CategoryBackgroundProperty = DependencyProperty.Register(nameof(CategoryBackground),
             typeof(Brush), typeof(PropertyGrid), new PropertyMetadata(null));
 
+        public static readonly DependencyProperty HighlightSelectedRowProperty = DependencyProperty.Register(nameof(HighlightSelectedRow),
+            typeof(bool), typeof(PropertyGrid), new PropertyMetadata(true));
+
+        public static readonly DependencyProperty SelectedRowBackgroundProperty = DependencyProperty.Register(nameof(SelectedRowBackground),
+            typeof(Brush), typeof(PropertyGrid), new PropertyMetadata(null));
+
         private static readonly DependencyPropertyKey PropertiesPropertyKey = DependencyProperty.RegisterReadOnly(nameof(Properties),
             typeof(ICollectionView), typeof(PropertyGrid), new PropertyMetadata(null));
         public static readonly DependencyProperty PropertiesProperty = PropertiesPropertyKey.DependencyProperty;
@@ -113,6 +119,23 @@ namespace OptimaxTools.Wpf
         {
             get => (Brush)GetValue(CategoryBackgroundProperty);
             set => SetValue(CategoryBackgroundProperty, value);
+        }
+
+        /// <summary>Whether the row with the keyboard focus is highlighted, across its whole width (true by default).</summary>
+        public bool HighlightSelectedRow
+        {
+            get => (bool)GetValue(HighlightSelectedRowProperty);
+            set => SetValue(HighlightSelectedRowProperty, value);
+        }
+
+        /// <summary>
+        /// The highlight of the row with the keyboard focus; when null, the grid's Foreground, faint. A brush that lets the text
+        /// show through (partly transparent) suits light and dark backgrounds alike.
+        /// </summary>
+        public Brush SelectedRowBackground
+        {
+            get => (Brush)GetValue(SelectedRowBackgroundProperty);
+            set => SetValue(SelectedRowBackgroundProperty, value);
         }
 
         /// <summary>The listed properties of SelectedObject, as PropertyItem objects.</summary>

@@ -16,6 +16,10 @@ namespace WireFlow
         public bool ReopenPreviousProject { get; set; } = false;
         // Tools > Options: the Select tool again after each object drawn, as Esc chooses it
         public bool SelectAfterDrawing { get; set; } = false;
+        // Tools > Options: the row of Properties with the keyboard focus highlighted, across the row
+        public bool HighlightSelectedProperty { get; set; } = true;
+        // Its color, #AARRGGBB; null for the Windows accent color, partly transparent
+        public string SelectedPropertyColor { get; set; }
         // The project open when the settings were last saved, as the Designer closed; null when none was
         public string PreviousProject { get; set; }
         // Its tabs then, in their order, and the index of the one in front (-1: none), reopened with it

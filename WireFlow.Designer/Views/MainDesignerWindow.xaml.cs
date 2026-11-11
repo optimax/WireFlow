@@ -638,6 +638,7 @@ namespace WireFlow
             }
             if (Config.Maximized)
                 WindowState = WindowState.Maximized;
+            ApplyPropertyHighlight();
         }
 
 
@@ -758,7 +759,34 @@ namespace WireFlow
                 return;
             Config.ReopenPreviousProject = dialog.ReopenPreviousProject;
             Config.SelectAfterDrawing = dialog.SelectAfterDrawing;
+            Config.HighlightSelectedProperty = dialog.HighlightSelectedProperty;
+            Config.SelectedPropertyColor = dialog.SelectedPropertyColor;
+            ApplyPropertyHighlight();
             PersistConfigSettings();
+        }
+
+
+        // Tools > Options: the highlight of the row of Properties with the keyboard focus. Without a color of its own it is the
+        // Windows accent, partly transparent, which shows on light and dark grids alike and differs from the category headers.
+        private void ApplyPropertyHighlight()
+        {
+            PropertyGrid.HighlightSelectedRow = Config.HighlightSelectedProperty;
+            Color color = SystemColors.AccentColor;
+            color.A = 0x60;
+            if (!string.IsNullOrWhiteSpace(Config.SelectedPropertyColor))
+            {
+                try
+                {
+                    color = (Color)ColorConverter.ConvertFromString(Config.SelectedPropertyColor);
+                }
+                catch (FormatException)
+                {
+                    // A color typed into the settings file that is none: the accent
+                }
+            }
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            PropertyGrid.SelectedRowBackground = brush;
         }
 
 

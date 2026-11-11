@@ -115,6 +115,9 @@
         <Grid x:Name="Row" MinHeight="22" Background="Transparent">
             <Border x:Name="Focus" Opacity="0"
                     Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type local:PropertyGrid}}}"/>
+            <!-- The highlight of the row with the keyboard focus, across the row, when the grid has one -->
+            <Border x:Name="Selected" Visibility="Hidden"
+                    Background="{Binding SelectedRowBackground, RelativeSource={RelativeSource AncestorType={x:Type local:PropertyGrid}}}"/>
             <Rectangle Height="1" VerticalAlignment="Bottom" Opacity="0.1"
                        Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type local:PropertyGrid}}}"/>
             <DockPanel>
@@ -131,9 +134,23 @@
             </DockPanel>
         </Grid>
         <DataTemplate.Triggers>
-            <Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True">
+            <!-- The row with the keyboard focus: the grid's SelectedRowBackground, else its Foreground, faint; nothing when
+                 HighlightSelectedRow is off -->
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=Row}" Value="True"/>
+                    <Condition Binding="{Binding HighlightSelectedRow, RelativeSource={RelativeSource AncestorType={x:Type local:PropertyGrid}}}" Value="True"/>
+                    <Condition Binding="{Binding SelectedRowBackground, RelativeSource={RelativeSource AncestorType={x:Type local:PropertyGrid}}}" Value="{x:Null}"/>
+                </MultiDataTrigger.Conditions>
                 <Setter TargetName="Focus" Property="Opacity" Value="0.08"/>
-            </Trigger>
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=Row}" Value="True"/>
+                    <Condition Binding="{Binding HighlightSelectedRow, RelativeSource={RelativeSource AncestorType={x:Type local:PropertyGrid}}}" Value="True"/>
+                </MultiDataTrigger.Conditions>
+                <Setter TargetName="Selected" Property="Visibility" Value="Visible"/>
+            </MultiDataTrigger>
             <DataTrigger Binding="{Binding HasError}" Value="True">
                 <Setter TargetName="Value" Property="BorderBrush" Value="#E04040"/>
             </DataTrigger>
