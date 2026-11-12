@@ -4,6 +4,11 @@
 
     <ContextMenu x:Key="DesignerContextMenu">
         <ContextMenu.Items>
+            <!-- The commands of Edit > Cut, Copy and Paste -->
+            <MenuItem Header="Cu_t" Command="{Binding CutCmd}" InputGestureText="Ctrl+X"/>
+            <MenuItem Header="_Copy" Command="{Binding CopyCmd}" InputGestureText="Ctrl+C"/>
+            <MenuItem Header="_Paste" Command="{Binding PasteCmd}" InputGestureText="Ctrl+V"/>
+            <Separator/>
             <MenuItem Header="Duplicate" Command="{Binding ObjectDuplicateCmd}"/>
             <MenuItem Header="Delete" Command="{Binding ObjectDeleteCmd}"/>
             <Separator/>

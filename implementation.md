@@ -71,7 +71,7 @@ The DOM is the model; WPF is a view of it. The Designer keeps each open page or 
 
 ## Cut, Copy and Paste
 
-Edit → Cut (Ctrl+X), Copy (Ctrl+C) and Paste (Ctrl+V) move elements between pages, layouts and parts, and within one. A text box with the keyboard (in Properties, say) cuts, copies and pastes its own text instead: its own bindings come before the window's.
+Edit → Cut (Ctrl+X), Copy (Ctrl+C) and Paste (Ctrl+V) move elements between pages, layouts and parts, and within one. The page's context menu (`Classes\DesignerContextMenu.xaml`) has the same three commands at its top, before Duplicate and Delete. A text box with the keyboard (in Properties, say) cuts, copies and pastes its own text instead: its own bindings come before the window's.
 
 - **The clipboard holds nodes.** `DesignerNavigator.CopySelectedElements` puts the selected elements' nodes on the clipboard as a JSON array in the format `WireFlow.Elements` (`ClipboardFormat`), each written as it is saved, but at the place it shows on the layer (a child of a group or a stack panel too); an element inside another selected one goes with it, not on its own. `CutSelectedElements` copies, then deletes. Another program sees nothing to paste.
 - **Paste** (`PasteElements`) reads the nodes back and adds them to the current layer, where they were copied from, moved down and right by 10 px (`PASTE_OFFSET`) while they would lie exactly on elements of the same kind already there, and selects them. As any edit, it goes through the DOM: it is one step of Undo, and `GiveIds` gives each pasted node an ID of its own, as for a duplicate.
