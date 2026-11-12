@@ -194,6 +194,12 @@
                 <MenuItem Header="_Forward" Command="{Binding NavigateForwardCmd}" InputGestureText="Alt+Right"/>
                 <MenuItem Header="_Highlight Links" IsCheckable="True" IsChecked="{Binding HighlightLinks, Mode=TwoWay}" InputGestureText="Ctrl+L"/>
                 <Separator/>
+                <!-- As MaxWrite's View menu, with PDFTools' Fit Page -->
+                <MenuItem Header="Zoom _In" Command="{Binding ZoomInCmd}" InputGestureText="Ctrl+="/>
+                <MenuItem Header="Zoom _Out" Command="{Binding ZoomOutCmd}" InputGestureText="Ctrl+-"/>
+                <MenuItem Header="_Actual Size" Command="{Binding ActualSizeCmd}" InputGestureText="Ctrl+Shift+0"/>
+                <MenuItem Header="Fit _Page" Command="{Binding FitPageCmd}" InputGestureText="Ctrl+0"/>
+                <Separator/>
                 <!-- As in PDFTools; DesignerTheme applies the choice -->
                 <MenuItem Header="_Theme" x:Name="ThemeMenuItem">
                     <MenuItem Header="_System" IsCheckable="True" Tag="{x:Static themes:ThemeChoice.System}" Click="ThemeMenuItem_Click"
@@ -376,6 +382,20 @@
                 </Button>
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding MakeSameHeightCmd}" ToolTip="Make Same Height">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.same-height}"/>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
+                <!-- Zoom, as MaxWrite's toolbar: Zoom Out, the zoom of the page in front (a click: Actual Size), Zoom In; and Fit Page -->
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ZoomOutCmd}" ToolTip="Zoom Out (Ctrl+-)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.zoom-out}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ActualSizeCmd}" ToolTip="Actual Size (Ctrl+Shift+0)" Width="48" Padding="2,0">
+                    <TextBlock Text="{Binding CurrentDesigner.Designer.Zoom, StringFormat={}{0:0%}, FallbackValue=100%}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ZoomInCmd}" ToolTip="Zoom In (Ctrl+=)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.zoom-in}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding FitPageCmd}" ToolTip="Fit Page (Ctrl+0)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.fit-page}"/>
                 </Button>
             </StackPanel>
         </Border>

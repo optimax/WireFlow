@@ -31,7 +31,7 @@ namespace WireFlow
 
         private Point origin;
         private Point start;
-        private double zoom;
+        private double zoom = 1.0;
 
         private bool mouseIsDown;
 
@@ -195,8 +195,89 @@ namespace WireFlow
             tt.X = 0.0;
             tt.Y = 0.0;
 
-            Zoom = 0;
+            Zoom = 1.0;
         }
+
+
+
+
+        #region Zoom
+
+        /// <summary>The least zoom: 10%, so that Fit Page can show a long page whole.</summary>
+        public const double MinimumZoom = 0.1;
+
+        /// <summary>The greatest zoom: 500%.</summary>
+        public const double MaximumZoom = 5.0;
+
+        /// <summary>The step of Zoom In and Zoom Out and of a notch of the mouse wheel: 10%.</summary>
+        public const double ZoomStep = 0.1;
+
+        /// <summary>The room Fit Page leaves around the page, in pixels of the panel.</summary>
+        public const double FitPageMargin = 20;
+
+        /// <summary>The page's scale on the panel: 1 is its actual size.</summary>
+        public double Scale => GetScaleTransform().ScaleX;
+
+
+        /// <summary>
+        /// Zooms to <paramref name="scale"/>, rounded to a whole percent and kept between <see cref="MinimumZoom"/> and
+        /// <see cref="MaximumZoom"/>, keeping the point of the page under <paramref name="anchor"/> (a point of the panel) where it
+        /// is: the mouse for the wheel, the center of the panel for the menu, the keys and the toolbar.
+        /// </summary>
+        public void ZoomTo(double scale, Point? anchor = null)
+        {
+            scale = Math.Clamp(Math.Round(scale * 100) / 100, MinimumZoom, MaximumZoom);
+            var st = GetScaleTransform();
+            var tt = GetTranslateTransform();
+            Point at = anchor ?? new Point(ActualWidth / 2, ActualHeight / 2);
+
+            // The page is drawn at its place in the panel's layout (offset), scaled, then moved by the pan: p * scale + tt + offset
+            Vector offset = VisualTreeHelper.GetOffset(Canvas);
+            double pageX = (at.X - offset.X - tt.X) / st.ScaleX;
+            double pageY = (at.Y - offset.Y - tt.Y) / st.ScaleY;
+
+            st.ScaleX = scale;
+            st.ScaleY = scale;
+            tt.X = at.X - offset.X - pageX * scale;
+            tt.Y = at.Y - offset.Y - pageY * scale;
+
+            Zoom = scale;
+        }
+
+
+        /// <summary>Zooms in or out by <paramref name="step"/> (<see cref="ZoomStep"/> or its negative) about the center of the panel.</summary>
+        public void ZoomBy(double step) => ZoomTo(Scale + step);
+
+
+        /// <summary>Shows the page at its actual size, 100%, keeping the point at the center of the panel where it is.</summary>
+        public void ActualSize() => ZoomTo(1.0);
+
+
+        /// <summary>
+        /// Zooms so that the whole page shows, as large as the panel allows with <see cref="FitPageMargin"/> around it, and centers it.
+        /// </summary>
+        public void FitPage()
+        {
+            double width = Canvas.ActualWidth, height = Canvas.ActualHeight;
+            double roomX = ActualWidth - 2 * FitPageMargin, roomY = ActualHeight - 2 * FitPageMargin;
+            if (width <= 0 || height <= 0 || roomX <= 0 || roomY <= 0)
+                return;
+
+            double scale = Math.Clamp(Math.Floor(Math.Min(roomX / width, roomY / height) * 100) / 100, MinimumZoom, MaximumZoom);
+            var st = GetScaleTransform();
+            var tt = GetTranslateTransform();
+            Vector offset = VisualTreeHelper.GetOffset(Canvas);
+
+            st.ScaleX = scale;
+            st.ScaleY = scale;
+            tt.X = (ActualWidth - width * scale) / 2 - offset.X;
+            tt.Y = (ActualHeight - height * scale) / 2 - offset.Y;
+
+            Zoom = scale;
+        }
+
+        #endregion
+
 
 
 
@@ -204,26 +285,8 @@ namespace WireFlow
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
-            const double step = 0.1;
-            var st = GetScaleTransform();
-            var tt = GetTranslateTransform();
-
-            double zoom = e.Delta > 0 ? step : -step;
-            if (!(e.Delta > 0) && (st.ScaleX < .26 || st.ScaleY < .26))
-                return;
-
-            Point relative = e.GetPosition(Canvas);
-
-            var abosuluteX = relative.X * st.ScaleX + tt.X;
-            var abosuluteY = relative.Y * st.ScaleY + tt.Y;
-
-            st.ScaleX += zoom;
-            st.ScaleY += zoom;
-
-            tt.X = abosuluteX - relative.X * st.ScaleX;
-            tt.Y = abosuluteY - relative.Y * st.ScaleY;
-
-            Zoom = st.ScaleX;
+            // A notch zooms in or out by a step, keeping the point under the mouse where it is
+            ZoomTo(Scale + (e.Delta > 0 ? ZoomStep : -ZoomStep), e.GetPosition(this));
         }
 
 

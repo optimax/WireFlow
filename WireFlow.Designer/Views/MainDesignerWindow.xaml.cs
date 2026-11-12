@@ -463,6 +463,13 @@ namespace WireFlow
             InputBindings.Add(new KeyBinding(NavigateModeCmd, Key.F9, ModifierKeys.None));
             // Ctrl+L: View > Highlight Links
             InputBindings.Add(new KeyBinding(HighlightLinksCmd, Key.L, ModifierKeys.Control));
+            // View > Zoom In, Zoom Out and Actual Size, with the keys of MaxWrite (Ctrl+=, Ctrl+-, Ctrl+Shift+0); Ctrl+0: Fit Page
+            InputBindings.Add(new KeyBinding(ZoomInCmd, Key.OemPlus, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(ZoomInCmd, Key.Add, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(ZoomOutCmd, Key.OemMinus, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(ZoomOutCmd, Key.Subtract, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(ActualSizeCmd, Key.D0, ModifierKeys.Control | ModifierKeys.Shift));
+            InputBindings.Add(new KeyBinding(FitPageCmd, Key.D0, ModifierKeys.Control));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             // The panes as they were, before any tab opens: tabs are not kept in the layout
@@ -2830,6 +2837,10 @@ namespace WireFlow
         public ICommand PasteCmd { get; set; }
         public ICommand NavigateModeCmd { get; set; }
         public ICommand HighlightLinksCmd { get; set; }
+        public ICommand ZoomInCmd { get; set; }
+        public ICommand ZoomOutCmd { get; set; }
+        public ICommand ActualSizeCmd { get; set; }
+        public ICommand FitPageCmd { get; set; }
         public ICommand NavigateBackCmd { get; set; }
         public ICommand NavigateForwardCmd { get; set; }
         /// <summary>Adds a layer above the current one (the Outline's caption and menu).</summary>
@@ -2917,6 +2928,11 @@ namespace WireFlow
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => !IsNavigateMode && (CurrentDesigner?.CanUndo ?? false));
             NavigateModeCmd = new RelayCommand(o => IsNavigateMode = !IsNavigateMode);
             HighlightLinksCmd = new RelayCommand(o => HighlightLinks = !HighlightLinks);
+            // View > Zoom In, Zoom Out, Actual Size and Fit Page, of the page, layout or part in front
+            ZoomInCmd = new RelayCommand(o => CurrentDesigner.Designer.ZoomBy(DesignerPanel.ZoomStep), o => CurrentDesigner?.Designer != null && CurrentDesigner.Designer.Scale < DesignerPanel.MaximumZoom);
+            ZoomOutCmd = new RelayCommand(o => CurrentDesigner.Designer.ZoomBy(-DesignerPanel.ZoomStep), o => CurrentDesigner?.Designer != null && CurrentDesigner.Designer.Scale > DesignerPanel.MinimumZoom);
+            ActualSizeCmd = new RelayCommand(o => CurrentDesigner.Designer.ActualSize(), o => CurrentDesigner?.Designer != null);
+            FitPageCmd = new RelayCommand(o => CurrentDesigner.Designer.FitPage(), o => CurrentDesigner?.Designer != null);
             NavigateBackCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Back()), o => IsNavigateMode && NavigationHistory.CanGoBack);
             NavigateForwardCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Forward()), o => IsNavigateMode && NavigationHistory.CanGoForward);
             CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
