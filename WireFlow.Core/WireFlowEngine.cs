@@ -74,8 +74,33 @@ namespace WireFlow
             return LayoutKey(reference) ?? keys.FirstOrDefault(k => string.Equals(k, reference, StringComparison.OrdinalIgnoreCase));
         }
 
-        /// <summary>The layout a page's or layout's <see cref="FlowPage.Master"/> names (<see cref="LayoutOf"/>).</summary>
-        public FlowPage GetLayoutOf(string reference) => GetMasterPage(LayoutOf(reference));
+        /// <summary>
+        /// The layout with this key as an editor has it open now, its edits not saved included, for drawing it under the pages
+        /// set on it: a copy, which the engine may change; null when no editor has it open, and the project's version is used.
+        /// </summary>
+        public Func<string, FlowPage> OpenLayout { get; set; }
+
+        /// <summary>
+        /// The layout a page's or layout's <see cref="FlowPage.Master"/> names (<see cref="LayoutOf"/>): as an editor has it open
+        /// now (<see cref="OpenLayout"/>), else as the project has it.
+        /// </summary>
+        public FlowPage GetLayoutOf(string reference)
+        {
+            string key = LayoutOf(reference);
+            return key == null ? null : OpenLayout?.Invoke(key) ?? GetMasterPage(key);
+        }
+
+        /// <summary>Whether the layout with this key is among a page's or layout's layouts, nearer or farther.</summary>
+        public bool IsOnLayout(FlowPage page, string layoutKey)
+        {
+            if (page == null || string.IsNullOrEmpty(layoutKey))
+                return false;
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { page.Key ?? page.Name ?? "" };
+            for (var layout = GetLayoutOf(page.Master); layout != null && seen.Add(layout.Key ?? layout.Name ?? ""); layout = GetLayoutOf(layout.Master))
+                if (string.Equals(layout.Key, layoutKey, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
         // The pages' keys (FlowPage.Key), in the project's order: the first is the entry point (HomePage)
         public IList<string> Pages => Repository.Pages;
 
@@ -1099,6 +1124,19 @@ namespace WireFlow
             RenderNode<Layer>(node, layout);
         }
 
+
+
+        /// <summary>
+        /// Draws a page's layouts again and gives it the size and background it takes from them again, as they are now: after a
+        /// layout under it changed.
+        /// </summary>
+        public void RefreshLayouts(FlowPage pageNode, Canvas canvas)
+        {
+            if (pageNode == null || canvas == null)
+                return;
+            RedrawLayouts(pageNode, canvas);
+            ApplyPage(pageNode, canvas);
+        }
 
 
         /// <summary>

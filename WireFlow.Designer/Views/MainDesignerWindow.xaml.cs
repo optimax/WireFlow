@@ -361,6 +361,7 @@ namespace WireFlow
             NodeProperties.LinkTargetChanged = (node, before, after) => RetargetLinks(node, before, after);
             // A page's layout set in Properties must name a layout, and not one on it (a circle)
             NodeProperties.CheckLayout = (page, master) => CheckLayout(page, master);
+            NodeProperties.CheckLayoutReference = (page, reference) => ClosesCircle(page?.Key, reference) ? CircleRefusal(reference) : null;
             LayoutPropertyEditor.LayoutNames = () => Engine?.LayoutNames ?? new List<string>();
             // The Pages and Layouts lists hold keys and show names
             PageNameConverter.Lookup = key => Engine?.PageName(key) ?? Engine?.LayoutName(key);
@@ -369,6 +370,8 @@ namespace WireFlow
             UpdateThemeMenu();
             DataContext = this;
             Engine = engine;
+            // Pages show the layouts open in tabs as they are being edited
+            Engine.OpenLayout = OpenLayoutCopy;
             //Engine.NavigateToNodeFunc = NavigateInNavMode;
             Engine.ProjectFileLoaded = s =>
             {
@@ -1344,6 +1347,8 @@ namespace WireFlow
             string other = layout ? Engine.LayoutKey(newName) : Engine.PageKey(newName);
             if (other != null && other != key)
                 return $"The project has a {what} named \"{newName}\" already.";
+            if (layout && ClosesCircle(key, newName))
+                return CircleRefusal(newName);
             if (layout)
                 Engine.RenameLayout(key, newName);
             else
@@ -1382,12 +1387,100 @@ namespace WireFlow
                 return null;
             // The chain from the layout named, as the project has it; the layout being set is this page itself
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            for (string next = key; next != null && seen.Add(next); next = Engine.LayoutOf(Engine.GetMasterPage(next)?.Master))
+            for (string next = key; next != null && seen.Add(next); next = Engine.LayoutOf(Engine.GetLayoutOf(next)?.Master))
             {
                 if (string.Equals(next, page.Key, StringComparison.OrdinalIgnoreCase))
                     return next == key ? "A layout cannot be set on itself." : $"\"{Engine.LayoutName(key)}\" is set on this layout already, nearer or farther: layouts cannot be set on each other in a circle.";
             }
             return null;
+        }
+
+
+        /// <summary>
+        /// Whether giving the layout with this key a new name or ID (<paramref name="reference"/>) would make layouts set on each
+        /// other in a circle: a layout whose layout names it, and which it reaches through its own layouts (or it itself), would
+        /// then be set on it. A reference that names another layout by its ID names that one still, as IDs come first.
+        /// </summary>
+        private bool ClosesCircle(string layoutKey, string reference)
+        {
+            if (Engine == null || string.IsNullOrWhiteSpace(reference) || string.IsNullOrEmpty(layoutKey)
+                || !Engine.Layouts.Contains(layoutKey, StringComparer.OrdinalIgnoreCase))
+                return false;
+            string named = Engine.LayoutOf(reference);
+            if (named != null && !string.Equals(named, layoutKey, StringComparison.OrdinalIgnoreCase))
+                return false;
+            return ChainNames(layoutKey, reference);
+        }
+
+
+        private static string CircleRefusal(string reference) =>
+            $"A layout set on this one, nearer or farther, names \"{reference}\" as its layout: layouts cannot be set on each other in a circle.";
+
+
+        // Whether the layout startReference names, or one of its layouts, nearer or farther, has a layout naming reference
+        private bool ChainNames(string startReference, string reference)
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (string next = Engine.LayoutOf(startReference); next != null && seen.Add(next); )
+            {
+                string master = Engine.GetLayoutOf(next)?.Master?.Trim();
+                if (string.Equals(master, reference, StringComparison.OrdinalIgnoreCase))
+                    return true;
+                next = Engine.LayoutOf(master);
+            }
+            return false;
+        }
+
+
+        // The layout with this key as its tab has it now, as a copy for the pages set on it; null when no tab has it open
+        private FlowPage OpenLayoutCopy(string key)
+        {
+            if (FindTab(DesignerNavigatorDocument.LayoutKind, key)?.Navigator.CurrentPage is not FlowPage layout)
+                return null;
+            var copy = FlatFolderRepository.DeserializeFromJSON<FlowPage>(FlatFolderRepository.SerializeToJSON(layout), layout.Name);
+            if (copy != null)
+            {
+                copy.Key = layout.Key ?? key;
+                copy.Name = layout.Name;
+            }
+            return copy;
+        }
+
+
+        // A layout's edits show on the pages and layouts open that are set on it, nearer or farther, once the edit is done
+        private void NavigatorDocumentChangedHandler(DesignerNavigator sender)
+        {
+            if (sender?.NavigatorDocument?.Kind == DesignerNavigatorDocument.LayoutKind)
+                ScheduleLayoutRefresh(sender.PageName);
+        }
+
+
+        private readonly HashSet<string> layoutsToRefresh = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+
+        private void ScheduleLayoutRefresh(string layoutKey)
+        {
+            // The first change since the last refresh schedules the next one
+            if (string.IsNullOrEmpty(layoutKey) || !layoutsToRefresh.Add(layoutKey) || layoutsToRefresh.Count > 1)
+                return;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(RefreshLayouts));
+        }
+
+
+        private void RefreshLayouts()
+        {
+            var changed = layoutsToRefresh.ToList();
+            layoutsToRefresh.Clear();
+            if (Engine == null)
+                return;
+            foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>().ToList())
+            {
+                if (doc.Kind == DesignerNavigatorDocument.PartKind || doc.Navigator.CurrentPage is not FlowPage page)
+                    continue;
+                var canvas = doc.Navigator.Designer?.Canvas;
+                if (canvas != null && changed.Any(key => !string.Equals(key, page.Key, StringComparison.OrdinalIgnoreCase) && Engine.IsOnLayout(page, key)))
+                    Engine.RefreshLayouts(page, canvas);
+            }
         }
 
 
@@ -1518,6 +1611,11 @@ namespace WireFlow
                 MessageBox.Show($"The project has a layout named \"{dlg.PageName}\" already.", "New Layout", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            if (ChainNames(dlg.LayoutName, dlg.PageName))
+            {
+                MessageBox.Show(CircleRefusal(dlg.PageName), "New Layout", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             Engine.CreateLayout(dlg.PageName, dlg.LayoutName);
             var layouts = Engine.Layouts;
             Layouts = new ObservableCollection<string>(layouts);
@@ -1642,6 +1740,9 @@ namespace WireFlow
             CurrentDesigner = navigator;
 
             NavigateToLayout(CurrentDesigner, href);
+            // Its edits, and its closing without saving them, show on the pages open that are set on it
+            navigator.DocumentChanged += NavigatorDocumentChangedHandler;
+            doc.Closed += (sender, e) => ScheduleLayoutRefresh(navigator.PageName);
 
             navigator.Focus();
             return doc;

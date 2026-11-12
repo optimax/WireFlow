@@ -249,6 +249,8 @@ namespace WireFlow
         public event Action<DesignerNavigator, string> PageNameChanged;
         public event Action<DesignerNavigator, FrameworkElement> SelectionChanged;
         public event Action<DesignerNavigator> ElementsChanged;
+        /// <summary>Raised when the DOM shown changes, by an edit, an undo or a redo, or is replaced (opened, reloaded).</summary>
+        public event Action<DesignerNavigator> DocumentChanged;
 
         public event Action<DesignerNavigator, string> Navigating;
         //public event Action<DesignerNavigator, string> NavigationFailed;
@@ -1090,6 +1092,7 @@ namespace WireFlow
                 history.NodeAdded += GiveIds;
             }
             OnHistoryStateChanged();
+            DocumentChanged?.Invoke(this);
         }
 
 
@@ -1158,6 +1161,7 @@ namespace WireFlow
                 }));
             }
             OnHistoryStateChanged();
+            DocumentChanged?.Invoke(this);
         }
 
 

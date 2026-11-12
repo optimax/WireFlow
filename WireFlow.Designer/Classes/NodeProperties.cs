@@ -35,6 +35,12 @@ namespace WireFlow
         /// </summary>
         public static Func<FlowPage, string, string> CheckLayout { get; set; }
 
+        /// <summary>
+        /// Checks a name or ID about to be given to a page or layout: the reason it cannot have it (a layout whose layout names it
+        /// would then make layouts set on each other in a circle), or null.
+        /// </summary>
+        public static Func<FlowPage, string, string> CheckLayoutReference { get; set; }
+
         /// <summary>Tells that a node's ID or a page's name changed (the node, the old and the new), for the links naming it.</summary>
         public static Action<FlowBase, string, string> LinkTargetChanged { get; set; }
 
@@ -357,6 +363,9 @@ namespace WireFlow
                     throw new ArgumentException($"The ID \"{id.Trim()}\" is already used in the project.");
                 bool isTarget = inner.Name == nameof(FlowBase.Id) || (inner.Name == nameof(FlowBase.Name) && node is FlowPage);
                 string before = isTarget ? inner.GetValue(node) as string : null;
+                if ((inner.Name == nameof(FlowBase.Id) || inner.Name == nameof(FlowBase.Name)) && node is FlowPage named && value is string reference
+                    && CheckLayoutReference?.Invoke(named, reference.Trim()) is string circle)
+                    throw new ArgumentException(circle);
                 if (inner.Name == nameof(FlowPage.Master) && node is FlowPage onLayout)
                 {
                     // None is null; a layout named is kept as typed, by name or by ID
