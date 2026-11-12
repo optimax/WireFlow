@@ -461,6 +461,8 @@ namespace WireFlow
             InputBindings.Add(new KeyBinding(NavigateForwardCmd, Key.Right, ModifierKeys.Alt));
             // F9: Navigate mode on or off (F5 is Reload from File)
             InputBindings.Add(new KeyBinding(NavigateModeCmd, Key.F9, ModifierKeys.None));
+            // Ctrl+L: View > Highlight Links
+            InputBindings.Add(new KeyBinding(HighlightLinksCmd, Key.L, ModifierKeys.Control));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
             InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
             // The panes as they were, before any tab opens: tabs are not kept in the layout
@@ -661,6 +663,7 @@ namespace WireFlow
                 WindowState = WindowState.Maximized;
             ApplyPropertyHighlight();
             ApplyNavigateBadgeColors();
+            ApplyLinkHighlightBrush();
         }
 
 
@@ -785,9 +788,55 @@ namespace WireFlow
             Config.SelectedPropertyColor = dialog.SelectedPropertyColor;
             Config.NavigateBadgeColor = dialog.NavigateBadgeColor;
             Config.NavigateBadgeTextColor = dialog.NavigateBadgeTextColor;
+            Config.LinkHighlightColor = dialog.LinkHighlightColor;
+            Config.LinkHighlightOpacity = dialog.LinkHighlightOpacity;
             ApplyPropertyHighlight();
             ApplyNavigateBadgeColors();
+            ApplyLinkHighlightBrush();
             PersistConfigSettings();
+        }
+
+
+        /// <summary>
+        /// View > Highlight Links (Ctrl+L, and the toolbar's toggle): every link on the pages open has a highlight laid over it,
+        /// in Design mode and in Navigate mode. Kept in the settings.
+        /// </summary>
+        public bool HighlightLinks
+        {
+            get => Config?.HighlightLinks == true;
+            set
+            {
+                if (Config == null || Config.HighlightLinks == value)
+                    return;
+                Config.HighlightLinks = value;
+                foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
+                    doc.Navigator.ShowLinkHighlights = value;
+                OnPropertyChanged(nameof(HighlightLinks));
+            }
+        }
+
+
+        // Tools > Options: the highlight laid over links, the color made partly transparent by the opacity chosen
+        private void ApplyLinkHighlightBrush()
+        {
+            Color color = Color.FromRgb(0x1E, 0x88, 0xE5);
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(Config.LinkHighlightColor))
+                    color = (Color)ColorConverter.ConvertFromString(Config.LinkHighlightColor);
+            }
+            catch (FormatException)
+            {
+                // A color typed into the settings file that is none: the default
+            }
+            double opacity = double.IsNaN(Config.LinkHighlightOpacity) ? 0.35 : Math.Clamp(Config.LinkHighlightOpacity, 0.0, 1.0);
+            color.A = (byte)Math.Round(color.A * opacity);
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            Application.Current.Resources["LinkHighlightBrush"] = brush;
+            // The highlights laid draw their brush once: they are laid again
+            foreach (var doc in DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>())
+                doc.Navigator.ScheduleLinkHighlights();
         }
 
 
@@ -1479,7 +1528,10 @@ namespace WireFlow
                     continue;
                 var canvas = doc.Navigator.Designer?.Canvas;
                 if (canvas != null && changed.Any(key => !string.Equals(key, page.Key, StringComparison.OrdinalIgnoreCase) && Engine.IsOnLayout(page, key)))
+                {
                     Engine.RefreshLayouts(page, canvas);
+                    doc.Navigator.ScheduleLinkHighlights();
+                }
             }
         }
 
@@ -1698,6 +1750,7 @@ namespace WireFlow
             navigator.PageName = href;
             navigator.SelectedDrawingTool = ModeDrawingTool;
             navigator.ShowNavigateBadge = IsNavigateMode;
+            navigator.ShowLinkHighlights = HighlightLinks;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1736,6 +1789,7 @@ namespace WireFlow
             navigator.PageName = href;
             navigator.SelectedDrawingTool = ModeDrawingTool;
             navigator.ShowNavigateBadge = IsNavigateMode;
+            navigator.ShowLinkHighlights = HighlightLinks;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -1772,6 +1826,7 @@ namespace WireFlow
             navigator.PageName = href;
             navigator.SelectedDrawingTool = ModeDrawingTool;
             navigator.ShowNavigateBadge = IsNavigateMode;
+            navigator.ShowLinkHighlights = HighlightLinks;
             DocumentPane.SelectedContentIndex = DocumentPane.Children.Count - 1;
             CurrentDesigner = navigator;
 
@@ -2774,6 +2829,7 @@ namespace WireFlow
         public ICommand CopyCmd { get; set; }
         public ICommand PasteCmd { get; set; }
         public ICommand NavigateModeCmd { get; set; }
+        public ICommand HighlightLinksCmd { get; set; }
         public ICommand NavigateBackCmd { get; set; }
         public ICommand NavigateForwardCmd { get; set; }
         /// <summary>Adds a layer above the current one (the Outline's caption and menu).</summary>
@@ -2860,6 +2916,7 @@ namespace WireFlow
             OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => !IsNavigateMode && CanOutlineDelete());
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => !IsNavigateMode && (CurrentDesigner?.CanUndo ?? false));
             NavigateModeCmd = new RelayCommand(o => IsNavigateMode = !IsNavigateMode);
+            HighlightLinksCmd = new RelayCommand(o => HighlightLinks = !HighlightLinks);
             NavigateBackCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Back()), o => IsNavigateMode && NavigationHistory.CanGoBack);
             NavigateForwardCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Forward()), o => IsNavigateMode && NavigationHistory.CanGoForward);
             CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);

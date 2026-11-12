@@ -252,6 +252,90 @@ namespace WireFlow
         /// <summary>Raised when the DOM shown changes, by an edit, an undo or a redo, or is replaced (opened, reloaded).</summary>
         public event Action<DesignerNavigator> DocumentChanged;
 
+
+        private bool showLinkHighlights;
+        private bool linkHighlightsScheduled;
+        private bool watchingVisibility;
+        // The overlays laid, with the adorner layer each is in, which takes it away even after its element left the page
+        private readonly List<(AdornerLayer Layer, Adorner Adorner)> linkHighlights = new List<(AdornerLayer, Adorner)>();
+
+        /// <summary>
+        /// Whether every element on the page that is a link, its own or its layouts', has a highlight laid over it (View >
+        /// Highlight Links). The highlights follow the page: they are laid again once each change is done.
+        /// </summary>
+        public bool ShowLinkHighlights
+        {
+            get => showLinkHighlights;
+            set
+            {
+                if (showLinkHighlights == value)
+                    return;
+                showLinkHighlights = value;
+                if (value && !watchingVisibility && Designer != null)
+                {
+                    // A tab behind another has no adorner layer: its highlights are laid when it comes to the front
+                    watchingVisibility = true;
+                    Designer.IsVisibleChanged += (sender, e) => ScheduleLinkHighlights();
+                }
+                ScheduleLinkHighlights();
+            }
+        }
+
+
+        /// <summary>Lays the link highlights again (or takes them away) once the dispatcher has nothing left but input.</summary>
+        public void ScheduleLinkHighlights()
+        {
+            if (linkHighlightsScheduled || Designer == null || (!showLinkHighlights && linkHighlights.Count == 0))
+                return;
+            linkHighlightsScheduled = true;
+            Designer.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(() =>
+            {
+                linkHighlightsScheduled = false;
+                UpdateLinkHighlights();
+            }));
+        }
+
+
+        /// <summary>The number of link highlights laid on the page.</summary>
+        public int LinkHighlightCount => linkHighlights.Count;
+
+
+        private void UpdateLinkHighlights()
+        {
+            foreach (var (layer, adorner) in linkHighlights)
+                layer.Remove(adorner);
+            linkHighlights.Clear();
+            var canvas = Designer?.Canvas;
+            if (!showLinkHighlights || canvas == null)
+                return;
+            foreach (var element in LinkedElements(canvas))
+            {
+                var layer = AdornerLayer.GetAdornerLayer(element);
+                if (layer == null)
+                    continue;
+                var adorner = new LinkHighlightAdorner(element);
+                layer.Add(adorner);
+                linkHighlights.Add((layer, adorner));
+            }
+        }
+
+
+        // The elements shown that are links, at any depth: a group's or stack panel's children, and the layouts' elements too
+        private static IEnumerable<FrameworkElement> LinkedElements(Panel panel)
+        {
+            foreach (var child in panel.Children.OfType<FrameworkElement>())
+            {
+                if (!child.IsVisible)
+                    continue;
+                // An element's link is its control's, which the engine keeps as its node has it
+                if (child is ILinkable linked && !string.IsNullOrWhiteSpace(linked.Href))
+                    yield return child;
+                if (child is Panel inner)
+                    foreach (var element in LinkedElements(inner))
+                        yield return element;
+            }
+        }
+
         public event Action<DesignerNavigator, string> Navigating;
         //public event Action<DesignerNavigator, string> NavigationFailed;
 
@@ -287,6 +371,7 @@ namespace WireFlow
         /// </summary>
         protected virtual void OnElementsChanged()
         {
+            ScheduleLinkHighlights();
             ElementsChanged?.Invoke(this);
         }
 
@@ -1093,6 +1178,7 @@ namespace WireFlow
             }
             OnHistoryStateChanged();
             DocumentChanged?.Invoke(this);
+            ScheduleLinkHighlights();
         }
 
 
@@ -1162,6 +1248,7 @@ namespace WireFlow
             }
             OnHistoryStateChanged();
             DocumentChanged?.Invoke(this);
+            ScheduleLinkHighlights();
         }
 
 

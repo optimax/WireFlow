@@ -20,6 +20,10 @@ namespace WireFlow.Views
         private readonly List<string> badgeColors = new List<string> { "#FFE8590C", "#FFD62828", "#FF1E88E5", "#FF2E9E44", "#FF8E44AD", "#FF00897B", "#FFF2B705", "#FF222222" };
         private readonly List<string> badgeTextColors = new List<string> { "#FFFFFFFF", "#FF000000" };
 
+        // The colors and opacities offered for the highlight laid over links
+        private readonly List<string> linkColors = new List<string> { "#FF1E88E5", "#FFF2B705", "#FF2E9E44", "#FFE8590C", "#FFD62828", "#FF8E44AD", "#FF00897B", "#FF808080" };
+        private readonly List<double> linkOpacities = new List<double> { 0.2, 0.3, 0.35, 0.4, 0.5, 0.6 };
+
 
         /// <summary>Whether the project open when the Designer closed opens again when it starts, as OK left it.</summary>
         public bool ReopenPreviousProject { get; private set; }
@@ -39,6 +43,12 @@ namespace WireFlow.Views
         /// <summary>The color of the badge's text, #AARRGGBB, as OK left it.</summary>
         public string NavigateBadgeTextColor { get; private set; }
 
+        /// <summary>The color of the highlight laid over links, #AARRGGBB, as OK left it.</summary>
+        public string LinkHighlightColor { get; private set; }
+
+        /// <summary>How opaque the highlight laid over links is, from 0 to 1, as OK left it.</summary>
+        public double LinkHighlightOpacity { get; private set; }
+
 
         public DesignerOptionsDialog(ConfigSettings settings)
         {
@@ -48,6 +58,8 @@ namespace WireFlow.Views
             SelectedPropertyColor = settings.SelectedPropertyColor;
             NavigateBadgeColor = settings.NavigateBadgeColor;
             NavigateBadgeTextColor = settings.NavigateBadgeTextColor;
+            LinkHighlightColor = settings.LinkHighlightColor;
+            LinkHighlightOpacity = settings.LinkHighlightOpacity;
             // In the theme's colors, as the color dialog
             SetResourceReference(BackgroundProperty, "NormalColorBrush");
             SetResourceReference(ForegroundProperty, "LightLightColorBrush");
@@ -82,6 +94,20 @@ namespace WireFlow.Views
             Choice(navigate, "NavigateBadgeTextColor", "Indicator text color",
                 ColorNames(badgeTextColors, new List<string> { "White", "Black" }, settings.NavigateBadgeTextColor, out index), index,
                 "The color of the words \"Navigate Mode\" on the badge.");
+            Choice(navigate, "LinkHighlightColor", "Link highlight color",
+                ColorNames(linkColors, new List<string> { "Blue", "Yellow", "Green", "Orange", "Red", "Purple", "Teal", "Gray" }, settings.LinkHighlightColor, out index), index,
+                "The color laid over every link on the pages while View > Highlight Links is on.");
+            var opacityNames = linkOpacities.ConvertAll(o => $"{o * 100:0}%");
+            index = linkOpacities.FindIndex(o => Math.Abs(o - settings.LinkHighlightOpacity) < 0.001);
+            if (index < 0)
+            {
+                // An opacity typed into the settings file, offered as it is
+                linkOpacities.Add(settings.LinkHighlightOpacity);
+                opacityNames.Add($"Custom ({settings.LinkHighlightOpacity * 100:0.#}%)");
+                index = linkOpacities.Count - 1;
+            }
+            Choice(navigate, "LinkHighlightOpacity", "Link highlight opacity", opacityNames, index,
+                "How much of the link's color covers the link: the page shows through the rest.");
             Finish();
         }
 
@@ -97,6 +123,10 @@ namespace WireFlow.Views
             NavigateBadgeColor = choice >= 0 && choice < badgeColors.Count ? badgeColors[choice] : badgeColors[0];
             choice = ChoiceOf("NavigateBadgeTextColor");
             NavigateBadgeTextColor = choice >= 0 && choice < badgeTextColors.Count ? badgeTextColors[choice] : badgeTextColors[0];
+            choice = ChoiceOf("LinkHighlightColor");
+            LinkHighlightColor = choice >= 0 && choice < linkColors.Count ? linkColors[choice] : linkColors[0];
+            choice = ChoiceOf("LinkHighlightOpacity");
+            LinkHighlightOpacity = choice >= 0 && choice < linkOpacities.Count ? linkOpacities[choice] : 0.35;
         }
 
 

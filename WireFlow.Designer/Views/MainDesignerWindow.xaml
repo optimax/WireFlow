@@ -192,6 +192,7 @@
                 <MenuItem Header="_Navigate Mode" IsCheckable="True" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}" InputGestureText="F9"/>
                 <MenuItem Header="_Back" Command="{Binding NavigateBackCmd}" InputGestureText="Alt+Left"/>
                 <MenuItem Header="_Forward" Command="{Binding NavigateForwardCmd}" InputGestureText="Alt+Right"/>
+                <MenuItem Header="_Highlight Links" IsCheckable="True" IsChecked="{Binding HighlightLinks, Mode=TwoWay}" InputGestureText="Ctrl+L"/>
                 <Separator/>
                 <!-- As in PDFTools; DesignerTheme applies the choice -->
                 <MenuItem Header="_Theme" x:Name="ThemeMenuItem">
@@ -308,6 +309,9 @@
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding NavigateForwardCmd}" ToolTip="Forward (Alt+Right)">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.forward}"/>
                 </Button>
+                <ToggleButton Style="{StaticResource ToolbarToggleStyle}" IsChecked="{Binding HighlightLinks, Mode=TwoWay}" ToolTip="Highlight Links (Ctrl+L): show where the links are">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.highlight-links}"/>
+                </ToggleButton>
                 <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCmd}" ToolTip="Undo (Ctrl+Z)">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.undo}"/>

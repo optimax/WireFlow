@@ -23,6 +23,12 @@ namespace WireFlow
         // Tools > Options: the badge over the page in Navigate mode, its color and the color of its text, #AARRGGBB
         public string NavigateBadgeColor { get; set; } = "#FFE8590C";
         public string NavigateBadgeTextColor { get; set; } = "#FFFFFFFF";
+        /// <summary>Whether the links on the pages are highlighted (View > Highlight Links).</summary>
+        public bool HighlightLinks { get; set; } = false;
+        /// <summary>The color of the highlight laid over links, #AARRGGBB, made partly transparent by <see cref="LinkHighlightOpacity"/>.</summary>
+        public string LinkHighlightColor { get; set; } = "#FF1E88E5";
+        /// <summary>How opaque the highlight laid over links is, from 0 to 1.</summary>
+        public double LinkHighlightOpacity { get; set; } = 0.35;
         // The project open when the settings were last saved, as the Designer closed; null when none was
         public string PreviousProject { get; set; }
         // Its tabs then, in their order, and the index of the one in front (-1: none), reopened with it
