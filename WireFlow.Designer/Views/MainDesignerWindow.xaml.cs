@@ -908,7 +908,7 @@ namespace WireFlow
             PersistConfigSettings();
             if (SomePageNeedsSaving())
             {
-                MessageBoxResult result = MessageBox.Show("Save changes to the project?", "Project was modified!", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+                MessageBoxResult result = AskYesNoCancel("Save changes to the project?", "Project was modified!");
                 if (result == MessageBoxResult.Yes)
                     SaveModifiedPages();
                 else if (result == MessageBoxResult.Cancel)
@@ -1084,7 +1084,8 @@ namespace WireFlow
 
         void NewProject()
         {
-            CloseProject();
+            if (!CloseProject())
+                return;
             SaveFileDialog dlg = new SaveFileDialog();
             dlg.Title = "Save Project File";
             dlg.DefaultExt = Engine.DefaultFileExt;
@@ -1115,11 +1116,29 @@ namespace WireFlow
         }
 
 
-        void CloseProject()
+        // Asks first about the changes not saved, as closing the window does: Yes saves them, No drops them, and Cancel keeps the
+        // project open and returns false, so that the caller stops. The tabs then close without asking each.
+        bool CloseProject()
         {
+            if (SomePageNeedsSaving())
+            {
+                MessageBoxResult result = AskYesNoCancel("Save changes to the project?", "Project was modified!");
+                if (result == MessageBoxResult.Cancel)
+                    return false;
+                if (result == MessageBoxResult.Yes)
+                    SaveModifiedPages();
+            }
             var tabs = new List<LayoutContent>(DocumentPane.Children);
-            foreach (var tab in tabs)
-                tab.Close();
+            closingProject = true;
+            try
+            {
+                foreach (var tab in tabs)
+                    tab.Close();
+            }
+            finally
+            {
+                closingProject = false;
+            }
             LayerOutline?.Clear();
             Pages?.Clear();
             Layouts?.Clear();
@@ -1128,6 +1147,33 @@ namespace WireFlow
             Engine?.CloseProject();
             FileName = null;
             //PropertyGrid.SelectedObject = null; NO!
+            return true;
+        }
+
+
+        // Set while CloseProject closes the tabs, having asked about the project as a whole
+        private bool closingProject;
+
+
+        /// <summary>
+        /// Asks a question answered Yes, No or Cancel: whether to save changes. A script hosting the window may answer it instead.
+        /// </summary>
+        internal Func<string, string, MessageBoxResult> AskYesNoCancel = (message, caption) =>
+            MessageBox.Show(message, caption, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+
+
+        // A tab with changes not saved asks before it closes, as AGENTS.md has dirty documents do: Yes saves them (its draft, which
+        // Save Project then makes the saved version), No drops them, and Cancel keeps the tab open.
+        private void DocumentClosingHandler(object sender, CancelEventArgs e)
+        {
+            if (closingProject || !(sender is DesignerNavigatorDocument doc) || doc.Navigator == null || !doc.Navigator.IsModified)
+                return;
+            string kind = doc.Kind == DesignerNavigatorDocument.LayoutKind ? "layout" : doc.Kind == DesignerNavigatorDocument.PartKind ? "part" : "page";
+            MessageBoxResult result = AskYesNoCancel($"Save changes to the {kind} \"{doc.Title}\"?", "WireFlow Designer");
+            if (result == MessageBoxResult.Yes)
+                doc.Navigator.SaveCurrentDocument();
+            else if (result == MessageBoxResult.Cancel)
+                e.Cancel = true;
         }
 
 
@@ -1170,7 +1216,8 @@ namespace WireFlow
         {
             if (string.IsNullOrWhiteSpace(fileName))
                 return;
-            CloseProject();
+            if (!CloseProject())
+                return;
 
             FlowProject project;
             string reason;
@@ -1747,6 +1794,7 @@ namespace WireFlow
             var doc = new DesignerNavigatorDocument(navigator) { Kind = DesignerNavigatorDocument.PageKind };
             DocumentPane.Children.Add(doc);
             navigator.NavigatorDocument = doc;
+            doc.Closing += DocumentClosingHandler;
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
@@ -1786,6 +1834,7 @@ namespace WireFlow
             var doc = new DesignerNavigatorDocument(navigator) { Kind = DesignerNavigatorDocument.LayoutKind };
             DocumentPane.Children.Add(doc);
             navigator.NavigatorDocument = doc;
+            doc.Closing += DocumentClosingHandler;
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
@@ -1823,6 +1872,7 @@ namespace WireFlow
             var doc = new DesignerNavigatorDocument(navigator) { Kind = DesignerNavigatorDocument.PartKind };
             DocumentPane.Children.Add(doc);
             navigator.NavigatorDocument = doc;
+            doc.Closing += DocumentClosingHandler;
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
