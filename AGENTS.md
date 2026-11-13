@@ -331,7 +331,7 @@ Update an `implementation.md` when the work changes a convention, requirement, d
 
 When working on an assigned task, work in a git branch specific to that task, with a name starting with `claude/`. Commit changes to git when you are done with a task. 
 
-When you commit your changes, collect all the files you worked on and commit them to **local repository only**. **You are allowed to push ==only== if the user explicitly instructs you to.**
+When you commit your changes, collect all the files you worked on and commit them to **local repository only**. **You are allowed to push ==only== if the user explicitly instructs you to.** Pushing `main` after each completed TO-DO task, as [`TO-DO-INSTRUCTIONS.md`](TO-DO-INSTRUCTIONS.md) says, is such an instruction.
 
 When committing your changes to local, identify yourself as Claude@<machineName> with email claude+<machineName>@anthropic.com (or the appropriate Agent name, if you are not Claude). <machineName> is the local Windows machine name.
 
