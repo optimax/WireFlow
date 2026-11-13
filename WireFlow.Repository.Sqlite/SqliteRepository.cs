@@ -409,6 +409,38 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
 
 
 
+        // Copies the file, drafts and archive included, to another .wf file (built under a temporary name and moved
+        // into place, as a new file is) and goes on with that one; the file it was is left as it is
+        public void SaveProjectAs(string projectFileName)
+        {
+            if (Project == null || ProjectFileName == null || string.IsNullOrWhiteSpace(projectFileName))
+                return;
+            string target = Path.GetFullPath(projectFileName);
+            if (IsFolderProject(target))
+                target = Path.ChangeExtension(target, FILE_EXTENSION);
+            else if (!string.Equals(Path.GetExtension(target), FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                target += FILE_EXTENSION;
+            if (string.Equals(target, Path.GetFullPath(ProjectFileName), StringComparison.OrdinalIgnoreCase))
+                return;
+            string temp = target + ".tmp";
+            try
+            {
+                File.Delete(temp);
+                using (var source = Connect(ProjectFileName, SqliteOpenMode.ReadOnly))
+                using (var copy = Connect(temp, SqliteOpenMode.ReadWriteCreate))
+                    source.BackupDatabase(copy);
+                File.Move(temp, target, true);
+            }
+            catch
+            {
+                try { File.Delete(temp); } catch { }
+                throw;
+            }
+            ProjectFileName = target;
+        }
+
+
+
         public byte[] LoadImage(string imageName)
         {
             return ExecuteScalar("SELECT Data FROM Images WHERE Name = $name", ("$name", imageName)) as byte[];

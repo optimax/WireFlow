@@ -536,6 +536,12 @@ namespace WireFlow
             Repository.SaveProject();
         }
 
+        // Copies the project to another file and goes on with that one (ProjectFileName)
+        public void SaveProjectAs(string projectFileName)
+        {
+            Repository.SaveProjectAs(projectFileName);
+        }
+
 
         public void RenamePage(string pageKey, string newName)
         {

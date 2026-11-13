@@ -1327,7 +1327,13 @@ namespace WireFlow
         {
             SaveFileDialog dlg = new SaveFileDialog();
             dlg.Title = "Save WireFlow Project As...";
+            dlg.DefaultExt = Engine.DefaultFileExt;
             dlg.Filter = Engine.DocumentFileFilters;
+            if (!string.IsNullOrWhiteSpace(FileName))
+            {
+                dlg.InitialDirectory = System.IO.Path.GetDirectoryName(FileName);
+                dlg.FileName = System.IO.Path.GetFileName(FileName);
+            }
             if (dlg.ShowDialog() != true)
                 return;
             SaveProjectFileAs(dlg.FileName);
@@ -1335,9 +1341,26 @@ namespace WireFlow
 
 
 
+        // Copies the project to the file named, goes on with that file, and saves every document open with changes
+        // there as a new revision, as Save All does; the file the project was in keeps what it had
         void SaveProjectFileAs(string projectFileName)
         {
-            //TODO: Save as new project
+            if (string.IsNullOrWhiteSpace(FileName))
+                return;
+            try
+            {
+                Engine.SaveProjectAs(projectFileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"The project could not be saved as {projectFileName}.\n\n{ex.Message}", "Save As",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            // The repository may have given the name its extension
+            FileName = Engine.ProjectFileName;
+            DoSaveProjectFile();
+            RecentFileList.InsertFile(FileName);
         }
 
 

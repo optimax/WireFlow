@@ -62,6 +62,8 @@ namespace WireFlow
 
 
         void SaveProject();
+        // Copies the project, as it is in its file, to another file, which becomes the project's file
+        void SaveProjectAs(string projectFileName);
 
 
         ImportImageResult CanImportImage(string fileName);

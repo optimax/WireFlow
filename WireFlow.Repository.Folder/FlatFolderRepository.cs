@@ -407,6 +407,14 @@ namespace WireFlow
 
 
 
+        // A folder project is only read, to be converted into a .wf file
+        public void SaveProjectAs(string projectFileName)
+        {
+            throw new NotSupportedException("A folder project cannot be saved under another name.");
+        }
+
+
+
         public void SaveProject()
         {
             string fileName;
