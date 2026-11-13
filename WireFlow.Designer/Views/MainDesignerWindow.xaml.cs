@@ -473,7 +473,7 @@ namespace WireFlow
             InputBindings.Add(new KeyBinding(ActualSizeCmd, Key.D0, ModifierKeys.Control | ModifierKeys.Shift));
             InputBindings.Add(new KeyBinding(FitPageCmd, Key.D0, ModifierKeys.Control));
             // Back to the Select tool, wherever the keyboard is; the designer's own Esc also ends a drag and clears the selection
-            InputBindings.Add(new KeyBinding(new RelayCommand(o => SelectDefaultTool()), Key.Escape, ModifierKeys.None));
+            RegisterEscape();
             // The panes as they were, before any tab opens: tabs are not kept in the layout
             RestoreDockLayout();
             // Once the window shows, so that it is there while the project loads and behind any message about it
@@ -549,6 +549,42 @@ namespace WireFlow
         {
             if (Config.SelectAfterDrawing)
                 Dispatcher.BeginInvoke(new Action(SelectDefaultTool), System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+
+        // The Designer's window, which Esc pressed in it or in one of its floating panes goes to
+        private static MainDesignerWindow escapeWindow;
+        private static bool escapeRegistered;
+
+
+        /// <summary>
+        /// Esc returns to the Select tool wherever the keyboard is: in any pane, docked or floating, and even when the control with
+        /// the keyboard used the key itself (a list ending a rename, a drop-down closing). In Navigate mode it leaves the mode.
+        /// A key binding of the window would miss both a key used and a floating pane, which is a window of its own.
+        /// </summary>
+        private void RegisterEscape()
+        {
+            escapeWindow = this;
+            if (escapeRegistered)
+                return;
+            escapeRegistered = true;
+            EventManager.RegisterClassHandler(typeof(Window), Keyboard.KeyDownEvent, new KeyEventHandler((sender, e) =>
+            {
+                var window = escapeWindow;
+                if (e.Key != Key.Escape || Keyboard.Modifiers != ModifierKeys.None || window == null)
+                    return;
+                if (sender == window || sender is OptimaxTools.Dock.Controls.LayoutFloatingWindowControl)
+                    window.EscapePressed();
+            }), true);
+        }
+
+
+        private void EscapePressed()
+        {
+            if (IsNavigateMode)
+                IsNavigateMode = false;
+            else
+                SelectDefaultTool();
         }
 
 
