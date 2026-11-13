@@ -258,6 +258,16 @@ namespace WireFlow
         public FlowProject NewProject(string docName)
         {
             Project = Repository.NewProject(docName);
+            // The first page, which the repository makes, gets an ID made of its name, as CreatePage gives a page one
+            foreach (string key in Project == null ? Enumerable.Empty<string>() : Repository.Pages.ToList())
+            {
+                var page = Repository.GetPage(key);
+                if (page == null || !string.IsNullOrWhiteSpace(page.Id))
+                    continue;
+                page.Id = NewDocumentId(page.Name);
+                Repository.SavePage(page);
+                NoteIdGiven(page.Id, key);
+            }
             return Project;
         }
 

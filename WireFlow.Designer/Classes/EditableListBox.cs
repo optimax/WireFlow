@@ -87,8 +87,10 @@ namespace WireFlow
         {
             if (!IsEditing)
                 return;
-            editSuccess?.Invoke(oldValue, newValue);
+            // The edit ends first, so that what the success does to the list (draw its items again) meets no edit in progress
+            var success = editSuccess;
             CancelEdit();
+            success?.Invoke(oldValue, newValue);
         }
 
 

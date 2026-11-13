@@ -1467,10 +1467,11 @@ namespace WireFlow
                 if (doc.Navigator.CurrentPage is FlowPage page && page != settingNode)
                     page.Name = newName;
             }
+            // The list shows names through PageNameConverter: its items are drawn again, keeping the one selected. Replacing the
+            // item with the same key kept the old name and left the list with two items selected.
             var list = layout ? Layouts : Pages;
-            int index = list?.IndexOf(key) ?? -1;
-            if (index >= 0)
-                list[index] = key;
+            if (list != null && list.Contains(key))
+                System.Windows.Data.CollectionViewSource.GetDefaultView(list)?.Refresh();
             // A name set in Properties carries what names it there, once the node has it (NodeProperties.LinkTargetChanged)
             if (settingNode == null)
                 RetargetLinks(layout ? Engine.GetMasterPage(key) : null, oldName, newName);
