@@ -187,7 +187,7 @@ The settings file is not offered for editing from the dialog (no Edit Settings F
 
 ## Publishing
 
-`publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published. The script empties the folder first (see "Known traps"), and stops if it cannot, for example while the published Designer is running.
+`publish-locally.bat` publishes the WireFlow Designer, built in Release mode for `win-x64`, to `c:\Programs\Optimax\WireFlow`. The output is framework-dependent: the machine running it needs the .NET 10 Desktop Runtime (x64). The Browser is not published. The script publishes into an empty staging folder, `WireFlow.new` (see "Known traps"), and only then swaps it in for the published folder, so a failed build leaves the previous version in place. While the published Designer is running the swap fails: the script says so and leaves the new build in `WireFlow.new`.
 
 ## Third-party components and licensing
 
