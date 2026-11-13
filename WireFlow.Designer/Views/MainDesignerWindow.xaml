@@ -167,6 +167,7 @@
                 <MenuItem Header="_New..." Command="{Binding NewFileCmd}"/>
                 <MenuItem Header="_Open..." Command="{Binding OpenFileCmd}"/>
                 <MenuItem Header="_Save" Command="{Binding SaveFileCmd}" InputGestureText="Ctrl+S"/>
+                <MenuItem Header="Save A_ll" Command="{Binding SaveAllCmd}" InputGestureText="Ctrl+Shift+S"/>
                 <MenuItem Header="Save _As..." Command="{Binding SaveFileAsCmd}"/>
                 <MenuItem Header="Reload from File" Command="{Binding ReloadFromFileCmd}" InputGestureText="F5"/>
                 <MenuItem Header="_Close" Command="{Binding CloseFileCmd}"/>

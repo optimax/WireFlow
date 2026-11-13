@@ -447,7 +447,9 @@ namespace WireFlow
             KeyBinding keyBinding = new KeyBinding(ReloadFromFileCmd, Key.F5, ModifierKeys.None);
             InputBindings.Add(keyBinding);
             // File > Save
+            // File > Save: the page, layout or part in front; File > Save All: every one open, and the project
             InputBindings.Add(new KeyBinding(SaveFileCmd, Key.S, ModifierKeys.Control));
+            InputBindings.Add(new KeyBinding(SaveAllCmd, Key.S, ModifierKeys.Control | ModifierKeys.Shift));
             // Edit > Undo, Redo; a text box with the keyboard undoes its own typing first, as its own bindings come before the window's
             InputBindings.Add(new KeyBinding(UndoCmd, Key.Z, ModifierKeys.Control));
             InputBindings.Add(new KeyBinding(RedoCmd, Key.Y, ModifierKeys.Control));
@@ -2876,6 +2878,7 @@ namespace WireFlow
         public ICommand SaveFileAsCmd { get; set; }
         public ICommand ExportPageAsCmd { get; set; }
         public ICommand SaveFileCmd { get; set; }
+        public ICommand SaveAllCmd { get; set; }
         public ICommand ReloadFromFileCmd { get; set; }
         public ICommand CloseFileCmd { get; set; }
 
@@ -2966,7 +2969,10 @@ namespace WireFlow
             OpenFileCmd = new RelayCommand(o => OpenProject());
             SaveFileAsCmd = new RelayCommand(o => SaveProjectFileAs(), o => !string.IsNullOrWhiteSpace(FileName));
             ExportPageAsCmd = new RelayCommand(o => ExportPageAs(), o => CurrentCanvas != null);
-            SaveFileCmd = new RelayCommand(o => SaveProjectFile(), o => !string.IsNullOrWhiteSpace(FileName));
+            // Save: the tab in front only, as what it is, as its draft (as Yes does when a tab closes); on while it has changes
+            SaveFileCmd = new RelayCommand(o => CurrentDesigner?.SaveCurrentDocument(), o => CurrentDesigner?.IsModified ?? false);
+            // Save All: every tab open with changes, then the project, committed as a new revision (Save Project)
+            SaveAllCmd = new RelayCommand(o => SaveProjectFile(), o => !string.IsNullOrWhiteSpace(FileName));
             ReloadFromFileCmd = new RelayCommand(o => ReloadProject(), o => !string.IsNullOrWhiteSpace(FileName));
             CloseFileCmd = new RelayCommand(o => CloseProject(), o => !string.IsNullOrWhiteSpace(FileName));
 
