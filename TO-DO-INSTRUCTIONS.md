@@ -14,11 +14,11 @@ When you encounter a task marked [PAUSE], do not process this task, pause the ex
 
 When reading TO-DO, read it in its entirety and analyze which tasks are related, so that you don't make design decisions that you are going to regret further down the line. Understand that some tasks may be related to other tasks and choices you make for one may conflict with the best choices for a future task.
 
-Do not hesitate to ask the user any questions when something is unclear, or when you are faced with a design decision. When you need to ask user a clarifying question, do not pop a modal blocking dialog in the interactive chat. Ask it by placing it in `TO-DO.md`, underneath the relevant task description, formatted in **bold**, and continue with other TO-DOs in the meantime, while waiting for user's answers.
+Do not hesitate to ask the user any questions when something is unclear, or when you are faced with a design decision. When you need to ask user a clarifying question, **do not** pop a modal blocking dialog in the interactive chat. Ask it by placing it in `TO-DO.md`, underneath the relevant task description, formatted in **bold**, and continue with other TO-DOs in the meantime, while waiting for user's answers.
 
 When working on a task, create and work in a temporary git branch off of `main` named such that its relation to the task is obvious. 
 
-When you are truly done and complete with each task, commit, pull `main`, merge your branch into the main as a fast-forward (`git merge --ff-only`; if `main` has moved on in the meantime, first rebase your branch onto it with `git rebase main`, reconciling any conflicts), so that the history stays a straight line with no merge commits, delete your working git branch, and mark that task [DONE] in the TO-DO itself. 
+When you are truly done and complete with each task, commit, pull `main`, merge your branch into the main as a fast-forward (`git merge --ff-only`; if `main` has moved on in the meantime, first rebase your branch onto it with `git rebase main`, reconciling any conflicts), so that the history stays a straight line with no merge commits, delete your working git branch, push `main` to `origin` (a fast-forward only, never forced: if `origin/main` has moved on, fetch it and rebase `main` onto it first), and mark that task [DONE] in the TO-DO itself. 
 
 Do not mark tasks that have active/unanswered questions on them as [DONE] — mark them as [QUESTION]. Make sure answered questions are not formatted bold any more. 
 

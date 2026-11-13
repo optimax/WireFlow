@@ -306,3 +306,227 @@ Done. Every tool in the Tools list has a glyph in front of its title: Select (th
 - **XAML:** as you asked, they were converted once into `WireFlow.Designer\Xaml\ToolGlyphs.xaml`, and the Designer uses that alone; it reads no SVG. The converter, `Documents\make-tool-glyphs.cs`, stays beside `make-icons.ps1`. To change a glyph or add one, edit or add the SVG and run `dotnet run Documents\make-tool-glyphs.cs` from the repository root; it checks that WPF reads each glyph and that it stays on its grid.
 - **Look:** each glyph is drawn 18 px square in its row's own text color, so it is white in Dark, black in Light and Classic, and follows a selected row.
 
+## [DONE] BUG: Background Not Saved
+
+User-defined page background does not survive project save/reload.
+
+Fixed. A page had no background of its own in the file: every page was drawn in the project's background, so the one you gave the page in Properties was never saved. Now a page, or a layout, keeps the Background you give it (the canvas in Properties, with nothing selected), and it shows again after save and reload, in the Designer and in the Browser.
+
+- A page whose background you leave alone stores none, and keeps following its layout's background, or else the project's. A background given to a layout reaches the pages that use it.
+- Clearing a page's Background in Properties makes it follow its layout or the project again.
+- Existing files need no conversion: their pages simply have no background of their own yet.
+
+## [DONE] Pages Line Spacing
+
+Pages list's lines are too far apart. Make them the same spacing as Tools palette. The same applies to Layouts, Parts, Images, and History.
+
+Done. Pages, Layouts, Parts, Images and History now have the Tools palette's row spacing: 27 px rows in Dark and Light, as a menu item, instead of the theme's 45 px, and Classic's own compact 23 px rows. All six lists share one piece of code, so they stay alike, also after a change of theme and as new rows appear.
+
+History is still empty: nothing fills it yet. Its rows will be as compact when something does.
+
+## [DONE] BUG: StackPanel Crashes App
+
+Place a StackPanel on a page. Check its `IsItemsHost` property. Click on the panel — the app crashes.
+
+Fixed. `IsItemsHost` is a WPF panel property that hands the panel's children to a list control (an `ItemsControl`). A page element is in none, so once it was checked WPF refused every access to the panel's children ("A panel with IsItemsHost="true" is not nested in an ItemsControl"), and a click, which reads them, crashed the Designer. It means nothing for a wireframe, so Properties no longer lists it: not for stack panels, nor for groups, layers, parts and the page itself, which are panels too and crashed the same way.
+
+## [DONE] Ctrl+S
+
+Make it a shortcut for File|Save.
+
+Done. Ctrl+S is File → Save, and the menu shows it. As the menu does, it saves every modified page, layout and part, and the project; a project not saved yet asks for a file name first.
+
+## [DONE] Esc Cancel Specialized Tool
+
+Pressing Esc should revert the tools selection to Select. 
+
+Done. Esc chooses the Select tool again, from any other tool, wherever the keyboard is in the window: the page, the Tools list, Properties. On the page it also still does what it did: it ends a drag and clears the selection.
+
+## [DONE] Reopen Previous
+
+"Reopen previous project on startup" option should ensure that not only the project re-opens, but all the tabs within that project that were open get re-opened.
+
+Done. With the option on, the Designer reopens the project with the tabs that were open when you closed it: pages, layouts and parts, in the same order, with the same tab in front.
+
+- A tab whose page, layout or part has since been deleted or renamed is skipped.
+- If none is left (or you had closed them all), the home page opens, as before.
+- Tabs dragged out into a floating window are not remembered.
+
+## [DONE] Text Alignment Custom Editor
+
+Text Alignment Custom Editor should not be embedded into the property grid directly. It should be invoked via `...` button and shown in a popup like any other property. Only the value should be shown in the property grid directly.
+
+Done. The TextAlignment row of a text or a box now shows only the value: where the text lies in its frame, named as the 9-point chooser names it (Top-Left, Top, Top-Right, Left, Center, Right, Bottom-Left, Bottom, Bottom-Right). Its `...` button opens the chooser in a small dialog, as Background opens the color dialog; Ctrl+Enter or a double click on the value open it too. The dialog is laid out as PDFTools shows the chooser in Add Margins and Resize Pages: the chooser in a "Text position" group, its label at the right, then OK (Enter) and Cancel (Esc). OK moves the text; Cancel leaves it.
+
+- Justified text shows as, for example, "Top-Left (justified)", and stays justified unless you choose another position.
+
+## [DONE] All Tools Derive from BaseDesignerObject
+
+Make all element tools, including Text, Rectangle, Ellipse, derive from BaseDesignerObject, exposing  (forwarding) the properties that make sense, so that all can support HRef property, in preparation for the next task.
+
+Done. Text, Rectangle and Ellipse are now BaseDesignerObjects, as Box and Image already were: each is a small control holding its WPF shape, and Properties shows the shape's properties that make sense (Fill, Stroke, StrokeThickness, RadiusX/RadiusY for a rectangle; Text, TextAlignment, TextVerticalAlignment, TextWrapping, TextPadding, LineHeight, Background, Foreground and the font for a text) and Href, under Navigation.
+
+Found and fixed on the way:
+
+- Ellipses were saved but never drawn again: a page with an ellipse showed a pink "unknown object" in its place after reload, and saving that page again turned it into a rectangle. Ellipses now load as ellipses.
+- Duplicate copies an element through XAML, which would also write its inner shape; it no longer does, so each copy builds its own shape, and changing the copy's properties changes what it shows (checked for texts, rectangles, ellipses and boxes).
+- A text's padding and a rectangle's saved alignments were lost on save; they are kept now.
+
+## Href on All Elements
+
+Ensure that a hyperlink target (Href) can be defined on any element (at least any that has a visual extent): Text, Rectangle, etc., not only on Image or Box.
+
+Done. Every element with an extent now has Href, under Properties → Navigation: Text, Rectangle, Ellipse, Box and Image (from the task above), and also groups, stack panels and part references. Layers have none.
+
+- A click follows the innermost link around what you clicked: an element's own link first, else that of the group, stack panel or part it is in. So you can link a whole group (say, a card) and still give one element inside it a different link.
+- The Browser and the Designer's Navigate tool behave alike.
+- Links are saved with the page; existing files need no conversion.
+
+## [DONE] Support Undo/Redo
+
+Redesign the app, so that unlimited Undo/Redo is supported. Undo history must be kept since the last save.
+
+Done. Edit → Undo (Ctrl+Z) and Redo (Ctrl+Y or Ctrl+Shift+Z), without limit, for the page or layout in front, back to when it was opened or last saved.
+
+- The history records the DOM itself: every change of every node of the page, and every element added, removed or moved. So every edit can be undone, whatever made it: drawing, moving, resizing, aligning, sizing, duplicating, deleting, grouping, ungrouping, ordering, and values set in Properties.
+- A drag of the mouse or a resize is one step, however far it goes; any other edit is one step, even when it moves many elements (aligning ten elements is undone at once). Each arrow key press is a step.
+- Each open tab has its own history. Saving clears it, as does opening another page in the tab. Undoing every edit since the save makes the page unmodified again.
+- In a text box (in Properties, say), Ctrl+Z undoes the typing in the box, as usual.
+- Tested with a script (27 checks), not by hand in the running Designer: please try Undo and Redo after the edits above.
+
+## [DONE] BUG: TextAlignment vs TextHorizonalAlignment, TextVerticalAlignment
+
+TextAlignment needs to be in sync with TextHorizonalAlignment and TextVerticalAlignment. When changing one of TextHorizonalAlignment, or TextVerticalAlignment, TextAlignment's highlight remains where it was. In custom editor shown only on demand, it should not be a problem, but the value should be in sync with the other two.
+
+Done. The TextAlignment row follows the other two as they change: set TextVerticalAlignment to Bottom, and it reads Bottom-Left at once; the dialog always opens at the current position.
+
+- On a box, changing TextHorizontalAlignment now moves the lines with the text (TextAlignment follows: Left, Center or Right), so the two no longer disagree. Stretch leaves TextAlignment as it is.
+- A text (not a box) now lists its TextVerticalAlignment under Appearance too, as a box does; before, only the chooser could set it.
+- Saved boxes keep their own TextAlignment when loaded, so existing pages look as they did.
+
+BUG: TextHorizontalAlignment is no longer even shown.
+
+Fixed. A box listed it (under Text, at the end), but a text did not. Both now do, and on both, setting it moves the lines with it (TextAlignment follows: Left, Center or Right), and the TextAlignment row and its chooser follow it; the chooser sets it too.
+
+## [DONE] BUG: Properties of Multiple Objects
+
+When multiple objects are selected, the Properties grid should show the properties that all of the selected objects have in common, not the last selected object's properties. Changing a value of such property should apply to all the selected objects.
+
+Done. With several objects selected, Properties shows the rows that all of them have (a rectangle and a text share Href, position, size and Transparency; two texts share all of a text's rows).
+
+- A value shows where all the objects have the same one, and is empty where they differ.
+- A value set is set on all of them, and one Undo takes it back from all.
+- Name is left out: setting it would give all of them the same name.
+- Rows are matched by the name they are shown under, so a text's Background (its fill) is not shared with a rectangle's Fill.
+- Tested with a script, not by hand in the running Designer.
+
+## [DONE] Color Selection Dialog
+
+Color Selection Dialog needs a number of predefined swatches near the bottom: Black, White, Light Gray (#dddddd), and Gray (#999999). Additionally, it needs to remember and show swatches for the last 10 colors selected. Clicking such a swatch would set the dialog's color to what the swatch represents. 
+
+![pasted-5](<TO-DO.images/pasted-5.png>)
+
+Remove the above-highlighted control in the middle.
+
+Done. Under the color wheel and sliders: a Standard row (black, white, light gray #dddddd, gray #999999) and a Recent row with the last 10 colors chosen with OK, the latest first, each shown once. A click on a swatch makes it the dialog's color; its tooltip gives its #AARRGGBB; translucent colors show over a checkerboard. The recent colors are kept in the Designer's settings, from run to run. The two-color control in the middle is gone.
+
+## [DONE] Convert to a DOM (Both)
+
+This applies to both the Designer and Browser. 
+
+Currently, the WPF element tree itself is the Designer’s working model. The Flow* data model only exists while a page is being loaded or saved. Redesign the flow so that the DOM becomes the source of truth and the ultimate authority about the model, independent of its presentation. Treat WPF as a presentation layer only, one of possibly many. The saved data is another "presentation". Make sure that WPF-specific details do not spill into other layers or services.
+
+Plan, in phases; each one is committed on its own, with the Designer and the Browser working after it:
+
+1. A WPF-free DOM. The Flow* classes (`WireFlow.Types`) become the DOM: they lose every WPF type (alignments, text wrapping, font stretch, image stretch, stack direction become WireFlow's own values with the same names, so `.wf` files stay exactly as they are), and the project no longer uses WPF.
+2. Observable DOM. Nodes announce changes to their properties and children, and know their parent.
+3. WPF as a view of the DOM. The Designer keeps each open page, layout and part as its DOM; the WPF elements are drawn from it and follow its changes; saving writes the DOM, not the WPF tree.
+4. Edits go through the DOM. Properties shows the selected element's node; drawing, moving, resizing, deleting, duplicating, grouping and ordering change nodes, and the view follows. This is also what Undo/Redo (the next task) will record.
+5. The Browser draws the DOM through the same view, read-only.
+
+Done, all five phases; the questions below were answered as the work had assumed. Phases 3 to 5 were done together rather than one by one: with saving writing the DOM, an edit still made on the WPF elements would have been lost, so the view following the DOM and the Designer editing it had to arrive at once.
+
+- The DOM is the model. The Designer keeps each open page or layout as its DOM, and saves the DOM; the Browser draws the DOM it reads. The WPF elements are a view: each is tied to its node and follows it, in place, so the selection stays on it; adding, removing or reordering a layer's or group's nodes adds, removes or reorders their elements.
+- Every edit changes nodes: drawing, moving (mouse and arrow keys), resizing, aligning, distributing, stacking, sizing, duplicating, deleting, grouping, ungrouping and ordering. Undo/Redo can record them at the DOM.
+- Properties shows the selected element's own properties for its kind (a rectangle no longer lists fonts, margins or cursors), under the names it had (TextPadding, BorderColor, TextVerticalAlignment, ...), and the page's size and background when nothing is selected. Colors keep the swatch and the color dialog; the text position keeps its chooser.
+- Saving no longer loses detail: color names stay names, a rectangle without a stroke keeps none, a group's size is not fixed. All 8 pages of the sample project, drawn and saved unchanged, write the same JSON.
+- Tested with scripts (view and Properties: 26 checks; the Designer's operations: 18 checks), not by hand in the running Designer: please try drawing, moving, resizing, grouping and Properties.
+
+Q1: I am making the existing Flow* classes the DOM (observable and WPF-free), rather than adding a separate set of DOM classes beside them, and keeping the `.wf` format unchanged. OK?
+
+A1: Yes.
+
+Q2: After phase 4, Properties shows an element's own properties (Fill, Stroke, Text, Href, position and size, font, alignment and so on), no longer every WPF property of the control that draws it (Margin, Cursor, IsHitTestVisible, Focusable and others, which are not saved anyway). OK?
+
+A2: Yes. We may have to adjust and show specific additional properties later on.
+
+Q3: Colors stay text in the DOM (`#AARRGGBB` or a color name), as the files keep them; the color dialog keeps working on them.
+
+A3: Yes.
+
+## [DONE] BUG: Image Crashes App
+
+Placing an image object on a page crashes the app.
+
+Fixed. The image dialog still asked for a style of the old look, which the themes no longer have, so it failed as it opened, and the Designer with it. It now opens, lists the project's images, and the image chosen is placed.
+
+- A placed image now keeps its Uniform stretch: it was saved as None and drawn at its natural size.
+- A project without images opens the dialog with an empty list rather than failing.
+- Checked with a script that builds the dialog and places an image; not by hand in the running Designer.
+
+## [DONE] Stack Panel Content in Outline
+
+A Rectangle inside a StackPanel does not show up in the Outline. Any objects placed inside a StackPanel should be listed and be selectable in the Outline.
+
+Done. The Outline lists the elements of stack panels, in their order in the panel, and of groups (topmost first, as a layer's), and a click there selects any of them.
+
+## [DONE] Stack Panel HitTest
+
+An object inside StackPanel cannot be selected by clicking on it. The entire panel is being selected on click, instead of individual objects.
+
+Expected: When an object inside the StackPanel is clicked on, that object becomes selected. Pressing Esc should unselect object but select it's parent/owner container. Eventually, the Page  itself becomes selected.
+
+Done. A click on an object in a stack panel selects that object; Esc selects the panel (or group) holding it, and Esc on a top-level object leaves nothing selected, which shows the page in Properties. So that a panel full of objects can still be moved with the mouse: once the panel is selected, a drag that starts on one of its objects moves the panel, and a click without a drag selects the object. Objects in a group are still selected as their group on the canvas (they are meant to move as one); the Outline selects them one by one. Delete, duplicate and the order commands work on a selected object in a panel; dragging it or the arrow keys do not move it, since the panel places it. Checked by a script that drives the Designer's mouse handlers; not by hand.
+
+## [DONE] Avoid Rebuilding Entire Outline
+
+Avoid rebuilding the entire outline on every change. Rebuild/update only the elements of the outline that are affected by the change. Make outline virtualizing, so that when the tree gets long and complicated, it renders fast.
+
+Done. After a change the Outline is brought up to date in place: the entries of the elements that stay are kept as they are (expanded or collapsed, selected), and only the entries of elements added, removed or moved change. A rename (in Properties, or by undo) shows in its entry at once, without any update of the tree. The tree is virtualizing: only the entries in view are drawn. Checked by a script against a sample project; not by hand.
+
+## [DONE] TextHorizontalAlignment
+
+Is missing from Text and Box elements.
+
+Done with the bug above: texts and boxes both list TextHorizontalAlignment under Text, in sync with TextAlignment.
+
+## [DONE] NodeProperties
+
+![pasted-3](<TO-DO.images/pasted-3.png>)
+
+The Properties grid should identify the type of the currently selected node, instead of saying "NodeProperties" for everything.,
+
+Done. The header names what is selected: Rectangle, Ellipse, Text, Box, Image, Group, Stack Panel, Part, Page or Layout, followed by its name; with several selected, "3 objects". Checked by a script; not by hand.
+
+## [DONE] Property Grid and Arrow Keys
+
+Up and Down arrows should navigate up and down in the property grid, like in a spreadsheet.
+
+Done. Up and Down move to the value of the row above or below, across categories, scrolling as needed; a value typed is set as you leave it, as with Tab. An open drop-down list keeps Up and Down to choose in it, and so does a text of several lines while there are lines to move to. (On the way, the ID row from the item above did not show; it does now.) Checked by a script that presses the keys in a grid; not by hand.
+
+## [DONE] Remember Window Position and Panes
+
+Make sure that the window position, layout (the open panes), and the splitter positions are remembered from run to run.
+
+Done. The Designer saves, as it closes, the window's place and size (and whether it is maximized), and the docking layout: which panes are docked where, floating, auto-hidden or closed, and the sizes the splitters give them. The next run opens the window where it was, before it shows, and puts the panes back. A window last placed on a screen no longer attached opens where Windows puts it. The restore of the old window position never worked (its test was the wrong way round); it does now. The History pane had the same pane ID as Layouts, which a saved layout cannot tell apart; it has its own now. A script saved a layout and read it back (sizes and a closed pane survive); the real window was not tried by hand.
+
+BUG: Splitter positions are note being saved.
+
+The Designer you tried was the build published before this change (19:45): the settings it wrote at 21:26 hold no layout. The build published at 21:48 saves the panes and the sizes the splitters give them (a drag of a splitter sets the size the layout keeps, and a script showed sizes surviving a save and a restore). Please try that one: drag a splitter, close the Designer, start it again.
+
+## [DONE] BUG: Float a Pane Crashes App
+
+Setting a pane to Float, crashes the application.
+
+Fixed. The crash came as a floating pane was dragged, when the Designer shows the drop targets: WPF's Fluent theme gives every window shown without a style of its own Fluent's plain window look, which replaced the look of the docking windows, so the drop-target window lacked its parts. The floating windows were affected too. The docking windows now name their own look before they show. Checked by a script that reproduced the crash with the Designer's themes and then, fixed, showed the drop targets and a floated pane in their own look, light and dark; not by hand.
+
