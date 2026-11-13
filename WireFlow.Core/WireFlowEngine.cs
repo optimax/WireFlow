@@ -542,6 +542,12 @@ namespace WireFlow
             Repository.SaveProjectAs(projectFileName);
         }
 
+        // Writes the project's own values (Project), such as its Navigate mode colors, into its file at once
+        public void SaveProjectSettings()
+        {
+            Repository.SaveProjectSettings();
+        }
+
 
         public void RenamePage(string pageKey, string newName)
         {

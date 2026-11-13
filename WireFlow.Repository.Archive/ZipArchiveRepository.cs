@@ -112,6 +112,11 @@ namespace WireFlow.Repository.Archive
             throw new NotImplementedException();
         }
 
+        public void SaveProjectSettings()
+        {
+            throw new NotImplementedException();
+        }
+
         public void RenamePage(string oldName, string newName)
         {
             throw new NotImplementedException();

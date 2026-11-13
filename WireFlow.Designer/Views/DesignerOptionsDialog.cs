@@ -57,16 +57,20 @@ namespace WireFlow.Views
         public double LinkHighlightOpacity { get; private set; }
 
 
-        public DesignerOptionsDialog(ConfigSettings settings)
+        /// <summary>
+        /// The options of the settings; the Navigate mode colors are the project's when one is open (null: none), its own or, where
+        /// it has none, the Designer's, which with no project open are the colors new projects start with.
+        /// </summary>
+        public DesignerOptionsDialog(ConfigSettings settings, FlowProject project = null)
         {
             ReopenPreviousProject = settings.ReopenPreviousProject;
             SelectAfterDrawing = settings.SelectAfterDrawing;
             HighlightSelectedProperty = settings.HighlightSelectedProperty;
             SelectedPropertyColor = settings.SelectedPropertyColor;
-            NavigateBadgeColor = settings.NavigateBadgeColor;
-            NavigateBadgeTextColor = settings.NavigateBadgeTextColor;
-            LinkHighlightColor = settings.LinkHighlightColor;
-            LinkHighlightOpacity = settings.LinkHighlightOpacity;
+            NavigateBadgeColor = project?.NavigateBadgeColor ?? settings.NavigateBadgeColor;
+            NavigateBadgeTextColor = project?.NavigateBadgeTextColor ?? settings.NavigateBadgeTextColor;
+            LinkHighlightColor = project?.LinkHighlightColor ?? settings.LinkHighlightColor;
+            LinkHighlightOpacity = project?.LinkHighlightOpacity ?? settings.LinkHighlightOpacity;
             // In the theme's colors, as the color dialog
             SetResourceReference(BackgroundProperty, "NormalColorBrush");
             SetResourceReference(ForegroundProperty, "LightLightColorBrush");
@@ -95,23 +99,33 @@ namespace WireFlow.Views
                 "The color of the highlight, partly transparent so that the text shows on it in every theme.");
 
             var navigate = Page("Navigate Mode");
-            ColorRow(navigate, "NavigateBadgeColor", "Indicator color", settings.NavigateBadgeColor, Color.FromRgb(0xE8, 0x59, 0x0C),
+            ColorRow(navigate, "NavigateBadgeColor", "Indicator color", NavigateBadgeColor, Color.FromRgb(0xE8, 0x59, 0x0C),
                 "The color of the badge that hangs from the top of each page while the Designer is in Navigate mode.");
-            ColorRow(navigate, "NavigateBadgeTextColor", "Indicator text color", settings.NavigateBadgeTextColor, Colors.White,
+            ColorRow(navigate, "NavigateBadgeTextColor", "Indicator text color", NavigateBadgeTextColor, Colors.White,
                 "The color of the words \"Navigate Mode\" on the badge.");
-            ColorRow(navigate, "LinkHighlightColor", "Link highlight color", settings.LinkHighlightColor, Color.FromRgb(0x1E, 0x88, 0xE5),
+            ColorRow(navigate, "LinkHighlightColor", "Link highlight color", LinkHighlightColor, Color.FromRgb(0x1E, 0x88, 0xE5),
                 "The color laid over every link on the pages while View > Highlight Links is on.");
             var opacityNames = linkOpacities.ConvertAll(o => $"{o * 100:0}%");
-            index = linkOpacities.FindIndex(o => Math.Abs(o - settings.LinkHighlightOpacity) < 0.001);
+            index = linkOpacities.FindIndex(o => Math.Abs(o - LinkHighlightOpacity) < 0.001);
             if (index < 0)
             {
                 // An opacity typed into the settings file, offered as it is
-                linkOpacities.Add(settings.LinkHighlightOpacity);
-                opacityNames.Add($"Custom ({settings.LinkHighlightOpacity * 100:0.#}%)");
+                linkOpacities.Add(LinkHighlightOpacity);
+                opacityNames.Add($"Custom ({LinkHighlightOpacity * 100:0.#}%)");
                 index = linkOpacities.Count - 1;
             }
             Choice(navigate, "LinkHighlightOpacity", "Link highlight opacity", opacityNames, index,
                 "How much of the link's color covers the link: the page shows through the rest.");
+            // Whose colors these are
+            navigate.Children.Add(new TextBlock
+            {
+                Text = project != null
+                    ? "These colors are the open project's, kept in its file, so that they can suit its pages. With no project open, Options sets the colors new projects start with."
+                    : "With no project open, these are the colors new projects start with, and those of projects that have none of their own.",
+                TextWrapping = TextWrapping.Wrap,
+                Opacity = 0.75,
+                Margin = new Thickness(0, 12, 0, 0)
+            });
             Finish();
             PlaceColorButtons();
         }

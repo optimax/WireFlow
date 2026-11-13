@@ -317,6 +317,16 @@ CREATE TABLE Images (
 
 
 
+        // The project's own values, such as its Navigate mode colors, are written at once, as the order of the pages is
+        public void SaveProjectSettings()
+        {
+            if (Project == null || ProjectFileName == null)
+                return;
+            Execute("UPDATE Project SET Json = $json WHERE Id = 1", ("$json", FlatFolderRepository.SerializeToJSON(Project)));
+        }
+
+
+
         public string CreateLayout(string layoutName, string masterName)
         {
             FlowPage page = new FlowPage()

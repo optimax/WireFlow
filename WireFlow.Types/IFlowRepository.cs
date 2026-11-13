@@ -64,6 +64,8 @@ namespace WireFlow
         void SaveProject();
         // Copies the project, as it is in its file, to another file, which becomes the project's file
         void SaveProjectAs(string projectFileName);
+        // Writes the project's own values (FlowProject) into its file at once, as SetPageOrder writes the order
+        void SaveProjectSettings();
 
 
         ImportImageResult CanImportImage(string fileName);

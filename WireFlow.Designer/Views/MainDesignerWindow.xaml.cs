@@ -821,9 +821,12 @@ namespace WireFlow
 
 
         // Tools > Options...: the dialog shows the settings as they are; OK applies and saves them
+        // The Navigate mode colors are the open project's (kept in its file), or with no project open the Designer's, which new
+        // projects start with
         private void OptionsMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new DesignerOptionsDialog(Config) { Owner = this };
+            var project = Engine?.Project;
+            var dialog = new DesignerOptionsDialog(Config, project) { Owner = this };
             dialog.ShowDialog();
             if (dialog.Answer != OptimaxTools.Options.OptionsAnswer.Ok)
                 return;
@@ -831,10 +834,21 @@ namespace WireFlow
             Config.SelectAfterDrawing = dialog.SelectAfterDrawing;
             Config.HighlightSelectedProperty = dialog.HighlightSelectedProperty;
             Config.SelectedPropertyColor = dialog.SelectedPropertyColor;
-            Config.NavigateBadgeColor = dialog.NavigateBadgeColor;
-            Config.NavigateBadgeTextColor = dialog.NavigateBadgeTextColor;
-            Config.LinkHighlightColor = dialog.LinkHighlightColor;
-            Config.LinkHighlightOpacity = dialog.LinkHighlightOpacity;
+            if (project != null)
+            {
+                project.NavigateBadgeColor = dialog.NavigateBadgeColor;
+                project.NavigateBadgeTextColor = dialog.NavigateBadgeTextColor;
+                project.LinkHighlightColor = dialog.LinkHighlightColor;
+                project.LinkHighlightOpacity = dialog.LinkHighlightOpacity;
+                SaveProjectSettings();
+            }
+            else
+            {
+                Config.NavigateBadgeColor = dialog.NavigateBadgeColor;
+                Config.NavigateBadgeTextColor = dialog.NavigateBadgeTextColor;
+                Config.LinkHighlightColor = dialog.LinkHighlightColor;
+                Config.LinkHighlightOpacity = dialog.LinkHighlightOpacity;
+            }
             ApplyPropertyHighlight();
             ApplyNavigateBadgeColors();
             ApplyLinkHighlightBrush();
@@ -861,20 +875,51 @@ namespace WireFlow
         }
 
 
+        // The Navigate mode colors in use: the open project's own, else the Designer's (Tools > Options with no project open)
+        private string NavigateBadgeColorInUse => Engine?.Project?.NavigateBadgeColor ?? Config.NavigateBadgeColor;
+        private string NavigateBadgeTextColorInUse => Engine?.Project?.NavigateBadgeTextColor ?? Config.NavigateBadgeTextColor;
+        private string LinkHighlightColorInUse => Engine?.Project?.LinkHighlightColor ?? Config.LinkHighlightColor;
+        private double LinkHighlightOpacityInUse => Engine?.Project?.LinkHighlightOpacity ?? Config.LinkHighlightOpacity;
+
+
+        // The Navigate mode colors of the project opened, made or closed (the Designer's own when it has none)
+        private void ApplyNavigateColors()
+        {
+            ApplyNavigateBadgeColors();
+            ApplyLinkHighlightBrush();
+        }
+
+
+        // Writes the project's Navigate mode colors into its file; a file that cannot be written is said, and the colors stay
+        // in use until the project is closed
+        private void SaveProjectSettings()
+        {
+            try
+            {
+                Engine.SaveProjectSettings();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"The project's colors could not be saved in {FileName}.\n\n{ex.Message}", "Options",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+
         // Tools > Options: the highlight laid over links, the color made partly transparent by the opacity chosen
         private void ApplyLinkHighlightBrush()
         {
             Color color = Color.FromRgb(0x1E, 0x88, 0xE5);
             try
             {
-                if (!string.IsNullOrWhiteSpace(Config.LinkHighlightColor))
-                    color = (Color)ColorConverter.ConvertFromString(Config.LinkHighlightColor);
+                if (!string.IsNullOrWhiteSpace(LinkHighlightColorInUse))
+                    color = (Color)ColorConverter.ConvertFromString(LinkHighlightColorInUse);
             }
             catch (FormatException)
             {
                 // A color typed into the settings file that is none: the default
             }
-            double opacity = double.IsNaN(Config.LinkHighlightOpacity) ? 0.35 : Math.Clamp(Config.LinkHighlightOpacity, 0.0, 1.0);
+            double opacity = double.IsNaN(LinkHighlightOpacityInUse) ? 0.35 : Math.Clamp(LinkHighlightOpacityInUse, 0.0, 1.0);
             color.A = (byte)Math.Round(color.A * opacity);
             var brush = new SolidColorBrush(color);
             brush.Freeze();
@@ -904,8 +949,8 @@ namespace WireFlow
                 brush.Freeze();
                 return brush;
             }
-            Application.Current.Resources["NavigateBadgeBrush"] = Solid(Config.NavigateBadgeColor, Color.FromRgb(0xE8, 0x59, 0x0C));
-            Application.Current.Resources["NavigateBadgeTextBrush"] = Solid(Config.NavigateBadgeTextColor, Colors.White);
+            Application.Current.Resources["NavigateBadgeBrush"] = Solid(NavigateBadgeColorInUse, Color.FromRgb(0xE8, 0x59, 0x0C));
+            Application.Current.Resources["NavigateBadgeTextBrush"] = Solid(NavigateBadgeTextColorInUse, Colors.White);
         }
 
 
@@ -1137,6 +1182,13 @@ namespace WireFlow
 
             // The repository may have given the name its extension
             FileName = Engine.ProjectFileName;
+            // A new project starts with the Designer's Navigate mode colors, and keeps them as its own
+            project.NavigateBadgeColor = Config.NavigateBadgeColor;
+            project.NavigateBadgeTextColor = Config.NavigateBadgeTextColor;
+            project.LinkHighlightColor = Config.LinkHighlightColor;
+            project.LinkHighlightOpacity = Config.LinkHighlightOpacity;
+            SaveProjectSettings();
+            ApplyNavigateColors();
 
             NewPageNode();
 
@@ -1183,6 +1235,7 @@ namespace WireFlow
             Parts?.Clear();
             Images?.Clear();
             Engine?.CloseProject();
+            ApplyNavigateColors();
             FileName = null;
             //PropertyGrid.SelectedObject = null; NO!
             return true;
@@ -1276,6 +1329,7 @@ namespace WireFlow
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            ApplyNavigateColors();
             // The first page in the order is where the project starts
             string homePage = Engine.HomePage;
             //string background = Project.Background;

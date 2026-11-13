@@ -18,6 +18,10 @@ namespace WireFlow
         private string background;
         private string home;
         private List<string> pageOrder;
+        private string navigateBadgeColor;
+        private string navigateBadgeTextColor;
+        private string linkHighlightColor;
+        private double? linkHighlightOpacity;
 
         public long RevisionNo { get => revisionNo; set => Set(ref revisionNo, value); }
         public double Width { get => width; set => Set(ref width, value); }
@@ -30,6 +34,16 @@ namespace WireFlow
         /// may name pages that no longer exist and leave out some that do: <see cref="OrderPages"/> makes the order of the pages.
         /// </summary>
         public List<string> PageOrder { get => pageOrder; set => Set(ref pageOrder, value); }
+
+        /// <summary>
+        /// The Designer's Navigate mode colors for this project, #AARRGGBB, as they suit its pages: the badge that shows the mode, its
+        /// text, and the highlight laid over links, with the highlight's opacity (0 to 1). Null where the project has none of its own,
+        /// as a project made before them: the Designer's own (Tools > Options with no project open), which a new project starts with.
+        /// </summary>
+        public string NavigateBadgeColor { get => navigateBadgeColor; set => Set(ref navigateBadgeColor, value); }
+        public string NavigateBadgeTextColor { get => navigateBadgeTextColor; set => Set(ref navigateBadgeTextColor, value); }
+        public string LinkHighlightColor { get => linkHighlightColor; set => Set(ref linkHighlightColor, value); }
+        public double? LinkHighlightOpacity { get => linkHighlightOpacity; set => Set(ref linkHighlightOpacity, value); }
 
         public FlowProject()
         {
