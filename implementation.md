@@ -183,9 +183,11 @@ Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' progr
 
 - Properties → Highlight the row being edited (`ConfigSettings.HighlightSelectedProperty`, on by default) and Highlight color (`SelectedPropertyColor`: null for the Windows accent, else `#AARRGGBB`), a list of named colors, partly transparent so that the text shows in every theme, as PDF Workshop offers its focus frame's colors; a color typed into the settings file is offered as Custom.
 
-- Navigate Mode → Link highlight color and Link highlight opacity (`ConfigSettings.LinkHighlightColor`, blue `#FF1E88E5` by default, and `LinkHighlightOpacity`, 0.35): the highlight View → Highlight Links lays over links (see "Navigate mode"); a color or opacity typed into the settings file is offered as Custom.
+- Navigate Mode → Link highlight color and Link highlight opacity (`ConfigSettings.LinkHighlightColor`, blue `#FF1E88E5` by default, and `LinkHighlightOpacity`, 0.35): the highlight View → Highlight Links lays over links (see "Navigate mode"); the opacity is a list, with one typed into the settings file offered as Custom.
 
-- Navigate Mode → Indicator color and Indicator text color (`ConfigSettings.NavigateBadgeColor`, orange `#FFE8590C` by default, and `NavigateBadgeTextColor`, white): lists of named opaque colors, with a color typed into the settings file offered as Custom (`DesignerOptionsDialog.ColorNames`).
+- Navigate Mode → Indicator color and Indicator text color (`ConfigSettings.NavigateBadgeColor`, orange `#FFE8590C` by default, and `NavigateBadgeTextColor`, white).
+
+  The three colors of Navigate Mode are color rows (`DesignerOptionsDialog.ColorRow`): a button showing the color as a swatch and as `#AARRGGBB`, which opens the color dialog (`ColorPickerDialog`, with its swatches and the colors chosen last) on it. OptimaxTools.Options has no such row, so each is made as a list's row, for its words and its place, and its button takes the list's place once the dialog has laid out its rows (`PlaceColorButtons`, after `Finish`). A color the settings file holds that cannot be read starts from the default.
 
 The settings file is not offered for editing from the dialog (no Edit Settings File button): the Designer writes it as it closes, so edits made to it while the Designer runs would be lost.
 

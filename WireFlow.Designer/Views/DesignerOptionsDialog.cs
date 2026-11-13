@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Media;
 using MaxServices.Core.Themes;
 using OptimaxTools.Options;
 
@@ -16,13 +21,15 @@ namespace WireFlow.Views
         // that the text shows through on light and dark grids alike (and a custom one, when typed into the settings file)
         private readonly List<string> highlightColors = new List<string> { null, "#603399FF", "#6032B45A", "#60FF9933", "#608A4FC8", "#60808080" };
 
-        // The colors offered for the Navigate mode badge and its text, opaque and vivid, so that it stands out on any page
-        private readonly List<string> badgeColors = new List<string> { "#FFE8590C", "#FFD62828", "#FF1E88E5", "#FF2E9E44", "#FF8E44AD", "#FF00897B", "#FFF2B705", "#FF222222" };
-        private readonly List<string> badgeTextColors = new List<string> { "#FFFFFFFF", "#FF000000" };
-
-        // The colors and opacities offered for the highlight laid over links
-        private readonly List<string> linkColors = new List<string> { "#FF1E88E5", "#FFF2B705", "#FF2E9E44", "#FFE8590C", "#FFD62828", "#FF8E44AD", "#FF00897B", "#FF808080" };
+        // The opacities offered for the highlight laid over links
         private readonly List<double> linkOpacities = new List<double> { 0.2, 0.3, 0.35, 0.4, 0.5, 0.6 };
+
+        // The color of each color row, by its key, #AARRGGBB, as its button shows it
+        private readonly Dictionary<string, string> colors = new Dictionary<string, string>();
+
+        // Each color row's list, made for its words and its place, and the button that takes the list's place once the
+        // dialog has laid out its rows (Finish)
+        private readonly List<(ComboBox List, Button Button)> colorButtons = new List<(ComboBox, Button)>();
 
 
         /// <summary>Whether the project open when the Designer closed opens again when it starts, as OK left it.</summary>
@@ -88,14 +95,11 @@ namespace WireFlow.Views
                 "The color of the highlight, partly transparent so that the text shows on it in every theme.");
 
             var navigate = Page("Navigate Mode");
-            Choice(navigate, "NavigateBadgeColor", "Indicator color",
-                ColorNames(badgeColors, new List<string> { "Orange", "Red", "Blue", "Green", "Purple", "Teal", "Yellow", "Charcoal" }, settings.NavigateBadgeColor, out index), index,
+            ColorRow(navigate, "NavigateBadgeColor", "Indicator color", settings.NavigateBadgeColor, Color.FromRgb(0xE8, 0x59, 0x0C),
                 "The color of the badge that hangs from the top of each page while the Designer is in Navigate mode.");
-            Choice(navigate, "NavigateBadgeTextColor", "Indicator text color",
-                ColorNames(badgeTextColors, new List<string> { "White", "Black" }, settings.NavigateBadgeTextColor, out index), index,
+            ColorRow(navigate, "NavigateBadgeTextColor", "Indicator text color", settings.NavigateBadgeTextColor, Colors.White,
                 "The color of the words \"Navigate Mode\" on the badge.");
-            Choice(navigate, "LinkHighlightColor", "Link highlight color",
-                ColorNames(linkColors, new List<string> { "Blue", "Yellow", "Green", "Orange", "Red", "Purple", "Teal", "Gray" }, settings.LinkHighlightColor, out index), index,
+            ColorRow(navigate, "LinkHighlightColor", "Link highlight color", settings.LinkHighlightColor, Color.FromRgb(0x1E, 0x88, 0xE5),
                 "The color laid over every link on the pages while View > Highlight Links is on.");
             var opacityNames = linkOpacities.ConvertAll(o => $"{o * 100:0}%");
             index = linkOpacities.FindIndex(o => Math.Abs(o - settings.LinkHighlightOpacity) < 0.001);
@@ -109,6 +113,7 @@ namespace WireFlow.Views
             Choice(navigate, "LinkHighlightOpacity", "Link highlight opacity", opacityNames, index,
                 "How much of the link's color covers the link: the page shows through the rest.");
             Finish();
+            PlaceColorButtons();
         }
 
 
@@ -119,29 +124,87 @@ namespace WireFlow.Views
             HighlightSelectedProperty = IsChecked("HighlightSelectedProperty");
             int choice = ChoiceOf("SelectedPropertyColor");
             SelectedPropertyColor = choice >= 0 && choice < highlightColors.Count ? highlightColors[choice] : null;
-            choice = ChoiceOf("NavigateBadgeColor");
-            NavigateBadgeColor = choice >= 0 && choice < badgeColors.Count ? badgeColors[choice] : badgeColors[0];
-            choice = ChoiceOf("NavigateBadgeTextColor");
-            NavigateBadgeTextColor = choice >= 0 && choice < badgeTextColors.Count ? badgeTextColors[choice] : badgeTextColors[0];
-            choice = ChoiceOf("LinkHighlightColor");
-            LinkHighlightColor = choice >= 0 && choice < linkColors.Count ? linkColors[choice] : linkColors[0];
+            NavigateBadgeColor = colors["NavigateBadgeColor"];
+            NavigateBadgeTextColor = colors["NavigateBadgeTextColor"];
+            LinkHighlightColor = colors["LinkHighlightColor"];
             choice = ChoiceOf("LinkHighlightOpacity");
             LinkHighlightOpacity = choice >= 0 && choice < linkOpacities.Count ? linkOpacities[choice] : 0.35;
         }
 
 
-        // The names of the colors offered, and the index of the one set; a color set that is not offered (typed into the
-        // settings file) is added to the colors and offered as Custom
-        private static List<string> ColorNames(List<string> colors, List<string> names, string color, out int index)
+        // A row of a color: its words, and a button showing the color as a swatch and as #AARRGGBB, which opens the color
+        // dialog (its swatches, and the colors chosen last) on it; the color the button shows is the row's. The row is made
+        // as a list's, so that its words and its place are those of the other rows, and the button takes the list's place.
+        private void ColorRow(Panel panel, string key, string text, string color, Color fallback, string toolTip)
         {
-            index = colors.FindIndex(c => string.Equals(c, color, StringComparison.OrdinalIgnoreCase));
-            if (index < 0 && !string.IsNullOrWhiteSpace(color))
+            Color shown = ColorOf(color) ?? fallback;
+            colors[key] = ToText(shown);
+            var list = Choice(panel, key, text, new List<string> { colors[key] }, 0, toolTip);
+            var swatch = new Border { Width = 16, Height = 16, BorderThickness = new Thickness(1), Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+            swatch.SetBinding(Border.BorderBrushProperty, new Binding(nameof(Foreground)) { Source = this });
+            var words = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            content.Children.Add(swatch);
+            content.Children.Add(words);
+            var button = new Button { Content = content, HorizontalContentAlignment = HorizontalAlignment.Left, ToolTip = list.ToolTip };
+            AutomationProperties.SetName(button, text);
+            void Show(Color c)
             {
-                colors.Add(color);
-                names.Add($"Custom ({color})");
-                index = colors.Count - 1;
+                colors[key] = ToText(c);
+                swatch.Background = new SolidColorBrush(c);
+                words.Text = colors[key];
             }
-            return names;
+            Show(shown);
+            button.Click += (s, e) =>
+            {
+                Color? chosen = ColorPickerDialog.Show(this, text, ColorOf(colors[key]) ?? fallback);
+                if (chosen != null)
+                    Show(chosen.Value);
+            };
+            colorButtons.Add((list, button));
+        }
+
+
+        // Puts each color row's button where its list is, at its size, and hides the list
+        private void PlaceColorButtons()
+        {
+            foreach (var (list, button) in colorButtons)
+            {
+                if (!(list.Parent is Panel row))
+                    continue;
+                button.Width = list.Width;
+                button.MinWidth = list.MinWidth;
+                button.MaxWidth = list.MaxWidth;
+                button.MinHeight = list.MinHeight;
+                button.Margin = list.Margin;
+                button.HorizontalAlignment = list.HorizontalAlignment;
+                button.VerticalAlignment = list.VerticalAlignment;
+                Grid.SetRow(button, Grid.GetRow(list));
+                Grid.SetColumn(button, Grid.GetColumn(list));
+                Grid.SetColumnSpan(button, Grid.GetColumnSpan(list));
+                DockPanel.SetDock(button, DockPanel.GetDock(list));
+                list.Visibility = Visibility.Collapsed;
+                row.Children.Insert(row.Children.IndexOf(list) + 1, button);
+            }
+        }
+
+
+        private static string ToText(Color color) => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+
+
+        // The color a text names; null for none, or for text that names no color
+        private static Color? ColorOf(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+            try
+            {
+                return (Color)ColorConverter.ConvertFromString(text);
+            }
+            catch (Exception ex) when (ex is FormatException || ex is NotSupportedException)
+            {
+                return null;
+            }
         }
     }
 }
