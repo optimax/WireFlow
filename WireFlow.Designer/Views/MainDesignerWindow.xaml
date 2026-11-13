@@ -17,24 +17,33 @@
         <Style x:Key="TooBarPanelStyle" TargetType="{x:Type ToolBarPanel}">
             <Setter Property="Background" Value="{DynamicResource ToolbarPanelBackgroundBrush}"/>
         </Style>
-        <!-- A small flat button in a pane's caption, as the pane's own menu and pin buttons -->
+        <!-- A small flat button in a pane's caption, as the pane's own menu and pin buttons. Its glyph is in the palette's
+             text color, the caption's: without a Foreground of its own, a button takes the system theme's black, which a
+             dark caption hides. Under the mouse it shows the toolbar's frame (the palette's ButtonHover); dimmed while
+             disabled, but not so far that it is lost on a dark caption. -->
         <Style x:Key="PaneCaptionButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static themes:Palette.Text}}"/>
             <Setter Property="Width" Value="18"/>
             <Setter Property="Height" Value="18"/>
             <Setter Property="Margin" Value="1,0"/>
             <Setter Property="Focusable" Value="False"/>
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="Transparent" CornerRadius="2">
+                        <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="3">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource LightLightColorBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static themes:Palette.ButtonHover}}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static themes:Palette.ButtonHoverBorder}}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static themes:Palette.ButtonPressed}}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
