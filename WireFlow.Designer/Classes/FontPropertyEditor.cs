@@ -11,8 +11,9 @@ namespace WireFlow
     /// <summary>
     /// The editor of the FontFamily of a text or a box: its name as text, as before, and a "..." button (or Ctrl+Enter, or a
     /// double click on the value) that opens the font dialog of Optimax's programs (DesignerFontDialog) on the element's font:
-    /// its family, size (in pixels, as FontSize is) and face, its weight, stretch and style. OK sets all of them, the family last,
-    /// each through its own row, so that each change raises PropertyValueChanged; with several elements selected, each gets them.
+    /// its family, size (in pixels, as FontSize is) and face, its weight, stretch and style, and the color of its text
+    /// (Foreground). OK sets all of them, the family last, each through its own row, so that each change raises
+    /// PropertyValueChanged; with several elements selected, each gets them. The color is set only when another was chosen.
     /// </summary>
     public class FontPropertyEditor : TextPropertyEditor
     {
@@ -39,13 +40,60 @@ namespace WireFlow
         public override bool HasDialog(PropertyItem item) => true;
 
 
-        /// <summary>Opens the font dialog on the element's font, and gives it the font chosen.</summary>
+        /// <summary>Opens the font dialog on the element's font and the color of its text, and gives it the font and the color chosen.</summary>
         public override void ShowDialog(PropertyItem item, Window owner)
         {
             var initial = FontOf(item.Component);
-            var chosen = DesignerFontDialog.Pick(owner, initial);
-            if (chosen != null)
-                Apply(item, chosen);
+            Color? before = ColorOf(item.Component), color = before;
+            var chosen = DesignerFontDialog.Pick(owner, initial, ref color, BackdropOf(item.Component));
+            if (chosen == null)
+                return;
+            // The color first: the family goes last
+            ApplyColor(item, before, color);
+            Apply(item, chosen);
+        }
+
+
+        /// <summary>Gives the element the color chosen for its text, when one was chosen and it is another than the one it had.</summary>
+        public static void ApplyColor(PropertyItem item, Color? before, Color? chosen)
+        {
+            if (chosen != null && chosen != before)
+                item.SetComponentProperty("Foreground", chosen.Value.ToString());
+        }
+
+
+        /// <summary>The color of a text's or a box's text (its Foreground); null when it has none, or the selected elements do not share one.</summary>
+        public static Color? ColorOf(object component) =>
+            ColorNamed(TypeDescriptor.GetProperties(component)["Foreground"]?.GetValue(component) as string);
+
+
+        /// <summary>
+        /// The color a text or a box lies on, which the dialog draws its sample on: the element's own fill, where one element
+        /// is selected and its fill hides what is under it, else the background of its page; null when neither is known.
+        /// </summary>
+        public static Color? BackdropOf(object component)
+        {
+            if (!(component is NodeProperties shown))
+                return null;
+            if (shown.Nodes.Count == 1 && shown.Node is FlowElement element && ColorNamed(element.Fill) is Color fill && fill.A == 255)
+                return fill;
+            return ColorNamed(shown.PageBackground);
+        }
+
+
+        // The color a text names; null for none, or for text that names no color
+        private static Color? ColorNamed(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+            try
+            {
+                return (Color)ColorConverter.ConvertFromString(text);
+            }
+            catch (System.Exception ex) when (ex is System.FormatException || ex is System.NotSupportedException)
+            {
+                return null;
+            }
         }
 
 

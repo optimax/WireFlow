@@ -112,6 +112,24 @@ namespace WireFlow
         public IReadOnlyList<FlowBase> Nodes => parts == null ? new[] { Node } : parts.Select(p => p.Node).ToArray();
 
 
+        /// <summary>
+        /// The background of the page or layout the node shown is on, its own or the one it takes from its layouts or the
+        /// project, as text; null when the node is on none (an element of a part).
+        /// </summary>
+        public string PageBackground
+        {
+            get
+            {
+                var node = Node;
+                while (node != null && !(node is FlowPage))
+                    node = node.Parent;
+                if (!(node is FlowPage page))
+                    return null;
+                return !string.IsNullOrWhiteSpace(page.Background) ? page.Background : engine?.InheritedPageBackground(page);
+            }
+        }
+
+
         public NodeProperties(FlowBase node, WireFlowEngine engine)
         {
             Node = node ?? throw new ArgumentNullException(nameof(node));
