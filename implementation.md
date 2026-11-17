@@ -203,6 +203,8 @@ Nothing with changes not saved is closed without asking. A tab closing (its X, o
 
 A dialog is wider than it is tall where its content allows (the user's requirement: dialogs present in landscape rather than portrait). The font dialog, which the library lays out tall, is rearranged for it (see "Property grid").
 
+A dialog checks what was typed as OK is pressed, and stays open when it refuses it, so that it can be corrected there (the user's requirement): the message shows over the dialog, and the name is selected to be typed over. The New Page and New Layout dialog (`NewPageDlg`) and the New Part dialog (`NewPartDlg`) ask their `CheckName`, which the window sets (`CreateNewPage`, `CreateNewLayout`, `CreateNewPart`): a name another page, layout or part has is refused, ignoring case, and for a layout one that would set layouts on each other in a circle. `ShowRefusal` shows the reason, a message box that a script hosting the dialog replaces. Checking after the dialog had closed, as before, lost what was typed.
+
 ## History
 
 The History pane lists the saved versions of the page, layout or part in front, the latest first (`MainDesignerWindow.History`, `ShowHistory`): "Draft", when it has edits saved with Save since the last revision; "Revision N" for each revision of the project at which it was saved anew, the latest of which is its saved version; and "First version", the one it had before the first of them. A new document, not yet part of a revision, has its draft alone. The version the tab shows, the draft or else the saved version, is marked "(current)". Edits not yet saved are no version, and change nothing in the list.

@@ -23,6 +23,17 @@ namespace WireFlow.Views
         public string LayoutName => LayoutNameBox.Text.Trim();
 
 
+        /// <summary>
+        /// Checks the name typed, with the layout chosen, as OK is pressed: the reason the page or layout cannot be made (a
+        /// name another has, say), or null. A reason is shown over the dialog, which stays open for the name to be corrected.
+        /// </summary>
+        public Func<string, string, string> CheckName { get; set; }
+
+        /// <summary>Shows the reason a name was refused, over the dialog: a message box, which a script hosting the dialog replaces.</summary>
+        public Action<Window, string> ShowRefusal { get; set; } =
+            (dialog, reason) => MessageBox.Show(dialog, reason, dialog.Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+
+
         public NewPageDlg(Window owner, ILayoutListProvider layoutsProvider, string pageName = null)
         {
             if (layoutsProvider == null)
@@ -49,6 +60,15 @@ namespace WireFlow.Views
         {
             if (string.IsNullOrWhiteSpace(PageName))
                 return;
+            // A name that cannot be used is refused here, while the dialog is open, and the dialog stays for it to be corrected
+            string refusal = CheckName?.Invoke(PageName, LayoutName);
+            if (refusal != null)
+            {
+                ShowRefusal(this, refusal);
+                NameBox.Focus();
+                NameBox.SelectAll();
+                return;
+            }
             this.DialogResult = true;
         }
 

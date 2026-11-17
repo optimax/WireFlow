@@ -34,10 +34,30 @@ namespace WireFlow.Views
             };
         }
 
+        /// <summary>
+        /// Checks the name typed as OK is pressed: the reason the part cannot be made (a name another has), or null. A reason
+        /// is shown over the dialog, which stays open for the name to be corrected.
+        /// </summary>
+        public Func<string, string> CheckName { get; set; }
+
+        /// <summary>Shows the reason a name was refused, over the dialog: a message box, which a script hosting the dialog replaces.</summary>
+        public Action<Window, string> ShowRefusal { get; set; } =
+            (dialog, reason) => MessageBox.Show(dialog, reason, dialog.Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+
+
         private void ButtonOK_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(Name))
                 return;
+            // A name that cannot be used is refused here, while the dialog is open, and the dialog stays for it to be corrected
+            string refusal = CheckName?.Invoke(Name);
+            if (refusal != null)
+            {
+                ShowRefusal(this, refusal);
+                NameBox.Focus();
+                NameBox.SelectAll();
+                return;
+            }
             this.DialogResult = true;
         }
 

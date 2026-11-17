@@ -1555,14 +1555,11 @@ namespace WireFlow
         private void CreateNewPage(string href = null)
         {
             NewPageDlg dlg = new NewPageDlg(this, Engine, href);
+            // A name another page has is refused as OK is pressed, and the dialog stays open for the name to be corrected
+            dlg.CheckName = (name, layout) => Engine.PageKey(name) != null ? $"The project has a page named \"{name}\" already." : null;
             var result = dlg.ShowDialog();
             if (result != true)
                 return;
-            if (Engine.PageKey(dlg.PageName) != null)
-            {
-                MessageBox.Show($"The project has a page named \"{dlg.PageName}\" already.", "New Page", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
             Engine.CreatePage(dlg.PageName, dlg.LayoutName);
             var pages = Engine.Pages;
             Pages = new ObservableCollection<string>(pages);
@@ -1875,21 +1872,13 @@ namespace WireFlow
         {
             NewPageDlg dlg = new NewPageDlg(this, Engine, href);
             dlg.Title = "New Layout";
+            // A name another layout has, or one that would set layouts on each other in a circle, is refused as OK is
+            // pressed, and the dialog stays open for the name to be corrected
+            dlg.CheckName = (name, layout) => Engine.LayoutKey(name) != null ? $"The project has a layout named \"{name}\" already."
+                : ChainNames(layout, name) ? CircleRefusal(name) : null;
             var result = dlg.ShowDialog();
             if (result != true)
                 return;
-            //    return this.ShowDialogResult(result);
-            //Debug.WriteLine($"CREATING LAYOUT: {dlg.PageName}");
-            if (Engine.LayoutKey(dlg.PageName) != null)
-            {
-                MessageBox.Show($"The project has a layout named \"{dlg.PageName}\" already.", "New Layout", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (ChainNames(dlg.LayoutName, dlg.PageName))
-            {
-                MessageBox.Show(CircleRefusal(dlg.PageName), "New Layout", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
             Engine.CreateLayout(dlg.PageName, dlg.LayoutName);
             var layouts = Engine.Layouts;
             Layouts = new ObservableCollection<string>(layouts);
@@ -1920,6 +1909,8 @@ namespace WireFlow
         {
             NewPartDlg dlg = new NewPartDlg(this, href);
             dlg.Title = "New Part";
+            // A name another part has is refused as OK is pressed, and the dialog stays open for the name to be corrected
+            dlg.CheckName = name => Engine.Parts.Contains(name, StringComparer.OrdinalIgnoreCase) ? $"The project has a part named \"{name}\" already." : null;
             var result = dlg.ShowDialog();
             if (result != true)
                 return;
