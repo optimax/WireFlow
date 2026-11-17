@@ -1944,6 +1944,17 @@ namespace WireFlow
         }
 
 
+        /// <summary>
+        /// Shows the cursor of the tool as it is now: the Pick Color tool's changes as it takes and gives colors, which it
+        /// may have done on another page open, or from a color chart.
+        /// </summary>
+        public void ShowToolCursor()
+        {
+            if (selectedDrawingTool != null)
+                Designer.Cursor = selectedDrawingTool.Cursor;
+        }
+
+
         private void ToolSelectionChanged(IDrawingTool tool)
         {
             var currentTool = tool;

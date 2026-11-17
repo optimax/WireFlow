@@ -1158,6 +1158,8 @@ namespace WireFlow
             {
                 CurrentDesigner = DocumentPane.Children[DocumentPane.SelectedContentIndex].Content as DesignerNavigator;
                 SelectPageAndTool(CurrentDesigner, true);
+                // The Pick Color tool may have taken or given colors on another tab since this one was in front
+                CurrentDesigner?.ShowToolCursor();
             }
             else
             {
@@ -2872,9 +2874,31 @@ namespace WireFlow
 
 
         /// <summary>
+        /// A color chosen on a color chart, by a double click: the Pick Color tool is chosen, with that color to give as a
+        /// fill, in every page, layout and part open, so that the next click on an element, in whichever tab, gives it the
+        /// color. As choosing a tool in the Tools list does, it leaves Navigate mode.
+        /// </summary>
+        private void PickChartColor(Color color)
+        {
+            var pick = Tools.Items.OfType<PickColorDrawingTool>().FirstOrDefault();
+            if (pick == null)
+                return;
+            // In the Tools list, which gives it to the tab in front (and to every tab, as Navigate mode is left)
+            SelectedToolIndex = Tools.Items.IndexOf(pick);
+            var navigators = DockingManager.Layout.Descendents().OfType<DesignerNavigatorDocument>().Select(d => d.Navigator).ToList();
+            foreach (var navigator in navigators)
+                navigator.SelectedDrawingTool = pick;
+            // Once every tab has the tool: a tab that takes it starts it with no colors
+            pick.Load(color.ToString());
+            foreach (var navigator in navigators)
+                navigator.ShowToolCursor();
+        }
+
+
+        /// <summary>
         /// Opens a chart of named colors in a tab of its own: a swatch, RRGGBB and the name of each, down four columns in
         /// the order given, under a heading. The tab is for looking at: a drag across it selects and moves nothing, and it
-        /// never has changes to save.
+        /// never has changes to save. A double click on a color chooses the Pick Color tool with it (PickChartColor).
         /// </summary>
         private void ShowColorChart(string tabTitle, string heading, IReadOnlyList<KeyValuePair<string, Color>> colors)
         {
@@ -2935,6 +2959,19 @@ namespace WireFlow
                 subPanel.Children.Add(rect);
                 subPanel.Children.Add(rgb);
                 subPanel.Children.Add(text);
+
+                // A double click on a color, anywhere on its row (which its background makes one target, the gaps between
+                // its parts too), chooses the Pick Color tool with that color to give
+                var color = named.Value;
+                subPanel.Background = Brushes.White;
+                subPanel.ToolTip = "Double-click to pick this color up with Pick Color";
+                subPanel.MouseLeftButtonDown += (sender, e) =>
+                {
+                    if (e.ClickCount != 2)
+                        return;
+                    PickChartColor(color);
+                    e.Handled = true;
+                };
 
                 panel.Children.Add(subPanel);
             }

@@ -54,6 +54,20 @@ namespace WireFlow
 
 
         /// <summary>
+        /// Takes a color that is no element's, as one chosen on a color chart, to give as a fill: the next click gives it to
+        /// the element clicked, whose stroke it leaves.
+        /// </summary>
+        public void Load(string fill)
+        {
+            HasFill = true;
+            Fill = fill;
+            HasStroke = false;
+            Stroke = null;
+            HasColors = true;
+        }
+
+
+        /// <summary>
         /// Gives an element the colors taken: the fill, when one was taken and its kind has a fill, and likewise the stroke.
         /// Says whether it changed.
         /// </summary>
