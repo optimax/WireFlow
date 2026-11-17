@@ -419,6 +419,30 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
 
 
 
+        // The revisions under which the archive holds earlier versions of a page, layout or part: those at which it was
+        // saved anew. Archived versions are found by the document's key, so those from before it was renamed are among them.
+        public IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft)
+        {
+            hasSaved = false;
+            hasDraft = false;
+            var revisions = new List<long>();
+            // A part is known by its name
+            string documentKey = kind == PART_KIND ? KeyOf(PART_KIND, key) : key;
+            if (ProjectFileName == null || string.IsNullOrWhiteSpace(documentKey))
+                return revisions;
+            // 1 for a saved version, 2 for a draft
+            long has = Convert.ToInt64(ExecuteScalar("SELECT (Saved IS NOT NULL) + 2 * (Draft IS NOT NULL) FROM Documents WHERE Kind = $kind AND Key = $key",
+                ("$kind", kind), ("$key", documentKey)) ?? 0L);
+            hasSaved = (has & 1) != 0;
+            hasDraft = (has & 2) != 0;
+            foreach (string revision in ReadStrings("SELECT CAST(RevisionNo AS TEXT) FROM Archive WHERE Kind = $kind AND Key = $key ORDER BY RevisionNo",
+                ("$kind", kind), ("$key", documentKey)))
+                revisions.Add(long.Parse(revision, System.Globalization.CultureInfo.InvariantCulture));
+            return revisions;
+        }
+
+
+
         // Copies the file, drafts and archive included, to another .wf file (built under a temporary name and moved
         // into place, as a new file is) and goes on with that one; the file it was is left as it is
         public void SaveProjectAs(string projectFileName)

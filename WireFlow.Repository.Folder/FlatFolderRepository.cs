@@ -407,6 +407,16 @@ namespace WireFlow
 
 
 
+        // A folder project is only read, to be converted into a .wf file: its versions are not listed
+        public IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft)
+        {
+            hasSaved = false;
+            hasDraft = false;
+            return new List<long>();
+        }
+
+
+
         // A folder project is only read, to be converted into a .wf file
         public void SaveProjectAs(string projectFileName)
         {

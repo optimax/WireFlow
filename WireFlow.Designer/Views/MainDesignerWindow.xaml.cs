@@ -176,6 +176,44 @@ namespace WireFlow
 
 
 
+        /// <summary>
+        /// What the History pane lists: the saved versions of the page, layout or part in front, the latest first (see
+        /// FlowVersions); nothing with no document open.
+        /// </summary>
+        public ObservableCollection<string> History
+        {
+            get { return history; }
+            set
+            {
+                history = value;
+                OnPropertyChanged(nameof(History));
+            }
+        }
+        private ObservableCollection<string> history = new ObservableCollection<string>();
+
+
+        // Brings the History pane up to date: as another document comes to the front, as the one in front is saved or shows
+        // another page, and as the project is saved as a new revision
+        private void ShowHistory()
+        {
+            var navigator = CurrentDesigner;
+            var kind = navigator?.NavigatorDocument?.Kind;
+            var titles = Engine == null || string.IsNullOrWhiteSpace(FileName) || kind == null || string.IsNullOrWhiteSpace(navigator.PageName)
+                ? new List<string>()
+                : Engine.VersionTitles(kind, navigator.PageName);
+            if (!titles.SequenceEqual(History))
+                History = new ObservableCollection<string>(titles);
+        }
+
+
+        // A tab shows another page, layout or part: the History pane follows the one in front
+        private void NavigatorPageNameChangedHandler(DesignerNavigator sender, string name)
+        {
+            if (sender == CurrentDesigner)
+                ShowHistory();
+        }
+
+
         public ObservableCollection<string> Images
         {
             get { return images; }
@@ -1407,6 +1445,8 @@ namespace WireFlow
             SaveModifiedPages();
             // Commit changes to the project itself
             Engine.SaveProject();
+            // The drafts are a revision now
+            ShowHistory();
         }
 
 
@@ -1433,11 +1473,13 @@ namespace WireFlow
         private void NavigatorModifiedChangedHandler(DesignerNavigator sender) => ShowModified();
 
 
-        // The caption's asterisk and the status bar follow the documents' changes not saved
+        // The caption's asterisk and the status bar follow the documents' changes not saved, and the History pane the
+        // document in front, which has a draft once it is saved
         private void ShowModified()
         {
             OnPropertyChanged(nameof(DesignerTitle));
             OnPropertyChanged(nameof(DocumentState));
+            ShowHistory();
         }
 
 
@@ -1923,6 +1965,7 @@ namespace WireFlow
             doc.Closing += DocumentClosingHandler;
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
+            navigator.PageNameChanged += NavigatorPageNameChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
@@ -1965,6 +2008,7 @@ namespace WireFlow
             doc.Closing += DocumentClosingHandler;
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
+            navigator.PageNameChanged += NavigatorPageNameChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
@@ -2005,6 +2049,7 @@ namespace WireFlow
             doc.Closing += DocumentClosingHandler;
             navigator.Navigating += NavigatorNavigatingHandler;
             navigator.PageNameChanged += doc.TitleChangedHandler;
+            navigator.PageNameChanged += NavigatorPageNameChangedHandler;
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;

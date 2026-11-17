@@ -203,6 +203,13 @@ Nothing with changes not saved is closed without asking. A tab closing (its X, o
 
 A dialog is wider than it is tall where its content allows (the user's requirement: dialogs present in landscape rather than portrait). The font dialog, which the library lays out tall, is rearranged for it (see "Property grid").
 
+## History
+
+The History pane lists the saved versions of the page, layout or part in front, the latest first (`MainDesignerWindow.History`, `ShowHistory`): "Draft", when it has edits saved with Save since the last revision; "Revision N" for each revision of the project at which it was saved anew, the latest of which is its saved version; and "First version", the one it had before the first of them. A new document, not yet part of a revision, has its draft alone. The version the tab shows, the draft or else the saved version, is marked "(current)". Edits not yet saved are no version, and change nothing in the list.
+
+- The file has no dates: a version is known by the project's revision number only. Its archive holds, for each document saved anew at a revision, the version that save replaced, under that revision (see "Project file format"); so the revisions of a document's archived versions are those at which it was saved anew, and the version in the archive under the earliest of them is its first. `FlowVersions.Titles` (Types) makes the titles from those revisions and from whether the document has a saved version and a draft, which `SqliteRepository.GetRevisions` reads (`IFlowRepository.GetRevisions`, through `WireFlowEngine.VersionTitles`). Archived versions are found by the document's key, so a renamed document keeps its history; a part, known by its name, is looked up by it.
+- The list is brought up to date as another tab comes to the front, as the document in front is saved or shows another page (`ShowModified`, `NavigatorPageNameChangedHandler`), and as Save All makes a revision (`DoSaveProjectFile`). Its entries do nothing yet when chosen.
+
 ## Options
 
 Tools → Options… is the Options dialog of MarkdownTools' and PDFTools' programs: `OptimaxTools.Options` 1.0.0, Optimax's own library made in Optimax.Shared.Lib, kept as a package in `LocalPackages\` as MaxServices.Core is. It has no look of its own, so it takes the theme's controls; `Views\DesignerOptionsDialog` derives from it, gives it the theme's colors, and adds the groups of options and their options. OK sets the dialog's results, which `MainDesignerWindow.OptionsMenuItem_Click` puts in `ConfigSettings` and saves; the dialog changes nothing itself. A new option is a setting in `ConfigSettings`, a control in the dialog's constructor, read in its `Apply`, and applied by the window.

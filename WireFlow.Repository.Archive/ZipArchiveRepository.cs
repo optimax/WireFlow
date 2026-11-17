@@ -117,6 +117,11 @@ namespace WireFlow.Repository.Archive
             throw new NotImplementedException();
         }
 
+        public IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft)
+        {
+            throw new NotImplementedException();
+        }
+
         public void RenamePage(string oldName, string newName)
         {
             throw new NotImplementedException();
