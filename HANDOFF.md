@@ -187,4 +187,4 @@ None found.
 
 ## Recommended next step
 
-Answer the open questions in `TO-DO.md`. Check the Designer and the Browser interactively, `.wf` files and OptimaxTools.Dock included (open a `.project`, edit, save, reopen; dock, float and auto-hide panes, Ctrl+Tab): View → Theme in each theme, docking, floating and auto-hiding panes, editing in the property grid, and following links in the Browser.
+`TO-DO.md` has no open item and no open question. Try by hand what only scripts have checked, the latest first: the Outline's eye and padlock (on layers too), the toolbar's Navigate Mode toggle, the WPF and Web color charts and a double click on a color, Pick Color with its two cursors, Locked, Visible, and going back to a version in History. Check the Designer and the Browser interactively, `.wf` files and OptimaxTools.Dock included (open a `.project`, edit, save, reopen; dock, float and auto-hide panes, Ctrl+Tab): View → Theme in each theme, docking, floating and auto-hiding panes, editing in the property grid, and following links in the Browser.
