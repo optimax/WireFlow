@@ -407,6 +407,11 @@ namespace WireFlow
 
 
 
+        // A folder project is only read, to be converted into a .wf file: it is not saved, so its drafts do not matter
+        public bool HasDrafts => false;
+
+
+
         // A folder project is only read, to be converted into a .wf file: its versions are not listed
         public IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft)
         {

@@ -566,6 +566,10 @@ namespace WireFlow
         }
 
 
+        /// <summary>Whether any page, layout or part has a draft, which Save Project would make a revision of.</summary>
+        public bool HasDrafts => Repository.HasDrafts;
+
+
         public void RenamePage(string pageKey, string newName)
         {
             Repository.RenamePage(pageKey, newName);

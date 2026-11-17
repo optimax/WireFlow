@@ -3148,8 +3148,9 @@ namespace WireFlow
             ExportPageAsCmd = new RelayCommand(o => ExportPageAs(), o => CurrentCanvas != null);
             // Save: the tab in front only, as what it is, as its draft (as Yes does when a tab closes); on while it has changes
             SaveFileCmd = new RelayCommand(o => CurrentDesigner?.SaveCurrentDocument(), o => CurrentDesigner?.IsModified ?? false);
-            // Save All: every tab open with changes, then the project, committed as a new revision (Save Project)
-            SaveAllCmd = new RelayCommand(o => SaveProjectFile(), o => !string.IsNullOrWhiteSpace(FileName));
+            // Save All: every tab open with changes, then the project, committed as a new revision (Save Project). It is off
+            // when there is nothing to save: no tab has changes, and no document has a draft waiting to be made a revision
+            SaveAllCmd = new RelayCommand(o => SaveProjectFile(), o => !string.IsNullOrWhiteSpace(FileName) && (SomePageNeedsSaving() || Engine.HasDrafts));
             ReloadFromFileCmd = new RelayCommand(o => ReloadProject(), o => !string.IsNullOrWhiteSpace(FileName));
             CloseFileCmd = new RelayCommand(o => CloseProject(), o => !string.IsNullOrWhiteSpace(FileName));
 

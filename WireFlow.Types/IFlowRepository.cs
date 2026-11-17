@@ -66,6 +66,8 @@ namespace WireFlow
         void SaveProjectAs(string projectFileName);
         // Writes the project's own values (FlowProject) into its file at once, as SetPageOrder writes the order
         void SaveProjectSettings();
+        // Whether any page, layout or part has a draft: edits saved that SaveProject has not yet made a revision of
+        bool HasDrafts { get; }
         // The revisions of the project at which a page, layout or part ("page", "layout", "part"; by its key, a part by
         // its name) was saved anew, in their order, and whether it has a saved version and a draft: what FlowVersions
         // makes its versions of

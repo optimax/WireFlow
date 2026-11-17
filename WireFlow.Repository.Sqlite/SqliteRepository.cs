@@ -124,6 +124,7 @@ CREATE TABLE Images (
             };
             CreateDatabase(docName, FlatFolderRepository.SerializeToJSON(project), null);
             ProjectFileName = docName;
+            hasDrafts = null;
             Project = project;
 
             // Default page
@@ -177,6 +178,7 @@ CREATE TABLE Images (
                 return null;
 
             ProjectFileName = projectFileName;
+            hasDrafts = null;
             Project = project;
             ProjectFileLoaded?.Invoke(ProjectFileName);
             return project;
@@ -409,11 +411,35 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                         ("$json", FlatFolderRepository.SerializeToJSON(Project)));
                     transaction.Commit();
                 }
+                hasDrafts = null;
             }
             catch
             {
                 Project.RevisionNo--;
                 throw;
+            }
+        }
+
+
+
+        // Whether a document has a draft, as HasDrafts last read it from the file; null when it is not known, as after
+        // anything was written or another file became the project's
+        private bool? hasDrafts;
+
+
+        /// <summary>
+        /// Whether any page, layout or part has a draft, which SaveProject would make a revision of. It is read from the
+        /// file once after each write, so that it can be asked often.
+        /// </summary>
+        public bool HasDrafts
+        {
+            get
+            {
+                if (ProjectFileName == null)
+                    return false;
+                if (hasDrafts == null)
+                    hasDrafts = Convert.ToInt64(ExecuteScalar("SELECT COUNT(*) FROM Documents WHERE Draft IS NOT NULL") ?? 0L) > 0;
+                return hasDrafts.Value;
             }
         }
 
@@ -471,6 +497,7 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
                 throw;
             }
             ProjectFileName = target;
+            hasDrafts = null;
         }
 
 
@@ -829,6 +856,8 @@ ALTER TABLE Archive ADD COLUMN Key TEXT;");
 
         private void Execute(string sql, params (string Name, object Value)[] parameters)
         {
+            // A write may make a draft, or take one away
+            hasDrafts = null;
             if (ProjectFileName == null)
                 return;
             using (var connection = Connect(ProjectFileName, SqliteOpenMode.ReadWrite))
