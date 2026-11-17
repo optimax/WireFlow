@@ -194,6 +194,35 @@ namespace WireFlow
         private Point StartPoint { get; set; }
         private bool IsDraggingShapes { get; set; }
 
+        // How near, in pixels on the screen, an edge has to come to a line for it to snap to it
+        private const double SNAP_DISTANCE = 6;
+
+        // A drag of the selection: where the mouse was pressed, where each selected element was then, whether the mouse
+        // has gone far enough since for it to count as a drag, and what the elements snap to (null for nothing)
+        private Point dragOrigin;
+        private List<(FrameworkElement Element, Point Place)> dragPlaces = new List<(FrameworkElement Element, Point Place)>();
+        private bool dragMoving;
+        private SnapLines dragSnap;
+
+        // What the element being resized snaps to
+        private FrameworkElement resizeSnapElement;
+        private SnapLines resizeSnap;
+
+        // The lines that show what a moved or resized element has snapped to, down the page and across it
+        private Line snapGuideAcross, snapGuideDown;
+        private static readonly Brush SnapGuideBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x3D, 0xBE));
+
+
+        // What a moved or resized element snaps to, in the coordinates of the panel holding it: the lines its left and
+        // right edges snap to and those its top and bottom edges do, and, for a move, the bounds of what moves, before it does
+        private sealed class SnapLines
+        {
+            public Panel Holder;
+            public List<double> Across;
+            public List<double> Down;
+            public Rect Bounds;
+        }
+
 
         public IDrawingTool SelectedDrawingTool
         {
@@ -602,7 +631,10 @@ namespace WireFlow
             if (!IsDraggingShapes)
                 CreateRubberband();
             else
+            {
                 BeginGestureStep();
+                BeginDrag(mousePos);
+            }
         }
 
 
@@ -613,28 +645,22 @@ namespace WireFlow
 
             if (IsDraggingShapes)
             {
-                bool moveElements =
-                    ((Math.Abs(mousePos.X - StartPoint.X) > SystemParameters.MinimumHorizontalDragDistance) ||
-                    (Math.Abs(mousePos.Y - StartPoint.Y) > SystemParameters.MinimumVerticalDragDistance));
-
-                Debug.WriteLine($"MOUSE MOVE: {moveElements} {mousePos}:{StartPoint}  {SystemParameters.MinimumVerticalDragDistance}");
-
-                if (moveElements)
+                // The drag starts once the mouse has gone far enough. From then on the elements are where they were when the
+                // mouse was pressed, plus how far it has gone since; where that brings an edge near a line it snaps to, on
+                // it (measuring from the start, not from the last move, lets an element stay on a line while the mouse is near)
+                if (!dragMoving)
+                    dragMoving = Math.Abs(mousePos.X - dragOrigin.X) > SystemParameters.MinimumHorizontalDragDistance
+                        || Math.Abs(mousePos.Y - dragOrigin.Y) > SystemParameters.MinimumVerticalDragDistance;
+                if (dragMoving)
                 {
                     pendingChildSelection = null;
-                    //Point position = Mouse.GetPosition(CurrentCanvas);
-                    var deltaX = mousePos.X - StartPoint.X;
-                    var deltaY = mousePos.Y - StartPoint.Y;
-
-                    foreach (var selectedElement in selectedElements)
+                    var delta = mousePos - dragOrigin;
+                    delta += SnapOffset(delta);
+                    foreach (var (element, place) in dragPlaces)
                     {
-                        double oldTop = Canvas.GetTop(selectedElement);
-                        double oldLeft = Canvas.GetLeft(selectedElement);
-
-                        SetTop(selectedElement, oldTop + deltaY);
-                        SetLeft(selectedElement, oldLeft + deltaX);
+                        SetLeft(element, place.X + delta.X);
+                        SetTop(element, place.Y + delta.Y);
                     }
-                    StartPoint = mousePos;
                     IsModified = true;
                 }
             }
@@ -661,7 +687,119 @@ namespace WireFlow
             }
 
             IsDraggingShapes = false;
+            EndDrag();
             EndGestureStep();
+        }
+
+
+        // The start of a drag of the selection: where each selected element is, and what they snap to
+        private void BeginDrag(Point mousePos)
+        {
+            dragOrigin = mousePos;
+            dragMoving = false;
+            dragPlaces = selectedElements.Select(e => (e, BoundsOf(e).TopLeft)).ToList();
+            dragSnap = SnapLinesFor(selectedElements.FirstOrDefault(e => !IsPlacedByItsPanel(e)), selectedElements);
+        }
+
+
+        private void EndDrag()
+        {
+            dragPlaces.Clear();
+            dragMoving = false;
+            dragSnap = null;
+            HideSnapGuides();
+        }
+
+
+        // What an element snaps to as it is moved or resized with the mouse: the edges of the elements around it in the panel
+        // holding it and of that panel (on a layer: of the elements of every visible layer and of the page's layouts, and
+        // of the page), but those of the elements moving with it. Null for an element its panel places, which is not moved.
+        private SnapLines SnapLinesFor(FrameworkElement e, IReadOnlyCollection<FrameworkElement> moving)
+        {
+            if (e == null || IsPlacedByItsPanel(e) || !(LogicalTreeHelper.GetParent(e) is Panel holder))
+                return null;
+            var others = Surroundings(e, holder, moving, out Rect container);
+            var bounds = moving.Where(m => LogicalTreeHelper.GetParent(m) == holder && !IsPlacedByItsPanel(m)).Select(BoundsOf).Aggregate(BoundsOf(e), Rect.Union);
+            return new SnapLines { Holder = holder, Across = SnapLayout.LinesAcross(container, others), Down = SnapLayout.LinesDown(container, others), Bounds = bounds };
+        }
+
+
+        // How far the elements dragged go beyond where the mouse alone puts them, so that an edge of theirs that has come
+        // near a line lies on it; nothing while Ctrl is held. The lines they have snapped to are shown.
+        private Vector SnapOffset(Vector delta)
+        {
+            if (dragSnap == null || IsCtrlPressed)
+            {
+                HideSnapGuides();
+                return new Vector();
+            }
+            double distance = SNAP_DISTANCE / Designer.Scale;
+            var bounds = dragSnap.Bounds;
+            bounds.Offset(delta);
+            double x = SnapLayout.SnapSpan(bounds.Left, bounds.Width, dragSnap.Across, distance, out double? across);
+            double y = SnapLayout.SnapSpan(bounds.Top, bounds.Height, dragSnap.Down, distance, out double? down);
+            ShowSnapGuide(ref snapGuideAcross, dragSnap.Holder, across, true);
+            ShowSnapGuide(ref snapGuideDown, dragSnap.Holder, down, false);
+            return new Vector(x, y);
+        }
+
+
+        // An edge of the element being resized, put on the nearest line it snaps to when one is near: one of its left and
+        // right edges (across) or of its top and bottom ones, where the mouse asks it to be. It is left there while Ctrl is
+        // held, and for an element its panel places.
+        private double SnapResizedEdge(UIElement element, bool across, double edge)
+        {
+            var lines = IsCtrlPressed || !(element is FrameworkElement e) ? null : e == resizeSnapElement ? resizeSnap : SnapLinesFor(e, new[] { e });
+            if (lines == null)
+            {
+                HideSnapGuides();
+                return edge;
+            }
+            var snapLines = across ? lines.Across : lines.Down;
+            double snapped = SnapLayout.Snap(edge, snapLines, SNAP_DISTANCE / Designer.Scale);
+            ShowSnapGuide(ref across ? ref snapGuideAcross : ref snapGuideDown, lines.Holder, snapLines.Contains(snapped) ? snapped : (double?)null, across);
+            return snapped;
+        }
+
+
+        // Shows the line an edge has snapped to: one down the page for an edge snapped across it, or one across the page;
+        // the line is given in the coordinates of the panel holding the element. None takes the line away.
+        private void ShowSnapGuide(ref Line guide, Panel holder, double? at, bool across)
+        {
+            if (at == null || CurrentCanvas == null)
+            {
+                if (guide != null)
+                    CurrentCanvas?.Children.Remove(guide);
+                guide = null;
+                return;
+            }
+            if (guide == null)
+            {
+                guide = new Line { Stroke = SnapGuideBrush, IsHitTestVisible = false };
+                Panel.SetZIndex(guide, int.MaxValue);
+                CurrentCanvas.Children.Add(guide);
+            }
+            var origin = holder == null || !holder.IsDescendantOf(CurrentCanvas) ? new Point() : holder.TranslatePoint(new Point(), CurrentCanvas);
+            guide.StrokeThickness = 1 / Designer.Scale;
+            if (across)
+            {
+                guide.X1 = guide.X2 = at.Value + origin.X;
+                guide.Y1 = 0;
+                guide.Y2 = CurrentCanvas.Height;
+            }
+            else
+            {
+                guide.Y1 = guide.Y2 = at.Value + origin.Y;
+                guide.X1 = 0;
+                guide.X2 = CurrentCanvas.Width;
+            }
+        }
+
+
+        private void HideSnapGuides()
+        {
+            ShowSnapGuide(ref snapGuideAcross, null, null, true);
+            ShowSnapGuide(ref snapGuideDown, null, null, false);
         }
 
 
@@ -1206,6 +1344,7 @@ namespace WireFlow
                 adorner = new ResizingAdorner(clickedElement, new SolidColorBrush(Colors.Chartreuse));
             adorner.ResizeStarted += OnElementResizeStarted;
             adorner.ResizeCompleted += OnElementResized;
+            adorner.SnapEdge = SnapResizedEdge;
             adorner.IsClipEnabled = true;
             aLayer.Add(adorner);
         }
@@ -1215,11 +1354,17 @@ namespace WireFlow
         private void OnElementResizeStarted(UIElement e)
         {
             BeginGestureStep();
+            // What its edges snap to, for the length of the resize
+            resizeSnapElement = e as FrameworkElement;
+            resizeSnap = resizeSnapElement == null ? null : SnapLinesFor(resizeSnapElement, new[] { resizeSnapElement });
         }
 
 
         private void OnElementResized(UIElement e, Size s)
         {
+            resizeSnapElement = null;
+            resizeSnap = null;
+            HideSnapGuides();
             IsModified = true;
             EndGestureStep();
         }
@@ -1516,6 +1661,7 @@ namespace WireFlow
         {
             Designer?.ReleaseMouseCapture();
             IsDraggingShapes = false;
+            EndDrag();
             RemoveRubberband();
 
             //TODO: Select default tool in the toolbox
@@ -2248,12 +2394,7 @@ namespace WireFlow
                 var holder = LogicalTreeHelper.GetParent(e) as Panel;
                 if (holder == null || IsPlacedByItsPanel(e))
                     continue;
-                var panels = holder is Layer
-                    ? CurrentCanvas.Children.OfType<Layout>().SelectMany(l => l.Children.OfType<Layer>()).Where(l => l.Visibility == Visibility.Visible).Cast<Panel>()
-                    : new[] { holder };
-                var others = panels.SelectMany(p => p.Children.OfType<FrameworkElement>())
-                    .Where(o => o != e && o.Visibility == Visibility.Visible && FlowView.GetNode(o) != null).Select(BoundsOf).ToList();
-                var container = holder is Layer ? new Rect(0, 0, CurrentCanvas.Width, CurrentCanvas.Height) : new Rect(0, 0, holder.Width, holder.Height);
+                var others = Surroundings(e, holder, null, out Rect container);
                 var bounds = BoundsOf(e);
                 var filled = FillLayout.Fill(bounds, container, others, across, down);
                 if (filled == bounds)
@@ -2264,6 +2405,21 @@ namespace WireFlow
                 SetHeight(e, filled.Height);
                 IsModified = true;
             }
+        }
+
+
+        // The places of the elements around an element in the panel holding it, which take room there, and the room itself:
+        // on a layer, the elements of every visible layer and of the page's layouts, in the page; in a group or a panel,
+        // its other children, in it. The elements left out are not among them.
+        private List<Rect> Surroundings(FrameworkElement e, Panel holder, IReadOnlyCollection<FrameworkElement> leftOut, out Rect container)
+        {
+            var panels = holder is Layer
+                ? CurrentCanvas.Children.OfType<Layout>().SelectMany(l => l.Children.OfType<Layer>()).Where(l => l.Visibility == Visibility.Visible).Cast<Panel>()
+                : new[] { holder };
+            container = holder is Layer ? new Rect(0, 0, CurrentCanvas.Width, CurrentCanvas.Height) : new Rect(0, 0, holder.Width, holder.Height);
+            return panels.SelectMany(p => p.Children.OfType<FrameworkElement>())
+                .Where(o => o != e && (leftOut == null || !leftOut.Contains(o)) && o.Visibility == Visibility.Visible && FlowView.GetNode(o) != null)
+                .Select(BoundsOf).ToList();
         }
 
 

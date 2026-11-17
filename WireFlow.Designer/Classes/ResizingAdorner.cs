@@ -40,6 +40,14 @@ namespace Optimax
         public event Action<UIElement> ResizeStarted;
         public event Action<UIElement, Size> ResizeCompleted;
 
+        /// <summary>
+        /// Puts an edge of the element being resized on a line it snaps to, when one is near: given the element, whether the
+        /// edge is its left or right one (across) or its top or bottom one, and where the mouse asks the edge to be, in the
+        /// coordinates of the panel holding the element, it gives where the edge goes. Without one, the edge goes where it
+        /// is asked to.
+        /// </summary>
+        public Func<UIElement, bool, double, double> SnapEdge { get; set; }
+
 
         // A size or position set while resizing goes to the element's DOM node, which the view follows at once; an element
         // without a node is set itself
@@ -207,6 +215,19 @@ namespace Optimax
 
         }
 
+        // The change of an edge that the mouse asks for, made to end on a line the edge snaps to when one is near
+        // (SnapEdge): of the left or right edge (across) or of the top or bottom one; the far edge is the right or bottom one
+        private double SnappedChange(FrameworkElement element, bool across, bool far, double change)
+        {
+            if (SnapEdge == null)
+                return change;
+            double start = across ? Canvas.GetLeft(element) : Canvas.GetTop(element);
+            double length = across ? (double.IsNaN(element.Width) ? element.ActualWidth : element.Width) : (double.IsNaN(element.Height) ? element.ActualHeight : element.Height);
+            double edge = (double.IsNaN(start) ? 0 : start) + (far ? length : 0);
+            return SnapEdge(element, across, edge + change) - edge;
+        }
+
+
         // Handler for resizing from the bottom-right.
         void HandleBottomRight(object sender, DragDeltaEventArgs args)
         {
@@ -214,6 +235,10 @@ namespace Optimax
             Thumb hitThumb = sender as Thumb;
 
             if (adornedElement == null || hitThumb == null) return;
+
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double horizontalChange = SnappedChange(adornedElement, true, true, args.HorizontalChange);
+            double verticalChange = SnappedChange(adornedElement, false, true, args.VerticalChange);
             FrameworkElement parentElement = adornedElement.Parent as FrameworkElement;
 
             Canvas canvas = adornedElement as Canvas;
@@ -225,23 +250,23 @@ namespace Optimax
 
                 // Change the size by the amount the user drags the mouse, as long as it's larger
                 // than the width or height of an adorner, respectively.
-                SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
-                SetHeight(adornedElement, Math.Max(adornedElement.Height + args.VerticalChange, hitThumb.DesiredSize.Height));
+                SetWidth(adornedElement, Math.Max(adornedElement.Width + horizontalChange, hitThumb.DesiredSize.Width));
+                SetHeight(adornedElement, Math.Max(adornedElement.Height + verticalChange, hitThumb.DesiredSize.Height));
             }
             else
             {
-                Size newSize = new Size(adornedElement.Width + args.HorizontalChange,adornedElement.Height + args.VerticalChange);
+                Size newSize = new Size(adornedElement.Width + horizontalChange,adornedElement.Height + verticalChange);
 
                 double scaleX = newSize.Width / adornedElement.Width;
                 double scaleY = newSize.Height / adornedElement.Height;
 
                 double scale;
-                if (args.HorizontalChange > args.VerticalChange)
+                if (horizontalChange > verticalChange)
                     scale = scaleY;
                 else
                     scale = scaleX;
 
-                Debug.WriteLine("HorizChange: {0}, Width: {1}, Scale: {2},{3}", args.HorizontalChange, adornedElement.Width, scaleX, scaleY);
+                Debug.WriteLine("HorizChange: {0}, Width: {1}, Scale: {2},{3}", horizontalChange, adornedElement.Width, scaleX, scaleY);
                 if (scaleX < 0)
                     Debug.WriteLine("!!!!");
 
@@ -260,8 +285,8 @@ namespace Optimax
                     SetTop(e,pos.Y*scaleY);
                 }
 
-                SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
-                SetHeight(adornedElement, Math.Max(adornedElement.Height + args.VerticalChange, hitThumb.DesiredSize.Height));
+                SetWidth(adornedElement, Math.Max(adornedElement.Width + horizontalChange, hitThumb.DesiredSize.Width));
+                SetHeight(adornedElement, Math.Max(adornedElement.Height + verticalChange, hitThumb.DesiredSize.Height));
 
                 Debug.WriteLine("Element: {0},{1}", adornedElement.ActualWidth, adornedElement.ActualHeight);
 
@@ -292,6 +317,10 @@ namespace Optimax
             Thumb hitThumb = sender as Thumb;
 
             if (adornedElement == null || hitThumb == null) return;
+
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double horizontalChange = SnappedChange(adornedElement, true, true, args.HorizontalChange);
+            double verticalChange = SnappedChange(adornedElement, false, false, args.VerticalChange);
             FrameworkElement parentElement = adornedElement.Parent as FrameworkElement;
 
             // Ensure that the Width and Height are properly initialized after the resize.
@@ -299,11 +328,11 @@ namespace Optimax
 
             // Change the size by the amount the user drags the mouse, as long as it's larger
             // than the width or height of an adorner, respectively.
-            SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
+            SetWidth(adornedElement, Math.Max(adornedElement.Width + horizontalChange, hitThumb.DesiredSize.Width));
             //adornedElement.Height = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
 
             double height_old = adornedElement.Height;
-            double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
+            double height_new = Math.Max(adornedElement.Height - verticalChange, hitThumb.DesiredSize.Height);
             double top_old = Canvas.GetTop(adornedElement);
             SetHeight(adornedElement, height_new);
             SetTop(adornedElement, top_old - (height_new - height_old));
@@ -317,6 +346,10 @@ namespace Optimax
 
             if (adornedElement == null || hitThumb == null) return;
 
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double horizontalChange = SnappedChange(adornedElement, true, false, args.HorizontalChange);
+            double verticalChange = SnappedChange(adornedElement, false, false, args.VerticalChange);
+
             // Ensure that the Width and Height are properly initialized after the resize.
             EnforceSize(adornedElement);
 
@@ -326,13 +359,13 @@ namespace Optimax
             //adornedElement.Height = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
 
             double width_old = adornedElement.Width;
-            double width_new = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
+            double width_new = Math.Max(adornedElement.Width - horizontalChange, hitThumb.DesiredSize.Width);
             double left_old = Canvas.GetLeft(adornedElement);
             SetWidth(adornedElement, width_new);
             SetLeft(adornedElement, left_old - (width_new - width_old));
 
             double height_old = adornedElement.Height;
-            double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
+            double height_new = Math.Max(adornedElement.Height - verticalChange, hitThumb.DesiredSize.Height);
             double top_old = Canvas.GetTop(adornedElement);
             SetHeight(adornedElement, height_new);
             SetTop(adornedElement, top_old - (height_new - height_old));
@@ -347,16 +380,20 @@ namespace Optimax
 
             if (adornedElement == null || hitThumb == null) return;
 
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double horizontalChange = SnappedChange(adornedElement, true, false, args.HorizontalChange);
+            double verticalChange = SnappedChange(adornedElement, false, true, args.VerticalChange);
+
             // Ensure that the Width and Height are properly initialized after the resize.
             EnforceSize(adornedElement);
 
             // Change the size by the amount the user drags the mouse, as long as it's larger
             // than the width or height of an adorner, respectively.
             //adornedElement.Width = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
-            SetHeight(adornedElement, Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height));
+            SetHeight(adornedElement, Math.Max(verticalChange + adornedElement.Height, hitThumb.DesiredSize.Height));
 
             double width_old = adornedElement.Width;
-            double width_new = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
+            double width_new = Math.Max(adornedElement.Width - horizontalChange, hitThumb.DesiredSize.Width);
             double left_old = Canvas.GetLeft(adornedElement);
             SetWidth(adornedElement, width_new);
             SetLeft(adornedElement, left_old - (width_new - width_old));
@@ -373,12 +410,15 @@ namespace Optimax
             if (adornedElement == null || hitThumb == null)
                 return;
 
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double verticalChange = SnappedChange(adornedElement, false, true, args.VerticalChange);
+
             // Ensure that the Width and Height are properly initialized after the resize.
             EnforceSize(adornedElement);
 
             // Change the size by the amount the user drags the mouse, as long as it's larger
             // than the width or height of an adorner, respectively.
-            SetHeight(adornedElement, Math.Max(args.VerticalChange + adornedElement.Height, hitThumb.DesiredSize.Height));
+            SetHeight(adornedElement, Math.Max(verticalChange + adornedElement.Height, hitThumb.DesiredSize.Height));
         }
 
 
@@ -390,6 +430,9 @@ namespace Optimax
 
             if (adornedElement == null || hitThumb == null)
                 return;
+
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double verticalChange = SnappedChange(adornedElement, false, false, args.VerticalChange);
             //FrameworkElement parentElement = adornedElement.Parent as FrameworkElement;
 
             // Ensure that the Width and Height are properly initialized after the resize.
@@ -401,10 +444,10 @@ namespace Optimax
 
             if (ResizeSymmetric)
             {
-                SetHeight(adornedElement, Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height));
+                SetHeight(adornedElement, Math.Max(adornedElement.Height - verticalChange, hitThumb.DesiredSize.Height));
                 double height_old = adornedElement.Height;
 
-                double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
+                double height_new = Math.Max(adornedElement.Height - verticalChange, hitThumb.DesiredSize.Height);
                 double top_old = Canvas.GetTop(adornedElement);
                 double top_new = top_old - (height_new - height_old);
                 SetHeight(adornedElement, height_new);
@@ -413,7 +456,7 @@ namespace Optimax
             else
             {
                 double height_old = adornedElement.Height;
-                double height_new = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
+                double height_new = Math.Max(adornedElement.Height - verticalChange, hitThumb.DesiredSize.Height);
                 double top_old = Canvas.GetTop(adornedElement);
                 double top_new = top_old - (height_new - height_old);
                 SetHeight(adornedElement, height_new);
@@ -430,6 +473,9 @@ namespace Optimax
             if (adornedElement == null || hitThumb == null)
                 return;
 
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double horizontalChange = SnappedChange(adornedElement, true, false, args.HorizontalChange);
+
             // Ensure that the Width and Height are properly initialized after the resize.
             EnforceSize(adornedElement);
 
@@ -439,7 +485,7 @@ namespace Optimax
             //adornedElement.Height = Math.Max(adornedElement.Height - args.VerticalChange, hitThumb.DesiredSize.Height);
 
             double width_old = adornedElement.Width;
-            double width_new = Math.Max(adornedElement.Width - args.HorizontalChange, hitThumb.DesiredSize.Width);
+            double width_new = Math.Max(adornedElement.Width - horizontalChange, hitThumb.DesiredSize.Width);
             double left_old = Canvas.GetLeft(adornedElement);
             SetWidth(adornedElement, width_new);
             SetLeft(adornedElement, left_old - (width_new - width_old));
@@ -455,10 +501,13 @@ namespace Optimax
             if (adornedElement == null || hitThumb == null)
                 return;
 
+            // The change the mouse asks for, ending on a line the edge snaps to when one is near
+            double horizontalChange = SnappedChange(adornedElement, true, true, args.HorizontalChange);
+
             // Ensure that the Width and Height are properly initialized after the resize.
             EnforceSize(adornedElement);
 
-            SetWidth(adornedElement, Math.Max(adornedElement.Width + args.HorizontalChange, hitThumb.DesiredSize.Width));
+            SetWidth(adornedElement, Math.Max(adornedElement.Width + horizontalChange, hitThumb.DesiredSize.Width));
         }
 
         private void CornerThumbOnDragStarted(object sender, DragStartedEventArgs dragStartedEventArgs)
