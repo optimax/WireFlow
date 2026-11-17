@@ -33,6 +33,8 @@
                 <MenuItem Header="Align Bottom" Command="{Binding AlignBottomsCmd}"/>
                 <MenuItem Header="Align Left" Command="{Binding AlignLeftsCmd}"/>
                 <MenuItem Header="Align Right" Command="{Binding AlignRightsCmd}"/>
+                <Separator/>
+                <MenuItem Header="Fill Space" Command="{Binding FillSpaceCmd}"/>
             </MenuItem>
             <MenuItem Header="Spacing">
                 <MenuItem Header="Distribute Horizontally" Command="{Binding DistributeHorizontallyCmd}"/>

@@ -3029,6 +3029,7 @@ namespace WireFlow
         public ICommand AlignCentersVerticallyCmd { get; set; }
         public ICommand AlignCentersHorizontallyCmd { get; set; }
         public ICommand CenterInPageCmd { get; set; }
+        public ICommand FillSpaceCmd { get; set; }
 
         public ICommand MakeSameWidthCmd { get; set; }
         public ICommand MakeSameHeightCmd { get; set; }
@@ -3124,6 +3125,7 @@ namespace WireFlow
             AlignCentersVerticallyCmd = new RelayCommand(o => CurrentDesigner?.AlignCentersVertically(), o => CurrentDesigner?.HasElementsSelected ?? false);
             AlignCentersHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.AlignCentersHorizontally(), o => CurrentDesigner?.HasElementsSelected ?? false);
             CenterInPageCmd = new RelayCommand(o => CurrentDesigner?.CenterInPage(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            FillSpaceCmd = new RelayCommand(o => CurrentDesigner?.FillSpace(), o => CurrentDesigner?.HasElementsSelected ?? false);
 
             MakeSameWidthCmd = new RelayCommand(o => CurrentDesigner?.MakeSameWidth(), o => CurrentDesigner?.HasElementsSelected ?? false);
             MakeSameHeightCmd = new RelayCommand(o => CurrentDesigner?.MakeSameHeight(), o => CurrentDesigner?.HasElementsSelected ?? false);

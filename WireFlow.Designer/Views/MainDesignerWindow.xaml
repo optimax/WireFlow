@@ -245,6 +245,8 @@
                     <MenuItem Header="Align Bottom" Command="{Binding AlignBottomsCmd}"/>
                     <MenuItem Header="Align Left" Command="{Binding AlignLeftsCmd}"/>
                     <MenuItem Header="Align Right" Command="{Binding AlignRightsCmd}"/>
+                    <Separator/>
+                    <MenuItem Header="Fill Space" Command="{Binding FillSpaceCmd}"/>
                 </MenuItem>
                 <MenuItem Header="Spacing">
                     <MenuItem Header="Distribute Horizontally" Command="{Binding DistributeHorizontallyCmd}"/>
@@ -382,6 +384,9 @@
                 </Button>
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AlignBottomsCmd}" ToolTip="Align Bottom">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.align-bottom}"/>
+                </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding FillSpaceCmd}" ToolTip="Fill Space: as far as the elements around it, or the page">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.fill-space}"/>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding DistributeHorizontallyCmd}" ToolTip="Distribute Horizontally">

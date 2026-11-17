@@ -2128,6 +2128,52 @@ namespace WireFlow
         }
 
 
+        /// <summary>
+        /// Makes each selected element fill the room around it, across and down: its edges go out to the nearest elements
+        /// beside, above and under it, or to the edges of the page (see <see cref="Fill"/>).
+        /// </summary>
+        public void FillSpace() => Fill(true, true);
+
+
+        // Makes each selected element fill the room it has in what holds it, across, down or both (FillLayout): the page,
+        // where the elements of every layer and of the page's layouts take room, or its group, where the group's other
+        // children do. One after another, so that two selected elements do not fill the same room. A stack panel's child
+        // is left as it is: the panel places and sizes it.
+        private void Fill(bool across, bool down)
+        {
+            foreach (var e in selectedElements.ToList())
+            {
+                var holder = LogicalTreeHelper.GetParent(e) as Panel;
+                if (holder == null || holder is Stack)
+                    continue;
+                var panels = holder is Layer
+                    ? CurrentCanvas.Children.OfType<Layout>().SelectMany(l => l.Children.OfType<Layer>()).Where(l => l.Visibility == Visibility.Visible).Cast<Panel>()
+                    : new[] { holder };
+                var others = panels.SelectMany(p => p.Children.OfType<FrameworkElement>())
+                    .Where(o => o != e && o.Visibility == Visibility.Visible && FlowView.GetNode(o) != null).Select(BoundsOf).ToList();
+                var container = holder is Layer ? new Rect(0, 0, CurrentCanvas.Width, CurrentCanvas.Height) : new Rect(0, 0, holder.Width, holder.Height);
+                var bounds = BoundsOf(e);
+                var filled = FillLayout.Fill(bounds, container, others, across, down);
+                if (filled == bounds)
+                    continue;
+                SetLeft(e, filled.Left);
+                SetTop(e, filled.Top);
+                SetWidth(e, filled.Width);
+                SetHeight(e, filled.Height);
+                IsModified = true;
+            }
+        }
+
+
+        // An element's place in the panel holding it; one without a size of its own has the size it is drawn at
+        private static Rect BoundsOf(FrameworkElement e)
+        {
+            double left = Canvas.GetLeft(e), top = Canvas.GetTop(e);
+            double width = double.IsNaN(e.Width) ? e.ActualWidth : e.Width, height = double.IsNaN(e.Height) ? e.ActualHeight : e.Height;
+            return new Rect(double.IsNaN(left) ? 0 : left, double.IsNaN(top) ? 0 : top, Math.Max(0, width), Math.Max(0, height));
+        }
+
+
 
         public void DistributeHorizontally()
         {

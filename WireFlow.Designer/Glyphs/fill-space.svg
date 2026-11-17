@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Fill Space: arrows going out to the four sides of a frame -->
+  <rect x="3" y="3" width="18" height="18" rx="2"/>
+  <path d="M6.5 12h11M12 6.5v11"/>
+  <path d="M8 10.5L6.5 12 8 13.5M16 10.5l1.5 1.5-1.5 1.5"/>
+  <path d="M10.5 8L12 6.5 13.5 8M10.5 16l1.5 1.5 1.5-1.5"/>
+</svg>
