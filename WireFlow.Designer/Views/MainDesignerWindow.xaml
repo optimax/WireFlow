@@ -320,13 +320,9 @@
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
                 <!-- Design or Navigate mode, and Back and Forward through the pages visited in Navigate mode -->
-                <!-- The Navigate Mode toggle, left out for now (user decision): the Navigate tool, F9 and View > Navigate Mode
-                     switch the mode. To show it again, put this back:
                 <ToggleButton Style="{StaticResource ToolbarToggleStyle}" IsChecked="{Binding IsNavigateMode, Mode=TwoWay}" ToolTip="Navigate Mode (F9): click links as in WireFlow Browser">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.navigate}"/>
                 </ToggleButton>
-                -->
-
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding NavigateBackCmd}" ToolTip="Back (Alt+Left)">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.back}"/>
                 </Button>
