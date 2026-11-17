@@ -49,7 +49,8 @@ namespace WireFlow
             new Shown { Property = property, Name = name ?? property, Category = category, ReadOnly = readOnly };
 
 
-        private static readonly Shown[] Position = { P("Left", "Layout"), P("Top", "Layout") };
+        // Every element has an alignment, which the panel holding it heeds
+        private static readonly Shown[] Position = { P("Left", "Layout"), P("Top", "Layout"), P("Alignment", "Layout") };
         private static readonly Shown[] Size = { P("Width", "Layout"), P("Height", "Layout") };
         private static readonly Shown[] Common = { P("Name", "Common"), P("Id", "Common", "ID"), P("Href", "Navigation") };
         private static readonly Shown[] Font =
@@ -86,6 +87,10 @@ namespace WireFlow
             ["stack"] = Common.Concat(Position).Concat(Size).Concat(new[]
             {
                 P("Direction", "Layout"), P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"),
+            }).ToArray(),
+            ["panel"] = Common.Concat(Position).Concat(Size).Concat(new[]
+            {
+                P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"),
             }).ToArray(),
             ["part"] = new[] { P("Name", "Common", "Part"), P("Id", "Common", "ID"), P("Href", "Navigation") }.Concat(Position).Concat(Size).ToArray(),
         };
@@ -246,6 +251,7 @@ namespace WireFlow
                 case "image": return "Image";
                 case "group": return "Group";
                 case "stack": return "Stack Panel";
+                case "panel": return "Panel";
                 case "part": return "Part";
                 default: return kind;
             }

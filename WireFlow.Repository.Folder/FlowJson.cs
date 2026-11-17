@@ -11,7 +11,7 @@ namespace WireFlow
 {
     /// <summary>
     /// The JSON of WireFlow documents, as of .wf format 2. An element's Type ("box", "text", "rect", "group", "stack",
-    /// "part", "image") chooses its class when it is read, so the JSON names no .NET types. Enums are written by name and an
+    /// "panel", "part", "image") chooses its class when it is read, so the JSON names no .NET types. Enums are written by name and an
     /// automatic size (NaN) as null. Every value is written, so that reading never depends on the defaults in the code.
     /// </summary>
     public static class FlowJson
@@ -80,6 +80,8 @@ namespace WireFlow
                     return new FlowGroup();
                 case "stack":
                     return new FlowStack();
+                case "panel":
+                    return new FlowPanel();
                 case "part":
                     return new FlowPart();
                 case "image":

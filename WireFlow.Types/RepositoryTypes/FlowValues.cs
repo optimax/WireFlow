@@ -75,4 +75,18 @@ namespace WireFlow
         Horizontal = 0,
         Vertical = 1,
     }
+
+    /// <summary>
+    /// Where the panel holding an element places it, as a Delphi control's Align: along one of the sides of the room the
+    /// panel has left, across the room left (Fill), or where the element's own position puts it (None).
+    /// </summary>
+    public enum FlowAlignment
+    {
+        None = 0,
+        Top = 1,
+        Bottom = 2,
+        Left = 3,
+        Right = 4,
+        Fill = 5,
+    }
 }

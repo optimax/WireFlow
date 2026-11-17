@@ -601,6 +601,7 @@ namespace WireFlow
             RegisterDrawingTool<SeparatorDrawingTool>();
 
             RegisterDrawingTool<StackPanelDrawingTool>();
+            RegisterDrawingTool<PanelDrawingTool>();
         }
 
 
@@ -2225,11 +2226,11 @@ namespace WireFlow
         }
 
 
-        // The elements a panel's entry lists: the page's layouts, a layout's layers and a layer's or group's elements, topmost first; a stack panel's elements in their order in it
+        // The elements a panel's entry lists: the page's layouts, a layout's layers and a layer's or group's elements, topmost first; a stack panel's and a panel's elements in their order in it, which is the order it places them in
         private static List<FrameworkElement> OutlineChildren(Panel panel)
         {
             var children = panel is Layout ? panel.Children.OfType<Layer>().Cast<FrameworkElement>().ToList() : panel.Children.OfType<FrameworkElement>().ToList();
-            if (!(panel is Stack))
+            if (!(panel is Stack || panel is AlignPanel))
                 children.Reverse();
             return children;
         }
@@ -2240,13 +2241,14 @@ namespace WireFlow
         {
             if (panel is Layout)
                 return new UILayerProxy(element);
-            if (!(panel is Layer || panel is Group || panel is Stack))
+            if (!(panel is Layer || panel is Group || panel is Stack || panel is AlignPanel))
                 return element is Layout ? new UILayoutProxy(element) : new UIElementProxy(element);
             switch (element)
             {
                 case Part _: return new UIPartProxy(element);
                 case Group _: return new UIGroupProxy(element);
                 case Stack _: return new UIStackProxy(element);
+                case AlignPanel _: return new UIPanelProxy(element);
                 case Box _: return new UIBoxProxy(element);
                 case ImageBox _: return new UIImageProxy(element);
                 case WireFlowText _: return new UITextProxy(element);
@@ -2292,7 +2294,7 @@ namespace WireFlow
                     }
                 }
                 // A count shown in the entry follows its elements
-                if (proxy is UICanvasProxy canvas && (child is Layer || child is Group || child is Stack) && OutlineSync((Panel)child, canvas.Elements))
+                if (proxy is UICanvasProxy canvas && (child is Layer || child is Group || child is Stack || child is AlignPanel) && OutlineSync((Panel)child, canvas.Elements))
                     canvas.Refresh();
             }
             return changed;

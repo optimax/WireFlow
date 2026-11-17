@@ -1116,22 +1116,22 @@ namespace WireFlow
         }
 
 
-        // The selected group or stack panel holding the element, if any
+        // The selected group, stack panel or panel holding the element, if any
         private FrameworkElement SelectedContainerOf(FrameworkElement element)
         {
             if (element == null)
                 return null;
-            for (var parent = LogicalTreeHelper.GetParent(element); parent is Group || parent is Stack; parent = LogicalTreeHelper.GetParent(parent))
+            for (var parent = LogicalTreeHelper.GetParent(element); parent is Group || parent is Stack || parent is AlignPanel; parent = LogicalTreeHelper.GetParent(parent))
                 if (selectedElements.Contains(parent))
                     return (FrameworkElement)parent;
             return null;
         }
 
 
-        /// <summary>Selects the groups and stack panels holding the selected elements, as Esc does; with none, deselects all, which leaves the page selected.</summary>
+        /// <summary>Selects the groups, stack panels and panels holding the selected elements, as Esc does; with none, deselects all, which leaves the page selected.</summary>
         public void SelectContainers()
         {
-            var containers = selectedElements.Select(e => LogicalTreeHelper.GetParent(e)).OfType<FrameworkElement>().Where(p => p is Group || p is Stack).Distinct().ToList();
+            var containers = selectedElements.Select(e => LogicalTreeHelper.GetParent(e)).OfType<FrameworkElement>().Where(p => p is Group || p is Stack || p is AlignPanel).Distinct().ToList();
             DeselectAll();
             foreach (var container in containers)
                 SelectElementOrItsGroup(container);
@@ -1147,7 +1147,7 @@ namespace WireFlow
             if (parent == null)
                 return;
 
-            if ((clickedElement is Part) || (parent is Layer) || (parent is Stack) || (parent == CurrentCanvas)) // not in a group, or freehand
+            if ((clickedElement is Part) || (parent is Layer) || (parent is Stack) || (parent is AlignPanel) || (parent == CurrentCanvas)) // not in a group, or freehand
             {
                 SelectElement(clickedElement);
                 return;
@@ -1673,14 +1673,15 @@ namespace WireFlow
             node.Width = Rubberband.Width;
             node.Height = Rubberband.Height;
             var start = new Point(Canvas.GetLeft(Rubberband), Canvas.GetTop(Rubberband));
-            // An element drawn starting inside a stack panel becomes its last child, which the panel places
-            Stack stack = FindStackAt(CurrentLayer, start);
-            if (stack != null && FlowView.GetNode(stack) is FlowStack stackNode)
+            // An element drawn starting inside a stack panel becomes its last child, which the panel places; one drawn
+            // starting inside a panel becomes its last child too, where it was drawn, until it is given an alignment
+            Panel holder = FindPanelAt(CurrentLayer, start, out Point inside);
+            if (holder != null && FlowView.GetNode(holder) is FlowGroup holderNode)
             {
-                node.Left = 0;
-                node.Top = 0;
-                stackNode.Children.Add(node);
-                var drawn = ViewOf(node, stack);
+                node.Left = holder is Stack ? 0 : inside.X;
+                node.Top = holder is Stack ? 0 : inside.Y;
+                holderNode.Children.Add(node);
+                var drawn = ViewOf(node, holder);
                 if (drawn != null)
                     SelectElementOrItsGroup(drawn);
             }
@@ -1701,16 +1702,23 @@ namespace WireFlow
 
 
         /// <summary>
-        /// The innermost stack panel at a point of a layer or of a panel (in its coordinates), the topmost where panels
-        /// overlap; null if there is none.
+        /// The innermost stack panel or panel at a point of a layer or of one of them (in its coordinates), the topmost
+        /// where they overlap, with the point in its own coordinates; null if there is none.
         /// </summary>
-        private static Stack FindStackAt(Panel container, Point point)
+        private static Panel FindPanelAt(Panel container, Point point, out Point inside)
         {
-            foreach (var stack in container.Children.OfType<Stack>().Reverse())
+            inside = point;
+            foreach (var panel in container.Children.OfType<Panel>().Where(p => p is Stack || p is AlignPanel).Reverse())
             {
-                var bounds = new Rect(Canvas.GetLeft(stack), Canvas.GetTop(stack), stack.ActualWidth, stack.ActualHeight);
-                if (bounds.Contains(point))
-                    return FindStackAt(stack, new Point(point.X - bounds.X, point.Y - bounds.Y)) ?? stack;
+                var bounds = new Rect(Canvas.GetLeft(panel), Canvas.GetTop(panel), panel.ActualWidth, panel.ActualHeight);
+                if (!bounds.Contains(point))
+                    continue;
+                var within = new Point(point.X - bounds.X, point.Y - bounds.Y);
+                var inner = FindPanelAt(panel, within, out inside);
+                if (inner != null)
+                    return inner;
+                inside = within;
+                return panel;
             }
             return null;
         }
@@ -2016,7 +2024,7 @@ namespace WireFlow
             foreach (FrameworkElement e in selection)
             {
                 var node = NodeOf(e);
-                // Groups and stack panels; a part reference keeps its part
+                // Groups, stack panels and panels; a part reference keeps its part
                 if (node is FlowGroup group && !(node is FlowPart) && e is Panel panel)
                     UngroupNode(group, panel, nodes);
                 else if (node != null)
@@ -2035,8 +2043,8 @@ namespace WireFlow
 
 
         /// <summary>
-        /// Puts a group's or stack panel's children in its place in its layer, where they are on the page (as drawn, which
-        /// is where a stack panel put them), and takes it away.
+        /// Puts a group's, stack panel's or panel's children in its place in its layer, where they are on the page (as
+        /// drawn, which is where a stack panel or a panel put them), and takes it away. A child released keeps no alignment.
         /// </summary>
         private static void UngroupNode(FlowGroup group, Panel panel, List<FlowElementBase> released)
         {
@@ -2062,6 +2070,7 @@ namespace WireFlow
                 }
                 child.Left += group.Left;
                 child.Top += group.Top;
+                child.Alignment = FlowAlignment.None;
             }
             layer.Elements.Remove(group);
             released.AddRange(children);
@@ -2223,13 +2232,13 @@ namespace WireFlow
         // Makes each selected element fill the room it has in what holds it, across, down or both (FillLayout): the page,
         // where the elements of every layer and of the page's layouts take room, or its group, where the group's other
         // children do. One after another, so that two selected elements do not fill the same room. A stack panel's child
-        // is left as it is: the panel places and sizes it.
+        // is left as it is, and so is a child a panel has aligned: the panel places and sizes it.
         private void Fill(bool across, bool down)
         {
             foreach (var e in selectedElements.ToList())
             {
                 var holder = LogicalTreeHelper.GetParent(e) as Panel;
-                if (holder == null || holder is Stack)
+                if (holder == null || IsPlacedByItsPanel(e))
                     continue;
                 var panels = holder is Layer
                     ? CurrentCanvas.Children.OfType<Layout>().SelectMany(l => l.Children.OfType<Layer>()).Where(l => l.Visibility == Visibility.Visible).Cast<Panel>()
@@ -2695,10 +2704,18 @@ namespace WireFlow
         private static FlowElementBase NodeOf(UIElement e) => FlowView.GetNode(e) as FlowElementBase;
 
 
+        // Whether the panel holding an element places it: a stack panel places every child, a panel those with an alignment
+        private static bool IsPlacedByItsPanel(UIElement e)
+        {
+            var parent = LogicalTreeHelper.GetParent(e);
+            return parent is Stack || (parent is AlignPanel && AlignPanel.GetAlignment(e) != FlowAlignment.None);
+        }
+
+
         // An element's position and size change in its node, which the view follows
         private static void SetLeft(UIElement e, double value)
         {
-            if (LogicalTreeHelper.GetParent(e) is Stack)
+            if (IsPlacedByItsPanel(e))
                 return;
             if (NodeOf(e) is FlowElementBase node)
                 node.Left = value;
@@ -2707,7 +2724,7 @@ namespace WireFlow
 
         private static void SetTop(UIElement e, double value)
         {
-            if (LogicalTreeHelper.GetParent(e) is Stack)
+            if (IsPlacedByItsPanel(e))
                 return;
             if (NodeOf(e) is FlowElementBase node)
                 node.Top = value;
@@ -2737,8 +2754,8 @@ namespace WireFlow
             {
                 if (FlowView.GetNode(element) == node)
                     return element;
-                // The elements of groups and stack panels, which can be selected too
-                if ((element is Group || element is Stack) && ViewOf(node, (Panel)element) is FrameworkElement inner)
+                // The elements of groups, stack panels and panels, which can be selected too
+                if ((element is Group || element is Stack || element is AlignPanel) && ViewOf(node, (Panel)element) is FrameworkElement inner)
                     return inner;
             }
             return null;

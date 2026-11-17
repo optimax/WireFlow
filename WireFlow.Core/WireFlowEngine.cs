@@ -819,6 +819,9 @@ namespace WireFlow
                 case "stack":
                     element = ConvertStack(uiElement);
                     break;
+                case "alignpanel":
+                    element = ConvertPanel(uiElement);
+                    break;
                 case "part":
                     element = ConvertPart(uiElement);
                     break;
@@ -826,6 +829,8 @@ namespace WireFlow
                     element = ConvertUnknown(uiElement);
                     break;
             }
+            if (element != null)
+                element.Alignment = AlignPanel.GetAlignment(uiElement);
             return element;
         }
 
@@ -875,6 +880,32 @@ namespace WireFlow
                 Href = stack.Href,
             };
             foreach (var uiChild in stack.Children.Cast<UIElement>())
+            {
+                FlowElementBase dataElement = ConvertUiElement(uiChild);
+                if (dataElement != null)
+                    result.Children.Add(dataElement);
+            }
+            return result;
+        }
+
+
+        FlowElementBase ConvertPanel(UIElement element)
+        {
+            if (!(element is AlignPanel panel))
+                return null;
+            var result = new FlowPanel()
+            {
+                Type = "panel",
+                Name = string.IsNullOrWhiteSpace(panel.Name) ? null : panel.Name,
+                Left = panel.Left,
+                Top = panel.Top,
+                Height = panel.Height,
+                Width = panel.Width,
+                Fill = panel.Background?.ToString(),
+                Transparency = 1 - panel.Opacity,
+                Href = panel.Href,
+            };
+            foreach (var uiChild in panel.Children.Cast<UIElement>())
             {
                 FlowElementBase dataElement = ConvertUiElement(uiChild);
                 if (dataElement != null)
@@ -1499,6 +1530,8 @@ namespace WireFlow
                     return CreateGroup(element as FlowGroup);
                 case "stack":
                     return CreateStack(element as FlowStack);
+                case "panel":
+                    return CreatePanel(element as FlowPanel);
                 case "part":
                     return CreatePartRef(element);
                 case "none":
@@ -1532,6 +1565,9 @@ namespace WireFlow
                 case Stack stack:
                     ApplyStack(element as FlowStack, stack);
                     break;
+                case AlignPanel alignPanel:
+                    ApplyPanel(element as FlowPanel, alignPanel);
+                    break;
                 case Group group:
                     ApplyGroup(element, group);
                     break;
@@ -1543,6 +1579,10 @@ namespace WireFlow
                     break;
             }
             ui.Cursor = string.IsNullOrWhiteSpace(element.Href) ? null : Cursors.Hand;
+            // Where a panel holding it places it; it has its node's own position and size again first, set above
+            AlignPanel.SetAlignment(ui, element.Alignment);
+            if (panel is AlignPanel)
+                panel.InvalidateArrange();
         }
 
 
@@ -1746,6 +1786,33 @@ namespace WireFlow
             stack.Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent"));
             stack.Opacity = 1 - element.Transparency;
             stack.Href = element.Href;
+        }
+
+
+        /// <summary>
+        /// A panel: its children placed by their alignments (see AlignPanel)
+        /// </summary>
+        private AlignPanel CreatePanel(FlowPanel element)
+        {
+            if (element == null)
+                return null;
+            var panel = new AlignPanel();
+            foreach (var child in element.Children)
+                RenderElement(child, panel);
+            FollowChildren(element, element.Children, panel);
+            return panel;
+        }
+
+
+        private void ApplyPanel(FlowPanel element, AlignPanel panel)
+        {
+            panel.Left = element.Left;
+            panel.Top = element.Top;
+            panel.Width = element.Width;
+            panel.Height = element.Height;
+            panel.Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent"));
+            panel.Opacity = 1 - element.Transparency;
+            panel.Href = element.Href;
         }
 
 
