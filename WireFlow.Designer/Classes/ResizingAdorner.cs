@@ -51,10 +51,14 @@ namespace Optimax
 
         // A size or position set while resizing goes to the element's DOM node, which the view follows at once; an element
         // without a node is set itself
+        // A locked element, or one in something locked, keeps its size and its place
         private static void SetWidth(FrameworkElement e, double value)
         {
             if (FlowView.GetNode(e) is FlowElementBase node)
-                node.Width = value;
+            {
+                if (!node.IsLocked)
+                    node.Width = value;
+            }
             else
                 e.Width = value;
         }
@@ -63,7 +67,10 @@ namespace Optimax
         private static void SetHeight(FrameworkElement e, double value)
         {
             if (FlowView.GetNode(e) is FlowElementBase node)
-                node.Height = value;
+            {
+                if (!node.IsLocked)
+                    node.Height = value;
+            }
             else
                 e.Height = value;
         }
@@ -72,7 +79,10 @@ namespace Optimax
         private static void SetLeft(UIElement e, double value)
         {
             if (FlowView.GetNode(e) is FlowElementBase node)
-                node.Left = value;
+            {
+                if (!node.IsLocked)
+                    node.Left = value;
+            }
             else
                 Canvas.SetLeft(e, value);
         }
@@ -81,7 +91,10 @@ namespace Optimax
         private static void SetTop(UIElement e, double value)
         {
             if (FlowView.GetNode(e) is FlowElementBase node)
-                node.Top = value;
+            {
+                if (!node.IsLocked)
+                    node.Top = value;
+            }
             else
                 Canvas.SetTop(e, value);
         }

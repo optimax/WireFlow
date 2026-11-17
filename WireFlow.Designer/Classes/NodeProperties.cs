@@ -52,8 +52,8 @@ namespace WireFlow
         // Every element has an alignment, which the panel holding it heeds
         private static readonly Shown[] Position = { P("Left", "Layout"), P("Top", "Layout"), P("Alignment", "Layout") };
         private static readonly Shown[] Size = { P("Width", "Layout"), P("Height", "Layout") };
-        // Every element can be hidden
-        private static readonly Shown[] State = { P("Visible", "Appearance") };
+        // Every element can be hidden, and locked
+        private static readonly Shown[] State = { P("Visible", "Appearance"), P("Locked", "Common") };
         private static readonly Shown[] Common = new[] { P("Name", "Common"), P("Id", "Common", "ID"), P("Href", "Navigation") }.Concat(State).ToArray();
         private static readonly Shown[] Font =
         {
@@ -183,10 +183,26 @@ namespace WireFlow
         }
 
 
+        // Whether the node shown was locked when its rows were made; null until they are
+        private bool? listedLocked;
+
+
+        /// <summary>
+        /// Whether a node shown has been locked or unlocked since its rows were made: they then show the wrong rows as
+        /// read-only, and Properties is to list the node again.
+        /// </summary>
+        public bool LockChanged => parts != null
+            ? parts.Any(p => p.LockChanged)
+            : listedLocked != null && listedLocked != ((Node as FlowElementBase)?.IsLocked == true);
+
+
         private PropertyDescriptorCollection MakeProperties()
         {
             var shown = Node is FlowPage ? Page : Kinds.TryGetValue(Node.Type ?? "", out var kind) ? kind : Unknown;
             var own = TypeDescriptor.GetProperties(Node);
+            // A locked element, or one in something locked, shows its values, of which Locked alone can be set
+            bool locked = (Node as FlowElementBase)?.IsLocked == true;
+            listedLocked = locked;
             var list = new List<PropertyDescriptor>();
             foreach (var p in shown)
             {
@@ -227,7 +243,7 @@ namespace WireFlow
                                 break;
                         }
                     };
-                list.Add(new NodePropertyDescriptor(p.Name, p.Category, inner, p.ReadOnly, get, set));
+                list.Add(new NodePropertyDescriptor(p.Name, p.Category, inner, p.ReadOnly || (locked && p.Property != nameof(FlowElementBase.Locked)), get, set));
             }
             return new PropertyDescriptorCollection(list.ToArray(), true);
         }

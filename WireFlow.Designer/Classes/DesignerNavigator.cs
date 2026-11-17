@@ -321,8 +321,15 @@ namespace WireFlow
         public bool HasElementsSelected => selectedElements.Count > 0;
         public bool Has2PlusElementsSelected => selectedElements.Count >= 2;
         public bool Has3PlusElementsSelected => selectedElements.Count >= 3;
-        public bool CanGroup => selectedElements.Count > 1;
-        public bool CanUngroup => selectedElements.Count > 0;
+        // The selected elements that can be changed: those not locked, nor in anything locked
+        private IEnumerable<FrameworkElement> EditableSelection => selectedElements.Where(e => !IsLocked(e));
+
+        /// <summary>Whether a selected element can be changed: the commands that move, size, restyle or delete need one.</summary>
+        public bool HasEditableSelection => EditableSelection.Any();
+        public bool Has2PlusEditableSelected => EditableSelection.Count() >= 2;
+        public bool Has3PlusEditableSelected => EditableSelection.Count() >= 3;
+        public bool CanGroup => EditableSelection.Count() > 1;
+        public bool CanUngroup => HasEditableSelection;
 
         // An element inside a selected group or stack panel pressed on: selected when the press ends without a drag
         private FrameworkElement pendingChildSelection;
@@ -662,7 +669,9 @@ namespace WireFlow
                         SetLeft(element, place.X + delta.X);
                         SetTop(element, place.Y + delta.Y);
                     }
-                    IsModified = true;
+                    // Only where something moved: an element its panel places, or a locked one, stays
+                    if (dragPlaces.Any(p => !IsPlacedByItsPanel(p.Element) && !IsLocked(p.Element)))
+                        IsModified = true;
                 }
             }
             else
@@ -699,7 +708,7 @@ namespace WireFlow
             dragOrigin = mousePos;
             dragMoving = false;
             dragPlaces = selectedElements.Select(e => (e, BoundsOf(e).TopLeft)).ToList();
-            dragSnap = SnapLinesFor(selectedElements.FirstOrDefault(e => !IsPlacedByItsPanel(e)), selectedElements);
+            dragSnap = SnapLinesFor(selectedElements.FirstOrDefault(e => !IsPlacedByItsPanel(e) && !IsLocked(e)), selectedElements);
         }
 
 
@@ -717,10 +726,10 @@ namespace WireFlow
         // of the page), but those of the elements moving with it. Null for an element its panel places, which is not moved.
         private SnapLines SnapLinesFor(FrameworkElement e, IReadOnlyCollection<FrameworkElement> moving)
         {
-            if (e == null || IsPlacedByItsPanel(e) || !(LogicalTreeHelper.GetParent(e) is Panel holder))
+            if (e == null || IsPlacedByItsPanel(e) || IsLocked(e) || !(LogicalTreeHelper.GetParent(e) is Panel holder))
                 return null;
             var others = Surroundings(e, holder, moving, out Rect container);
-            var bounds = moving.Where(m => LogicalTreeHelper.GetParent(m) == holder && !IsPlacedByItsPanel(m)).Select(BoundsOf).Aggregate(BoundsOf(e), Rect.Union);
+            var bounds = moving.Where(m => LogicalTreeHelper.GetParent(m) == holder && !IsPlacedByItsPanel(m) && !IsLocked(m)).Select(BoundsOf).Aggregate(BoundsOf(e), Rect.Union);
             return new SnapLines { Holder = holder, Across = SnapLayout.LinesAcross(container, others), Down = SnapLayout.LinesDown(container, others), Bounds = bounds };
         }
 
@@ -886,6 +895,9 @@ namespace WireFlow
                 return;
             if (!pick.HasColors)
                 pick.Take(node);
+            else if (node.IsLocked)
+                // A locked element keeps its colors, and the tool the ones it has
+                return;
             else
             {
                 if (pick.GiveTo(node))
@@ -1371,7 +1383,10 @@ namespace WireFlow
                 return;
 
             ResizingAdorner adorner;
-            if (subsequent)
+            // A locked element's handles are gray: they do nothing
+            if (IsLocked(clickedElement))
+                adorner = new ResizingAdorner(clickedElement, new SolidColorBrush(Colors.Gray));
+            else if (subsequent)
                 adorner = new ResizingAdorner(clickedElement, new SolidColorBrush(Colors.Yellow));
             else
                 adorner = new ResizingAdorner(clickedElement, new SolidColorBrush(Colors.Chartreuse));
@@ -1893,7 +1908,8 @@ namespace WireFlow
             if (element == null)
                 return false;
             var node = Engine.ToNode(element);
-            if (node == null || !(FlowView.GetNode(CurrentLayer) is FlowLayer layer))
+            // Nothing is drawn on a locked layer
+            if (node == null || !(FlowView.GetNode(CurrentLayer) is FlowLayer layer) || layer.Locked)
                 return false;
 
             node.Width = Rubberband.Width;
@@ -1934,7 +1950,8 @@ namespace WireFlow
         private static Panel FindPanelAt(Panel container, Point point, out Point inside)
         {
             inside = point;
-            foreach (var panel in container.Children.OfType<Panel>().Where(p => p is Stack || p is AlignPanel).Reverse())
+            // A locked one takes no new child: what is drawn over it goes onto the layer
+            foreach (var panel in container.Children.OfType<Panel>().Where(p => (p is Stack || p is AlignPanel) && !IsLocked(p)).Reverse())
             {
                 var bounds = new Rect(Canvas.GetLeft(panel), Canvas.GetTop(panel), panel.ActualWidth, panel.ActualHeight);
                 if (!bounds.Contains(point))
@@ -2093,7 +2110,8 @@ namespace WireFlow
         /// </summary>
         public void PasteElements()
         {
-            if (!(FlowView.GetNode(CurrentLayer) is FlowLayer layer))
+            // Nothing is pasted onto a locked layer
+            if (!(FlowView.GetNode(CurrentLayer) is FlowLayer layer) || layer.Locked)
                 return;
             string json;
             try
@@ -2155,7 +2173,10 @@ namespace WireFlow
         {
             if (selectedElements.Count == 0)
                 return;
-            var nodes = selectedElements.Select(NodeOf).Where(n => n != null).ToList();
+            // A locked element, or one in something locked, is not deleted
+            var nodes = selectedElements.Select(NodeOf).Where(n => n != null && !n.IsLocked).ToList();
+            if (nodes.Count == 0)
+                return;
             // Deselected first, so that the adorners go while the elements are on the page
             DeselectAll();
             foreach (var node in nodes)
@@ -2182,9 +2203,11 @@ namespace WireFlow
 
             if (!(NodeOf(selectedElements[0])?.Parent is FlowLayer layer))
                 return;
-            var bounds = GetGroupBounds(selectedElements);
-            // The selected elements of the anchor's layer, in their order on it, bottom first
-            var nodes = selectedElements.Select(NodeOf).Where(n => n != null && n.Parent == layer).OrderBy(n => layer.Elements.IndexOf(n)).ToList();
+            // The selected elements of the anchor's layer, in their order on it, bottom first; a locked one is not grouped
+            var nodes = selectedElements.Select(NodeOf).Where(n => n != null && n.Parent == layer && !n.IsLocked).OrderBy(n => layer.Elements.IndexOf(n)).ToList();
+            if (nodes.Count < 2)
+                return;
+            var bounds = GetGroupBounds(selectedElements.Where(e => !IsLocked(e)));
             DeselectAll();
 
             var group = new FlowGroup { Type = "group", Left = bounds.Left, Top = bounds.Top, Width = bounds.Width, Height = bounds.Height };
@@ -2251,7 +2274,7 @@ namespace WireFlow
             {
                 var node = NodeOf(e);
                 // Groups, stack panels and panels; a part reference keeps its part
-                if (node is FlowGroup group && !(node is FlowPart) && e is Panel panel)
+                if (node is FlowGroup group && !(node is FlowPart) && e is Panel panel && !node.IsLocked)
                     UngroupNode(group, panel, nodes);
                 else if (node != null)
                     nodes.Add(node);
@@ -2472,7 +2495,7 @@ namespace WireFlow
             foreach (var e in selectedElements.ToList())
             {
                 var holder = LogicalTreeHelper.GetParent(e) as Panel;
-                if (holder == null || IsPlacedByItsPanel(e))
+                if (holder == null || IsPlacedByItsPanel(e) || IsLocked(e))
                     continue;
                 var others = Surroundings(e, holder, null, out Rect container);
                 var bounds = BoundsOf(e);
@@ -2956,10 +2979,14 @@ namespace WireFlow
         }
 
 
-        // An element's position and size change in its node, which the view follows
+        // Whether an element is kept from being changed: it is locked, or something holding it is
+        private static bool IsLocked(UIElement e) => NodeOf(e)?.IsLocked == true;
+
+
+        // An element's position and size change in its node, which the view follows; a locked element keeps them
         private static void SetLeft(UIElement e, double value)
         {
-            if (IsPlacedByItsPanel(e))
+            if (IsPlacedByItsPanel(e) || IsLocked(e))
                 return;
             if (NodeOf(e) is FlowElementBase node)
                 node.Left = value;
@@ -2968,7 +2995,7 @@ namespace WireFlow
 
         private static void SetTop(UIElement e, double value)
         {
-            if (IsPlacedByItsPanel(e))
+            if (IsPlacedByItsPanel(e) || IsLocked(e))
                 return;
             if (NodeOf(e) is FlowElementBase node)
                 node.Top = value;
@@ -2977,14 +3004,14 @@ namespace WireFlow
 
         private static void SetWidth(UIElement e, double value)
         {
-            if (NodeOf(e) is FlowElementBase node)
+            if (NodeOf(e) is FlowElementBase node && !node.IsLocked)
                 node.Width = value;
         }
 
 
         private static void SetHeight(UIElement e, double value)
         {
-            if (NodeOf(e) is FlowElementBase node)
+            if (NodeOf(e) is FlowElementBase node && !node.IsLocked)
                 node.Height = value;
         }
 

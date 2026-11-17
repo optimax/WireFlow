@@ -1723,12 +1723,26 @@ namespace WireFlow
         }
 
 
-        // A layout's edits show on the pages and layouts open that are set on it, nearer or farther, once the edit is done
+        // A layout's edits show on the pages and layouts open that are set on it, nearer or farther, once the edit is done.
+        // And an element shown in Properties that was locked or unlocked, there, in the Outline or by Undo, is listed
+        // again, once the edit is done: its rows are read-only while it is locked.
         private void NavigatorDocumentChangedHandler(DesignerNavigator sender)
         {
             if (sender?.NavigatorDocument?.Kind == DesignerNavigatorDocument.LayoutKind)
                 ScheduleLayoutRefresh(sender.PageName);
+            if (sender == CurrentDesigner && !propertiesRefreshScheduled && (PropertyGrid.SelectedObject as NodeProperties)?.LockChanged == true)
+            {
+                propertiesRefreshScheduled = true;
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
+                {
+                    propertiesRefreshScheduled = false;
+                    OnPropertyChanged(nameof(CurrentProperties));
+                    CommandManager.InvalidateRequerySuggested();
+                }));
+            }
         }
+
+        private bool propertiesRefreshScheduled;
 
 
         private readonly HashSet<string> layoutsToRefresh = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -2011,6 +2025,8 @@ namespace WireFlow
             CurrentDesigner = navigator;
 
             NavigateToPage(CurrentDesigner, href);
+            // An element locked or unlocked is listed again in Properties
+            navigator.DocumentChanged += NavigatorDocumentChangedHandler;
 
             //Debug.WriteLine($"Designer: {CurrentDesigner.AbsoluteId} PageName: {CurrentDesigner.PageName}-->{value}");
             //TODO: Verify this is not something important
@@ -3187,7 +3203,7 @@ namespace WireFlow
             CloseFileCmd = new RelayCommand(o => CloseProject(), o => !string.IsNullOrWhiteSpace(FileName));
 
             ObjectDuplicateCmd = new RelayCommand(o => CurrentDesigner?.DuplicateSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            ObjectDeleteCmd = new RelayCommand(o =>CurrentDesigner?.DeleteSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            ObjectDeleteCmd = new RelayCommand(o =>CurrentDesigner?.DeleteSelectedElements(), o => CurrentDesigner?.HasEditableSelection ?? false);
             // Navigate mode leaves the page as it is: the commands that change it without a selection wait for Design mode
             AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => !IsNavigateMode && CurrentDesigner?.CurrentPage is FlowPage);
             OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => !IsNavigateMode && CanOutlineDelete());
@@ -3201,7 +3217,7 @@ namespace WireFlow
             FitPageCmd = new RelayCommand(o => CurrentDesigner.Designer.FitPage(), o => CurrentDesigner?.Designer != null);
             NavigateBackCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Back()), o => IsNavigateMode && NavigationHistory.CanGoBack);
             NavigateForwardCmd = new RelayCommand(o => ShowVisitedPage(NavigationHistory.Forward()), o => IsNavigateMode && NavigationHistory.CanGoForward);
-            CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            CutCmd = new RelayCommand(o => CurrentDesigner?.CutSelectedElements(), o => CurrentDesigner?.HasEditableSelection ?? false);
             CopyCmd = new RelayCommand(o => CurrentDesigner?.CopySelectedElements(), o => CurrentDesigner?.HasElementsSelected ?? false);
             PasteCmd = new RelayCommand(o => CurrentDesigner?.PasteElements(),
                 o => !IsNavigateMode && CurrentDesigner?.CurrentLayer != null && DesignerNavigator.ClipboardHasElements());
@@ -3213,32 +3229,32 @@ namespace WireFlow
             GroupSelectedCmd = new RelayCommand(o => CurrentDesigner?.GroupSelected(), o => CurrentDesigner?.CanGroup ?? false);
             UngroupSelectedCmd = new RelayCommand(o => CurrentDesigner?.UngroupSelected(), o => CurrentDesigner?.CanUngroup ?? false);
 
-            AlignTopsCmd = new RelayCommand(o => CurrentDesigner?.AlignTops(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            AlignBottomsCmd = new RelayCommand(o => CurrentDesigner?.AlignBottoms(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            AlignLeftsCmd = new RelayCommand(o => CurrentDesigner?.AlignLefts(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            AlignRightsCmd = new RelayCommand(o => CurrentDesigner?.AlignRights(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            AlignCentersVerticallyCmd = new RelayCommand(o => CurrentDesigner?.AlignCentersVertically(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            AlignCentersHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.AlignCentersHorizontally(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            CenterInPageCmd = new RelayCommand(o => CurrentDesigner?.CenterInPage(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            FillSpaceCmd = new RelayCommand(o => CurrentDesigner?.FillSpace(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            FillWidthCmd = new RelayCommand(o => CurrentDesigner?.FillWidth(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            FillHeightCmd = new RelayCommand(o => CurrentDesigner?.FillHeight(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            AlignTopsCmd = new RelayCommand(o => CurrentDesigner?.AlignTops(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            AlignBottomsCmd = new RelayCommand(o => CurrentDesigner?.AlignBottoms(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            AlignLeftsCmd = new RelayCommand(o => CurrentDesigner?.AlignLefts(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            AlignRightsCmd = new RelayCommand(o => CurrentDesigner?.AlignRights(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            AlignCentersVerticallyCmd = new RelayCommand(o => CurrentDesigner?.AlignCentersVertically(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            AlignCentersHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.AlignCentersHorizontally(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            CenterInPageCmd = new RelayCommand(o => CurrentDesigner?.CenterInPage(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            FillSpaceCmd = new RelayCommand(o => CurrentDesigner?.FillSpace(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            FillWidthCmd = new RelayCommand(o => CurrentDesigner?.FillWidth(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            FillHeightCmd = new RelayCommand(o => CurrentDesigner?.FillHeight(), o => CurrentDesigner?.HasEditableSelection ?? false);
 
-            MakeSameWidthCmd = new RelayCommand(o => CurrentDesigner?.MakeSameWidth(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            MakeSameHeightCmd = new RelayCommand(o => CurrentDesigner?.MakeSameHeight(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            MakeSameSizeCmd = new RelayCommand(o => CurrentDesigner?.MakeSameSize(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            ExchangeWidthAndHeightCmd = new RelayCommand(o => CurrentDesigner?.ExchangeWidthAndHeight(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            MakeSameWidthCmd = new RelayCommand(o => CurrentDesigner?.MakeSameWidth(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            MakeSameHeightCmd = new RelayCommand(o => CurrentDesigner?.MakeSameHeight(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            MakeSameSizeCmd = new RelayCommand(o => CurrentDesigner?.MakeSameSize(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            ExchangeWidthAndHeightCmd = new RelayCommand(o => CurrentDesigner?.ExchangeWidthAndHeight(), o => CurrentDesigner?.HasEditableSelection ?? false);
 
-            DistributeHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.DistributeHorizontally(), o => CurrentDesigner?.Has3PlusElementsSelected ?? false);
-            DistributeVerticallyCmd = new RelayCommand(o => CurrentDesigner?.DistributeVertically(), o => CurrentDesigner?.Has3PlusElementsSelected ?? false);
-            StackHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.StackHorizontally(), o => CurrentDesigner?.Has2PlusElementsSelected ?? false);
-            StackVerticallyCmd = new RelayCommand(o => CurrentDesigner?.StackVertically(), o => CurrentDesigner?.Has2PlusElementsSelected ?? false);
+            DistributeHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.DistributeHorizontally(), o => CurrentDesigner?.Has3PlusEditableSelected ?? false);
+            DistributeVerticallyCmd = new RelayCommand(o => CurrentDesigner?.DistributeVertically(), o => CurrentDesigner?.Has3PlusEditableSelected ?? false);
+            StackHorizontallyCmd = new RelayCommand(o => CurrentDesigner?.StackHorizontally(), o => CurrentDesigner?.Has2PlusEditableSelected ?? false);
+            StackVerticallyCmd = new RelayCommand(o => CurrentDesigner?.StackVertically(), o => CurrentDesigner?.Has2PlusEditableSelected ?? false);
 
 
-            MoveSelectionUpCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionUp(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            MoveSelectionDnCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionDn(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            MoveSelectionLeftCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionLeft(), o => CurrentDesigner?.HasElementsSelected ?? false);
-            MoveSelectionRightCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionRight(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            MoveSelectionUpCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionUp(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            MoveSelectionDnCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionDn(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            MoveSelectionLeftCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionLeft(), o => CurrentDesigner?.HasEditableSelection ?? false);
+            MoveSelectionRightCmd = new RelayCommand(o => CurrentDesigner?.MoveSelectionRight(), o => CurrentDesigner?.HasEditableSelection ?? false);
 
             NewPageCmd = new RelayCommand(o => CreateNewPage(), o => IsProjectFileOpen);
             MovePageUpCmd = new RelayCommand(o => MovePage((string)ListBoxPages.SelectedItem, SelectedPageIndex - 1), o => SelectedPageIndex > 0);
@@ -3250,7 +3266,7 @@ namespace WireFlow
             NewPartCmd = new RelayCommand(o => CreateNewPart(), o => IsProjectFileOpen);
             DeletePartCmd = new RelayCommand(o => DeleteSelectedPart(), o => IsPageSelected);
 
-            ConvertToBoxCmd = new RelayCommand(o => ConvertToBox(), o => CurrentDesigner?.HasElementsSelected ?? false);
+            ConvertToBoxCmd = new RelayCommand(o => ConvertToBox(), o => CurrentDesigner?.HasEditableSelection ?? false);
 
             ImportImageCmd = new RelayCommand(o => ImportImages());
             DeleteImageCmd = new RelayCommand(o => DeleteImages());
