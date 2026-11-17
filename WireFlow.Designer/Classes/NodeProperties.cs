@@ -52,7 +52,9 @@ namespace WireFlow
         // Every element has an alignment, which the panel holding it heeds
         private static readonly Shown[] Position = { P("Left", "Layout"), P("Top", "Layout"), P("Alignment", "Layout") };
         private static readonly Shown[] Size = { P("Width", "Layout"), P("Height", "Layout") };
-        private static readonly Shown[] Common = { P("Name", "Common"), P("Id", "Common", "ID"), P("Href", "Navigation") };
+        // Every element can be hidden
+        private static readonly Shown[] State = { P("Visible", "Appearance") };
+        private static readonly Shown[] Common = new[] { P("Name", "Common"), P("Id", "Common", "ID"), P("Href", "Navigation") }.Concat(State).ToArray();
         private static readonly Shown[] Font =
         {
             P("Color", "Text", "Foreground"), P("Font", "Text", "FontFamily"), P("FontSize", "Text"), P("FontWeight", "Text"),
@@ -92,7 +94,7 @@ namespace WireFlow
             {
                 P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"),
             }).ToArray(),
-            ["part"] = new[] { P("Name", "Common", "Part"), P("Id", "Common", "ID"), P("Href", "Navigation") }.Concat(Position).Concat(Size).ToArray(),
+            ["part"] = new[] { P("Name", "Common", "Part"), P("Id", "Common", "ID"), P("Href", "Navigation") }.Concat(State).Concat(Position).Concat(Size).ToArray(),
         };
 
         /// <summary>Whether Properties shows a property of a node, by the property's own name (Fill, Stroke, ...), for the node's kind.</summary>
@@ -100,7 +102,7 @@ namespace WireFlow
             node != null && Kinds.TryGetValue(node.Type ?? "", out var kind) && kind.Any(shown => shown.Property == property);
 
 
-        private static readonly Shown[] Unknown = new[] { P("Name", "Common"), P("Id", "Common", "ID"), P("Type", "Common", readOnly: true) }.Concat(Position).Concat(Size).ToArray();
+        private static readonly Shown[] Unknown = new[] { P("Name", "Common"), P("Id", "Common", "ID"), P("Type", "Common", readOnly: true) }.Concat(State).Concat(Position).Concat(Size).ToArray();
 
         private static readonly Shown[] Page =
         {

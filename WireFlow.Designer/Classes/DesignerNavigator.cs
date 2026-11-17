@@ -1683,6 +1683,9 @@ namespace WireFlow
 
             foreach (FrameworkElement item in CurrentLayer.Children)
             {
+                // An element that does not show is not selected by the band drawn around where it would be
+                if (item.Visibility != Visibility.Visible)
+                    continue;
                 Rect itemRect = VisualTreeHelper.GetDescendantBounds(item);
                 Rect itemBounds = item.TransformToAncestor(CurrentCanvas).TransformBounds(itemRect);
                 if (bandRect.Contains(itemBounds))

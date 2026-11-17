@@ -55,7 +55,8 @@ namespace WireFlow
         // arrange it at the size it was measured at, before its size was set here
         protected override Size ArrangeOverride(Size arrangeSize)
         {
-            var children = InternalChildren.OfType<FrameworkElement>().ToList();
+            // The children that show: one that is not visible takes no room along a side
+            var children = InternalChildren.OfType<FrameworkElement>().Where(c => c.Visibility == Visibility.Visible).ToList();
             var panel = new Size(double.IsNaN(Width) ? arrangeSize.Width : Width, double.IsNaN(Height) ? arrangeSize.Height : Height);
             var alignments = children.Select(GetAlignment).ToList();
             var places = PanelLayout.Arrange(panel, alignments, children.Select(c => new Rect(Coordinate(GetLeft(c)), Coordinate(GetTop(c)), c.Width, c.Height)).ToList());

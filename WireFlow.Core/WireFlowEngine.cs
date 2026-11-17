@@ -1608,6 +1608,8 @@ namespace WireFlow
                     break;
             }
             ui.Cursor = string.IsNullOrWhiteSpace(element.Href) ? null : Cursors.Hand;
+            // An element that is not visible is not drawn, nor laid out: a stack panel or a panel gives it no room
+            ui.Visibility = element.Visible ? Visibility.Visible : Visibility.Collapsed;
             // Where a panel holding it places it; it has its node's own position and size again first, set above
             AlignPanel.SetAlignment(ui, element.Alignment);
             if (panel is AlignPanel)
@@ -1780,7 +1782,8 @@ namespace WireFlow
             double width = 0.0, height = 0.0;
             foreach (var child in group.Children.OfType<FrameworkElement>())
             {
-                if (!(FlowView.GetNode(child) is FlowElementBase node))
+                // A child that is not visible does not make the group larger
+                if (!(FlowView.GetNode(child) is FlowElementBase node) || !node.Visible)
                     continue;
                 width = Math.Max(width, node.Left + (double.IsNaN(node.Width) ? 0 : node.Width));
                 height = Math.Max(height, node.Top + (double.IsNaN(node.Height) ? 0 : node.Height));

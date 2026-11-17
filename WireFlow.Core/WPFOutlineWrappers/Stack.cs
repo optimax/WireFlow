@@ -57,7 +57,8 @@ namespace WireFlow
         // shows only that much of itself until something lays it out again.
         protected override Size ArrangeOverride(Size arrangeSize)
         {
-            var children = InternalChildren.OfType<FrameworkElement>().ToList();
+            // The children that show: one that is not visible has no place in the stack
+            var children = InternalChildren.OfType<FrameworkElement>().Where(c => c.Visibility == Visibility.Visible).ToList();
             var panel = new Size(double.IsNaN(Width) ? arrangeSize.Width : Width, double.IsNaN(Height) ? arrangeSize.Height : Height);
             // A child's own size is its node's: the size its control has across the panel is the one the panel gave it, which,
             // after a change of direction, would be the size the other direction gave
