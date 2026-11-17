@@ -550,13 +550,20 @@ namespace WireFlow
 
 
         /// <summary>
-        /// The titles of the saved versions of a page, layout or part ("page", "layout" or "part"; by its key, a part by its
-        /// name), the latest first, as the History pane lists them (see FlowVersions).
+        /// The saved versions of a page, layout or part ("page", "layout" or "part"; by its key, a part by its name), the
+        /// latest first, as the History pane lists them (see FlowVersions).
         /// </summary>
-        public List<string> VersionTitles(string kind, string key)
+        public List<FlowVersion> Versions(string kind, string key)
         {
             var revisions = GetRevisions(kind, key, out bool hasSaved, out bool hasDraft);
-            return FlowVersions.Titles(revisions, hasSaved, hasDraft);
+            return FlowVersions.List(revisions, hasSaved, hasDraft);
+        }
+
+
+        /// <summary>A page or layout as one of its versions has it; null for a part, and when the file does not hold it.</summary>
+        public FlowPage GetVersion(string kind, string key, bool draft, long? archivedUnder)
+        {
+            return Repository.GetVersion(kind, key, draft, archivedUnder);
         }
 
 

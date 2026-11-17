@@ -119,6 +119,11 @@ namespace WireFlow.Repository.Archive
 
         public bool HasDrafts => throw new NotImplementedException();
 
+        public FlowPage GetVersion(string kind, string key, bool draft, long? archivedUnder)
+        {
+            throw new NotImplementedException();
+        }
+
         public IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft)
         {
             throw new NotImplementedException();

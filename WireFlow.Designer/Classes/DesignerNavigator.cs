@@ -1580,6 +1580,42 @@ namespace WireFlow
 
 
         /// <summary>
+        /// Makes the page or layout open what a version of it was: its size, its background, the layout it is set on, and
+        /// its layers with their elements, which become the page's own (the version given is left without them). The
+        /// page keeps its name and its ID. It is an edit, one step of Undo, after which the document has changes not saved.
+        /// </summary>
+        public bool RevertTo(FlowPage version)
+        {
+            if (!(CurrentPage is FlowPage page) || version == null || version == page)
+                return false;
+            EndGestureStep();
+            // The elements selected are taken away
+            DeselectAll();
+            BeginGestureStep();
+            try
+            {
+                page.Width = version.Width;
+                page.Height = version.Height;
+                page.Background = version.Background;
+                page.Master = version.Master;
+                var layers = version.Layers.ToList();
+                version.Layers.Clear();
+                page.Layers.Clear();
+                foreach (var layer in layers)
+                    page.Layers.Add(layer);
+            }
+            finally
+            {
+                EndGestureStep();
+            }
+            KeepCurrentLayer();
+            IsModified = true;
+            OnElementsChanged();
+            return true;
+        }
+
+
+        /// <summary>
         /// Raised when an undo or a redo gave a node another ID, or the page or layout open another name: the node, the
         /// property (Id or Name), and its value before and after. The window then brings the project, its lists and tabs, and
         /// what names the node in the other documents, in line, as when the ID or name is set in Properties.

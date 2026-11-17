@@ -72,6 +72,9 @@ namespace WireFlow
         // its name) was saved anew, in their order, and whether it has a saved version and a draft: what FlowVersions
         // makes its versions of
         IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft);
+        // A page or layout as one of its versions has it: its draft, or its saved version, or the earlier version that
+        // the archive holds under a revision; null when there is none
+        FlowPage GetVersion(string kind, string key, bool draft, long? archivedUnder);
 
 
         ImportImageResult CanImportImage(string fileName);

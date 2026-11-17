@@ -525,6 +525,8 @@
                                 <DockPanel>
                                     <!-- The saved versions of the page, layout or part in front, the latest first -->
                                     <ListBox x:Name="ListBoxHistory" BorderThickness="0" ItemsSource="{Binding History}"
+                                             MouseDoubleClick="ListBoxHistory_MouseDoubleClick"
+                                             ToolTip="Double-click a version to make the page what it was then. Undo takes it back."
                                              ItemTemplate="{StaticResource ListOfNamesDataTemplate}">
                                     </ListBox>
                                 </DockPanel>

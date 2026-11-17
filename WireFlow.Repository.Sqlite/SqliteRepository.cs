@@ -469,6 +469,31 @@ UPDATE Documents SET Saved = Draft, Draft = NULL WHERE Draft IS NOT NULL;",
 
 
 
+        // A page or layout as one of its versions has it, under the key and the name it has now: its draft, its saved
+        // version, or the earlier version the archive holds under a revision. Null for a part, and when there is none.
+        public FlowPage GetVersion(string kind, string key, bool draft, long? archivedUnder)
+        {
+            if (ProjectFileName == null || string.IsNullOrWhiteSpace(key) || (kind != PAGE_KIND && kind != LAYOUT_KIND))
+                return null;
+            string json = archivedUnder is long revision
+                ? ExecuteScalar("SELECT Json FROM Archive WHERE Kind = $kind AND Key = $key AND RevisionNo = $revision",
+                    ("$kind", kind), ("$key", key), ("$revision", revision)) as string
+                : ExecuteScalar($"SELECT {(draft ? "Draft" : "Saved")} FROM Documents WHERE Kind = $kind AND Key = $key",
+                    ("$kind", kind), ("$key", key)) as string;
+            if (json == null)
+                return null;
+            string name = NameOf(kind, key);
+            var page = FlatFolderRepository.DeserializeFromJSON<FlowPage>(json, kind + "|" + name);
+            if (page != null)
+            {
+                page.Name = name;
+                page.Key = key;
+            }
+            return page;
+        }
+
+
+
         // Copies the file, drafts and archive included, to another .wf file (built under a temporary name and moved
         // into place, as a new file is) and goes on with that one; the file it was is left as it is
         public void SaveProjectAs(string projectFileName)

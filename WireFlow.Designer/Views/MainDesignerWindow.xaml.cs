@@ -180,7 +180,7 @@ namespace WireFlow
         /// What the History pane lists: the saved versions of the page, layout or part in front, the latest first (see
         /// FlowVersions); nothing with no document open.
         /// </summary>
-        public ObservableCollection<string> History
+        public ObservableCollection<FlowVersion> History
         {
             get { return history; }
             set
@@ -189,7 +189,7 @@ namespace WireFlow
                 OnPropertyChanged(nameof(History));
             }
         }
-        private ObservableCollection<string> history = new ObservableCollection<string>();
+        private ObservableCollection<FlowVersion> history = new ObservableCollection<FlowVersion>();
 
 
         // Brings the History pane up to date: as another document comes to the front, as the one in front is saved or shows
@@ -198,11 +198,43 @@ namespace WireFlow
         {
             var navigator = CurrentDesigner;
             var kind = navigator?.NavigatorDocument?.Kind;
-            var titles = Engine == null || string.IsNullOrWhiteSpace(FileName) || kind == null || string.IsNullOrWhiteSpace(navigator.PageName)
-                ? new List<string>()
-                : Engine.VersionTitles(kind, navigator.PageName);
-            if (!titles.SequenceEqual(History))
-                History = new ObservableCollection<string>(titles);
+            var versions = Engine == null || string.IsNullOrWhiteSpace(FileName) || kind == null || string.IsNullOrWhiteSpace(navigator.PageName)
+                ? new List<FlowVersion>()
+                : Engine.Versions(kind, navigator.PageName);
+            if (!versions.Select(v => v.Title).SequenceEqual(History.Select(v => v.Title)))
+                History = new ObservableCollection<FlowVersion>(versions);
+        }
+
+
+        // A double click on a version in the History pane makes the page or layout in front what that version was
+        private void ListBoxHistory_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var row = ItemsControl.ContainerFromElement(ListBoxHistory, e.OriginalSource as DependencyObject) as ListBoxItem;
+            if (row?.Content is FlowVersion version)
+                SwitchToVersion(version);
+        }
+
+
+        /// <summary>
+        /// Makes the page or layout in front what a version of it was (its draft, a revision, its first version): the
+        /// version's content takes the place of the tab's, as an edit. Undo takes it back, the file's versions stay as they
+        /// are, and the document has changes not saved until it is saved, which makes what it was reverted to its latest
+        /// version. Not in Navigate mode, which is read-only, and not for a part. Says whether it did.
+        /// </summary>
+        private bool SwitchToVersion(FlowVersion version)
+        {
+            var navigator = CurrentDesigner;
+            var kind = navigator?.NavigatorDocument?.Kind;
+            if (IsNavigateMode || version == null || kind == null || kind == DesignerNavigatorDocument.PartKind || !(navigator.CurrentPage is FlowPage page))
+                return false;
+            var content = Engine.GetVersion(kind, navigator.PageName, version.IsDraft, version.ArchivedUnder);
+            if (content == null)
+                return false;
+            // A layout the version was set on that the project no longer has, or that would now set layouts on each other in
+            // a circle, is not taken: the page stays on the layout it has
+            if (!string.IsNullOrWhiteSpace(content.Master) && CheckLayout(page, content.Master) != null)
+                content.Master = page.Master;
+            return navigator.RevertTo(content);
         }
 
 

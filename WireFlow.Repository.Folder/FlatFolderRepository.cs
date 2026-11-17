@@ -412,6 +412,10 @@ namespace WireFlow
 
 
 
+        public FlowPage GetVersion(string kind, string key, bool draft, long? archivedUnder) => null;
+
+
+
         // A folder project is only read, to be converted into a .wf file: its versions are not listed
         public IList<long> GetRevisions(string kind, string key, out bool hasSaved, out bool hasDraft)
         {
