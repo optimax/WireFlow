@@ -3363,7 +3363,8 @@ namespace WireFlow
             SaveFileCmd = new RelayCommand(o => CurrentDesigner?.SaveCurrentDocument(), o => CurrentDesigner?.IsModified ?? false);
             // Save All: every tab open with changes, then the project, committed as a new revision (Save Project). It is off
             // when there is nothing to save: no tab has changes, and no document has a draft waiting to be made a revision
-            SaveAllCmd = new RelayCommand(o => SaveProjectFile(), o => !string.IsNullOrWhiteSpace(FileName) && (SomePageNeedsSaving() || Engine.HasDrafts));
+            // On while a tab has changes not saved; drafts already saved (with Save, say) go into the revision of the next Save All
+            SaveAllCmd = new RelayCommand(o => SaveProjectFile(), o => !string.IsNullOrWhiteSpace(FileName) && SomePageNeedsSaving());
             ReloadFromFileCmd = new RelayCommand(o => ReloadProject(), o => !string.IsNullOrWhiteSpace(FileName));
             CloseFileCmd = new RelayCommand(o => CloseProject(), o => !string.IsNullOrWhiteSpace(FileName));
 
