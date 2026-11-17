@@ -1074,6 +1074,7 @@ namespace WireFlow
                 Engine.SavePage(CurrentPage as FlowPage);
                 IsModified = false;
                 ClearHistory();
+                NoteSaved();
             });
         }
 
@@ -1090,6 +1091,7 @@ namespace WireFlow
                 Engine.SaveLayout(CurrentPage as FlowPage);
                 IsModified = false;
                 ClearHistory();
+                NoteSaved();
             });
         }
 
@@ -1105,6 +1107,7 @@ namespace WireFlow
                 Engine.SavePart(pageToSave);
                 IsModified = false;
                 ClearHistory();
+                NoteSaved();
             });
         }
 
@@ -1140,6 +1143,8 @@ namespace WireFlow
 
                 canvas.Background = ColorUtils.StringToBrush(Engine.Project.Background);
                 Engine.RenderPage(canvas, CurrentPage as FlowPage);
+                // As drawn, which sets what drawing sets (IsMaster), it is as saved
+                NoteSaved();
                 SelectDefaultLayer();
 
                 Debug.WriteLine($"Rendered to Designer:{AbsoluteId} Canvas:{canvas.GetHashCode()}");
@@ -1189,6 +1194,8 @@ namespace WireFlow
 
                 canvas.Background = ColorUtils.StringToBrush(Engine.Project.Background);
                 Engine.RenderPage(canvas, CurrentPage as FlowPage);
+                // As drawn, which sets what drawing sets (IsMaster), it is as saved
+                NoteSaved();
                 SelectDefaultLayer();
 
                 Debug.WriteLine($"Rendered to Designer:{AbsoluteId} Canvas:{canvas.GetHashCode()}");
@@ -1232,6 +1239,8 @@ namespace WireFlow
 
                 canvas.Background = ColorUtils.StringToBrush(Engine.Project.Background);
                 Engine.RenderPage(canvas, CurrentPage as FlowPage);
+                // As drawn, which sets what drawing sets (IsMaster), it is as saved
+                NoteSaved();
                 SelectDefaultLayer();
 
                 Debug.WriteLine($"Rendered to Designer:{AbsoluteId} Canvas:{canvas.GetHashCode()}");
@@ -1476,6 +1485,7 @@ namespace WireFlow
             }
             gestureStepOpen = false;
             history = page == null ? null : new FlowHistory(page);
+            savedJson = page == null ? null : FlatFolderRepository.SerializeToJSON(page);
             idsOutside = null;
             if (history != null)
             {
@@ -1518,7 +1528,8 @@ namespace WireFlow
         {
             foreach (var node in FlowIds.Nodes(added).OfType<FlowElementBase>().ToList())
             {
-                if (!string.IsNullOrWhiteSpace(node.Id) && !IsIdTaken(node, node.Id))
+                // An element a version gives back keeps the ID it had there, none too (a file from before IDs), unless another node has it
+                if (string.IsNullOrWhiteSpace(node.Id) ? reverting : !IsIdTaken(node, node.Id))
                     continue;
                 var taken = FlowIds.NewSet();
                 taken.UnionWith(IdsOutside);
@@ -1528,6 +1539,18 @@ namespace WireFlow
                 Engine.NoteIdGiven(node.Id, DocumentKey);
             }
         }
+
+
+        // The page or layout open as it was opened or last saved, as its JSON: an edit that brings it back to that, as going
+        // back to the version the tab shows does, leaves it with no changes to save
+        private string savedJson;
+
+
+        private void NoteSaved() => savedJson = CurrentPage == null ? null : FlatFolderRepository.SerializeToJSON(CurrentPage);
+
+
+        /// <summary>Whether the page or layout open is now as it was opened or last saved.</summary>
+        private bool IsAsSaved => savedJson != null && CurrentPage != null && FlatFolderRepository.SerializeToJSON(CurrentPage) == savedJson;
 
 
         private void ClearHistory()
@@ -1721,6 +1744,7 @@ namespace WireFlow
             // The elements selected are taken away
             DeselectAll();
             BeginGestureStep();
+            reverting = true;
             try
             {
                 page.Width = version.Width;
@@ -1735,13 +1759,19 @@ namespace WireFlow
             }
             finally
             {
+                reverting = false;
                 EndGestureStep();
             }
             KeepCurrentLayer();
-            IsModified = true;
+            // Back to the version the tab shows, with nothing else changed, there is nothing to save
+            IsModified = !IsAsSaved;
             OnElementsChanged();
             return true;
         }
+
+
+        // Whether a version's content is being put on the page (RevertTo)
+        private bool reverting;
 
 
         /// <summary>
@@ -1768,7 +1798,7 @@ namespace WireFlow
             // The elements selected may be taken away
             DeselectAll();
             history.Undo();
-            IsModified = history.CanUndo;
+            IsModified = history.CanUndo && !IsAsSaved;
             KeepCurrentLayer();
             OnElementsChanged();
         }
@@ -1782,7 +1812,7 @@ namespace WireFlow
             EndGestureStep();
             DeselectAll();
             history.Redo();
-            IsModified = true;
+            IsModified = !IsAsSaved;
             KeepCurrentLayer();
             OnElementsChanged();
         }
