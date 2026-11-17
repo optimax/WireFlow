@@ -32,6 +32,9 @@ namespace WireFlow.Views
             SetResourceReference(ForegroundProperty, "LightLightColorBrush");
             foreach (var button in Buttons)
                 button.MinWidth = 80;
+            // The lists' rows close together, with next to no room between their lines
+            foreach (var list in new[] { FamilyList, StyleList, SizeList })
+                ListRows.Keep(list, ListRows.Tight);
             Arrange();
             ShowColor();
         }

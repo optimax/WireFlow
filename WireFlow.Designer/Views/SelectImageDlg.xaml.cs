@@ -13,6 +13,8 @@ namespace WireFlow.Views
         {
             InitializeComponent();
             SourceInitialized += (s, e) => MaxServices.Core.Themes.AppTheme.ApplyTitleBar(this);
+            // Its rows as close as those of the Images pane
+            ListRows.Keep(ListBoxImages, ListRows.Compact);
             Owner = owner;
             VM = vm;
             DataContext = VM;
