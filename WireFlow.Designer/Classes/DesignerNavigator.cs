@@ -1377,6 +1377,25 @@ namespace WireFlow
         }
 
 
+        // The handles of the selected elements show whether each can be changed: gray on one locked since it was selected, in
+        // Properties or by the Outline's padlock, itself or through what holds it, and in the selection's colors on one freed
+        private void ShowLocksOnHandles()
+        {
+            for (int i = 0; i < selectedElements.Count; i++)
+            {
+                var element = selectedElements[i];
+                var aLayer = AdornerLayer.GetAdornerLayer(element);
+                var adorner = aLayer?.GetAdorners(element)?.OfType<ResizingAdorner>().FirstOrDefault();
+                if (adorner == null || ((adorner.Background as SolidColorBrush)?.Color == Colors.Gray) == IsLocked(element))
+                    continue;
+                adorner.ResizeStarted -= OnElementResizeStarted;
+                adorner.ResizeCompleted -= OnElementResized;
+                aLayer.Remove(adorner);
+                AttachAdorner(element, aLayer, i > 0);
+            }
+        }
+
+
         private void AttachAdorner(UIElement clickedElement, AdornerLayer aLayer, bool subsequent)
         {
             if (aLayer == null)
@@ -1507,6 +1526,7 @@ namespace WireFlow
                     if (scheduledFor == history)
                         history.CommitStep();
                     OnHistoryStateChanged();
+                    ShowLocksOnHandles();
                 }));
             }
             OnHistoryStateChanged();
@@ -1573,6 +1593,75 @@ namespace WireFlow
             CurrentLayer = LayerViewOf(layer) ?? CurrentLayer;
             IsModified = true;
             OnElementsChanged();
+        }
+
+
+        /// <summary>
+        /// Whether a node is the open page's or layout's own: one of its layers, or an element on one, at any depth. The
+        /// layers and elements of the layouts a page shows are not: they are changed in their layout's tab.
+        /// </summary>
+        public bool IsOwn(FlowBase node)
+        {
+            if (!(CurrentPage is FlowPage page) || node == null || node == page)
+                return false;
+            for (var holder = node.Parent; holder != null; holder = holder.Parent)
+                if (holder == page)
+                    return true;
+            return false;
+        }
+
+
+        /// <summary>
+        /// Whether a layer or an element of the page open can be shown or hidden: a locked one, or one in something
+        /// locked, keeps its visibility as it keeps its other properties.
+        /// </summary>
+        public bool CanSetVisible(FlowBase node) =>
+            IsOwn(node) && (node is FlowElementBase element ? !element.IsLocked : node is FlowLayer layer && !layer.Locked);
+
+
+        /// <summary>Whether a layer or an element of the page open can be locked or unlocked: any of them can.</summary>
+        public bool CanSetLocked(FlowBase node) => IsOwn(node) && (node is FlowElementBase || node is FlowLayer);
+
+
+        /// <summary>
+        /// Shows or hides a layer or an element of the page open, as the Outline's eye does; false if it cannot. It is an
+        /// edit of the DOM, one step of Undo.
+        /// </summary>
+        public bool SetVisible(FlowBase node, bool visible)
+        {
+            if (!CanSetVisible(node))
+                return false;
+            if (node is FlowElementBase element)
+                element.Visible = visible;
+            else
+            {
+                var layer = (FlowLayer)node;
+                // The elements of a layer hidden are no longer there to be worked on; a hidden element stays selected, so
+                // that Properties can show it again
+                if (!visible && LayerViewOf(layer) is Layer view)
+                    foreach (var selected in selectedElements.Where(e => LayerOf(e) == view).ToList())
+                        DeselectElement(selected);
+                layer.Hidden = !visible;
+            }
+            IsModified = true;
+            return true;
+        }
+
+
+        /// <summary>
+        /// Locks or unlocks a layer or an element of the page open, as the Outline's padlock does; false if it cannot. It
+        /// is an edit of the DOM, one step of Undo.
+        /// </summary>
+        public bool SetLocked(FlowBase node, bool locked)
+        {
+            if (!CanSetLocked(node))
+                return false;
+            if (node is FlowElementBase element)
+                element.Locked = locked;
+            else
+                ((FlowLayer)node).Locked = locked;
+            IsModified = true;
+            return true;
         }
 
 
@@ -1696,6 +1785,9 @@ namespace WireFlow
 
             Debug.WriteLine($"Rubberband Canvas: {CurrentCanvas.GetHashCode()}");
 
+            // Nor is an element of a hidden layer
+            if (CurrentLayer.Visibility != Visibility.Visible)
+                return;
             foreach (FrameworkElement item in CurrentLayer.Children)
             {
                 // An element that does not show is not selected by the band drawn around where it would be
@@ -1908,8 +2000,8 @@ namespace WireFlow
             if (element == null)
                 return false;
             var node = Engine.ToNode(element);
-            // Nothing is drawn on a locked layer
-            if (node == null || !(FlowView.GetNode(CurrentLayer) is FlowLayer layer) || layer.Locked)
+            // Nothing is drawn on a locked layer, or on a hidden one, where it would not show
+            if (node == null || !(FlowView.GetNode(CurrentLayer) is FlowLayer layer) || layer.Locked || layer.Hidden)
                 return false;
 
             node.Width = Rubberband.Width;
@@ -2110,8 +2202,8 @@ namespace WireFlow
         /// </summary>
         public void PasteElements()
         {
-            // Nothing is pasted onto a locked layer
-            if (!(FlowView.GetNode(CurrentLayer) is FlowLayer layer) || layer.Locked)
+            // Nothing is pasted onto a locked layer, or onto a hidden one, where it would not show
+            if (!(FlowView.GetNode(CurrentLayer) is FlowLayer layer) || layer.Locked || layer.Hidden)
                 return;
             string json;
             try

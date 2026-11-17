@@ -17,6 +17,17 @@ namespace WireFlow
         }
 
 
+        protected override void RefreshElements()
+        {
+            foreach (var proxy in Elements)
+            {
+                proxy.Refresh();
+                if (proxy is UICanvasProxy canvas)
+                    canvas.RefreshElements();
+            }
+        }
+
+
         public override void Detach()
         {
             base.Detach();

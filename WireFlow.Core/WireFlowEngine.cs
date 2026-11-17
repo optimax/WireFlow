@@ -1322,12 +1322,21 @@ namespace WireFlow
 
             canvas.Children.Add(layerCanvas);
             FlowView.SetNode(layerCanvas, layer);
+            ApplyLayer(layer, layerCanvas);
+            FollowLayer(layer, layerCanvas);
 
             foreach (var element in layer.Elements)
             {
                 RenderElement(element, layerCanvas);
             }
             FollowChildren(layer, layer.Elements, layerCanvas);
+        }
+
+
+        // A layer shows unless it is hidden: a hidden one is not drawn, with all that is on it, and stays in its page
+        private static void ApplyLayer(FlowLayer layer, Layer view)
+        {
+            view.Visibility = layer.Hidden ? Visibility.Collapsed : Visibility.Visible;
         }
 
 
@@ -1407,6 +1416,16 @@ namespace WireFlow
                     canvas.Children.Remove(wanted[i]);
                     canvas.Children.Insert(i, wanted[i]);
                 }
+        }
+
+
+        // Keeps a layer in step with its node's properties
+        private void FollowLayer(FlowLayer layer, Layer view)
+        {
+            var link = view.GetValue(ViewLinkProperty) as ViewLink ?? new ViewLink { Node = layer };
+            link.OnProperty = (sender, e) => ApplyLayer(layer, view);
+            layer.PropertyChanged += link.OnProperty;
+            view.SetValue(ViewLinkProperty, link);
         }
 
 

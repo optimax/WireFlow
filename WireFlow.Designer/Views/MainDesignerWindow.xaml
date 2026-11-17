@@ -671,28 +671,75 @@
                                             <EventSetter Event="Selected" Handler="TreeViewItem_Selected"/>
                                         </Style>
 
-                                        <!-- An element selected in the Designer is highlighted: the theme's text color, faint, behind its entry -->
+                                        <!-- An entry's eye or padlock: a caption button, faint while it has nothing to tell (the element shows,
+                                             or is free), and plain while it has (Tag "On": the element is hidden, or locked) or under the mouse -->
+                                        <Style x:Key="OutlineStateButton" TargetType="Button" BasedOn="{StaticResource PaneCaptionButton}">
+                                            <Setter Property="Opacity" Value="0.3"/>
+                                            <Setter Property="Margin" Value="0"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="Tag" Value="On">
+                                                    <Setter Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+
+                                        <!-- The eye and the padlock of an entry of the page's own: a click shows or hides its element or layer, or
+                                             locks or unlocks it. Each shows how the element is, through what holds it too (an element of a hidden
+                                             layer has the struck-through eye, faint, as it is not itself hidden) -->
+                                        <DataTemplate x:Key="OutlineStateButtons">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button x:Name="Eye" Style="{StaticResource OutlineStateButton}" ToolTip="Show or hide"
+                                                        CommandParameter="{Binding}" Command="{Binding DataContext.OutlineToggleVisibleCmd, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                                    <Viewbox Width="14" Height="14"><Path Data="{Binding EyeGlyph, Converter={StaticResource ToolGlyphConverter}}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
+                                                </Button>
+                                                <Button x:Name="Padlock" Style="{StaticResource OutlineStateButton}" ToolTip="Lock or unlock: a locked object cannot be changed"
+                                                        CommandParameter="{Binding}" Command="{Binding DataContext.OutlineToggleLockedCmd, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                                    <Viewbox Width="14" Height="14"><Path Data="{Binding LockGlyph, Converter={StaticResource ToolGlyphConverter}}" Style="{StaticResource PaneCaptionGlyph}"/></Viewbox>
+                                                </Button>
+                                            </StackPanel>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Visible}" Value="False">
+                                                    <Setter TargetName="Eye" Property="Tag" Value="On"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Locked}" Value="True">
+                                                    <Setter TargetName="Padlock" Property="Tag" Value="On"/>
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+
+                                        <!-- An element selected in the Designer is highlighted: the theme's text color, faint, behind its entry.
+                                             What an entry shows ends before its eye and padlock (the pin's Room), its name cut short with an ellipsis -->
                                         <HierarchicalDataTemplate DataType="{x:Type wireFlowCore:UICanvasProxy}" ItemsSource="{Binding Elements}">
                                             <Grid>
                                                 <Border x:Name="Highlight" Background="{DynamicResource LightLightColorBrush}" CornerRadius="2" Margin="-2,0" Opacity="0"/>
-                                                <StackPanel Orientation="Horizontal">
+                                                <DockPanel HorizontalAlignment="Left" MaxWidth="{Binding Room, ElementName=Pin}">
                                                     <!-- The tool glyph of the entry's kind, as the Tools list draws it: in the row's text color -->
-                                                    <Viewbox Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                    <Viewbox DockPanel.Dock="Left" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
                                                         <Path Width="24" Height="24" Data="{Binding Glyph, Converter={StaticResource ToolGlyphConverter}}"
                                                               StrokeThickness="{StaticResource ToolGlyphStrokeThickness}" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                                                               Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
                                                     </Viewbox>
-                                                    <TextBlock>
+                                                    <TextBlock DockPanel.Dock="Right" Foreground="Gray">
+                                                        <Run Text=" ["/><Run Text="{Binding Path=Elements.Count,Mode=OneWay}"/><Run Text="]"/>
+                                                    </TextBlock>
+                                                    <TextBlock TextTrimming="CharacterEllipsis">
                                                         <Run Text="{Binding Path=Type,Mode=OneWay}"/>
                                                         <Run Text=":"/>
                                                         <Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
                                                     </TextBlock>
-                                                    <TextBlock Foreground="Gray">
-                                                        <Run Text=" ["/><Run Text="{Binding Path=Elements.Count,Mode=OneWay}"/><Run Text="]"/>
-                                                    </TextBlock>
-                                                </StackPanel>
+                                                </DockPanel>
+                                                <!-- Its eye and padlock, at the pane's right edge -->
+                                                <wireFlow:RightEdgePin x:Name="Pin" HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="Collapsed">
+                                                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource OutlineStateButtons}"/>
+                                                </wireFlow:RightEdgePin>
                                             </Grid>
                                             <HierarchicalDataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding HasState}" Value="True">
+                                                    <Setter TargetName="Pin" Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
                                                     <Setter TargetName="Highlight" Property="Opacity" Value="0.22"/>
                                                 </DataTrigger>
@@ -702,19 +749,26 @@
                                         <HierarchicalDataTemplate DataType="{x:Type wireFlowCore:UIElementProxy}">
                                             <Grid>
                                                 <Border x:Name="Highlight" Background="{DynamicResource LightLightColorBrush}" CornerRadius="2" Margin="-2,0" Opacity="0"/>
-                                                <StackPanel Orientation="Horizontal">
+                                                <DockPanel HorizontalAlignment="Left" MaxWidth="{Binding Room, ElementName=Pin}">
                                                     <!-- The tool glyph of the entry's kind, as the Tools list draws it: in the row's text color -->
-                                                    <Viewbox Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                    <Viewbox DockPanel.Dock="Left" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
                                                         <Path Width="24" Height="24" Data="{Binding Glyph, Converter={StaticResource ToolGlyphConverter}}"
                                                               StrokeThickness="{StaticResource ToolGlyphStrokeThickness}" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                                                               Stroke="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"/>
                                                     </Viewbox>
-                                                    <TextBlock>
+                                                    <TextBlock TextTrimming="CharacterEllipsis">
                                                         <Run Text="{Binding Path=Type,Mode=OneWay}"/><Run Text=": "/><Run Text="{Binding Path=ContentInfo,Mode=OneWay}"/>
                                                     </TextBlock>
-                                                </StackPanel>
+                                                </DockPanel>
+                                                <!-- Its eye and padlock, at the pane's right edge -->
+                                                <wireFlow:RightEdgePin x:Name="Pin" HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="Collapsed">
+                                                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource OutlineStateButtons}"/>
+                                                </wireFlow:RightEdgePin>
                                             </Grid>
                                             <HierarchicalDataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding HasState}" Value="True">
+                                                    <Setter TargetName="Pin" Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
                                                     <Setter TargetName="Highlight" Property="Opacity" Value="0.22"/>
                                                 </DataTrigger>

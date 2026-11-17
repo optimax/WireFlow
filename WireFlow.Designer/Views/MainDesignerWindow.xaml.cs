@@ -1109,6 +1109,22 @@ namespace WireFlow
         }
 
 
+        // The eye of an Outline entry: its element or layer is hidden if it is set to show, and shown if it is hidden
+        private void OutlineToggleVisible(UIElementProxy entry)
+        {
+            if (entry != null)
+                CurrentDesigner?.SetVisible(entry.Node, !entry.Visible);
+        }
+
+
+        // The padlock of an Outline entry: its element or layer is locked if it is free, and freed if it is locked
+        private void OutlineToggleLocked(UIElementProxy entry)
+        {
+            if (entry != null)
+                CurrentDesigner?.SetLocked(entry.Node, !entry.Locked);
+        }
+
+
         private void Outline_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             var selectedItem = Outline.SelectedItem as UIElementProxy;
@@ -3122,6 +3138,10 @@ namespace WireFlow
         public ICommand AddLayerCmd { get; set; }
         /// <summary>Deletes the elements selected, or else the layer chosen in the Outline (the Outline's caption and menu).</summary>
         public ICommand OutlineDeleteCmd { get; set; }
+        /// <summary>Shows or hides the element or layer of an Outline entry (its eye); the entry is the parameter.</summary>
+        public ICommand OutlineToggleVisibleCmd { get; set; }
+        /// <summary>Locks or unlocks the element or layer of an Outline entry (its padlock); the entry is the parameter.</summary>
+        public ICommand OutlineToggleLockedCmd { get; set; }
         public ICommand RedoCmd { get; set; }
         public ICommand ObjectBringForwardCmd { get; set; }
         public ICommand ObjectSendBackwardCmd { get; set; }
@@ -3207,6 +3227,10 @@ namespace WireFlow
             // Navigate mode leaves the page as it is: the commands that change it without a selection wait for Design mode
             AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => !IsNavigateMode && CurrentDesigner?.CurrentPage is FlowPage);
             OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => !IsNavigateMode && CanOutlineDelete());
+            OutlineToggleVisibleCmd = new RelayCommand(o => OutlineToggleVisible(o as UIElementProxy),
+                o => !IsNavigateMode && o is UIElementProxy entry && CurrentDesigner?.CanSetVisible(entry.Node) == true);
+            OutlineToggleLockedCmd = new RelayCommand(o => OutlineToggleLocked(o as UIElementProxy),
+                o => !IsNavigateMode && o is UIElementProxy entry && CurrentDesigner?.CanSetLocked(entry.Node) == true);
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => !IsNavigateMode && (CurrentDesigner?.CanUndo ?? false));
             NavigateModeCmd = new RelayCommand(o => IsNavigateMode = !IsNavigateMode);
             HighlightLinksCmd = new RelayCommand(o => HighlightLinks = !HighlightLinks);
