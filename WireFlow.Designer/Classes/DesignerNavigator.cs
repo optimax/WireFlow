@@ -1234,6 +1234,7 @@ namespace WireFlow
             if (history != null)
             {
                 history.Changed -= HistoryChanged;
+                history.PropertyReplayed -= HistoryPropertyReplayed;
                 history.Detach();
             }
             gestureStepOpen = false;
@@ -1243,6 +1244,7 @@ namespace WireFlow
             {
                 history.Changed += HistoryChanged;
                 history.NodeAdded += GiveIds;
+                history.PropertyReplayed += HistoryPropertyReplayed;
             }
             OnHistoryStateChanged();
             DocumentChanged?.Invoke(this);
@@ -1396,6 +1398,21 @@ namespace WireFlow
             IsModified = true;
             OnElementsChanged();
             return true;
+        }
+
+
+        /// <summary>
+        /// Raised when an undo or a redo gave a node another ID, or the page or layout open another name: the node, the
+        /// property (Id or Name), and its value before and after. The window then brings the project, its lists and tabs, and
+        /// what names the node in the other documents, in line, as when the ID or name is set in Properties.
+        /// </summary>
+        public event Action<DesignerNavigator, FlowBase, string, string, string> TargetReplayed;
+
+
+        private void HistoryPropertyReplayed(FlowBase node, string property, object before, object after)
+        {
+            if (property == nameof(FlowBase.Id) || (property == nameof(FlowBase.Name) && node == CurrentPage))
+                TargetReplayed?.Invoke(this, node, property, before as string, after as string);
         }
 
 

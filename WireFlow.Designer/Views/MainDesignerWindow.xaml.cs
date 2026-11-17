@@ -1718,7 +1718,7 @@ namespace WireFlow
         /// <paramref name="after"/>: in the documents open, as edits of each, and in the others as the repository has them. A
         /// page's old name is left in links when it is also an ID, as links name IDs first.
         /// </summary>
-        private void RetargetLinks(FlowBase node, string before, string after)
+        private void RetargetLinks(FlowBase node, string before, string after, DesignerNavigator replaying = null)
         {
             if (Engine == null || string.IsNullOrWhiteSpace(before) || string.IsNullOrWhiteSpace(after))
                 return;
@@ -1741,6 +1741,9 @@ namespace WireFlow
                 if (root == null)
                     continue;
                 open.Add((root as FlowPage)?.Key ?? root.Name);
+                // The document whose undo or redo this follows has its own links back already, as part of the step
+                if (doc.Navigator == replaying)
+                    continue;
                 if (layout)
                     FlowIds.RetargetMaster(root as FlowPage, before, after);
                 else
@@ -1750,6 +1753,30 @@ namespace WireFlow
                 Engine.RetargetMasters(before, after, open);
             else
                 Engine.RetargetLinks(before, after, open);
+        }
+
+
+
+        // An undo or a redo gave a node another ID, or the page or layout open another name: the project, its list and the
+        // tab follow, and what names the node in the other documents names it by the new one, as when the name or the ID is
+        // set in Properties. A name the project cannot give the page (another has it now) is not kept: the node gets the
+        // project's name back.
+        private void NavigatorTargetReplayedHandler(DesignerNavigator sender, FlowBase node, string property, string before, string after)
+        {
+            if (Engine == null)
+                return;
+            if (property == nameof(FlowBase.Name))
+            {
+                if (!(node is FlowPage page) || string.IsNullOrEmpty(page.Key))
+                    return;
+                if (RenamePage(page.Key, after, page) != null)
+                {
+                    page.Name = Engine.PageName(page.Key) ?? Engine.LayoutName(page.Key) ?? page.Name;
+                    return;
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(before) && !string.IsNullOrWhiteSpace(after) && !string.Equals(before, after, StringComparison.Ordinal))
+                RetargetLinks(node, before, after, sender);
         }
 
 
@@ -1924,6 +1951,7 @@ namespace WireFlow
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
             navigator.LeaveNavigateModeRequested += NavigatorLeaveNavigateModeHandler;
+            navigator.TargetReplayed += NavigatorTargetReplayedHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1965,6 +1993,7 @@ namespace WireFlow
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
             navigator.LeaveNavigateModeRequested += NavigatorLeaveNavigateModeHandler;
+            navigator.TargetReplayed += NavigatorTargetReplayedHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -2004,6 +2033,7 @@ namespace WireFlow
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
             navigator.LeaveNavigateModeRequested += NavigatorLeaveNavigateModeHandler;
+            navigator.TargetReplayed += NavigatorTargetReplayedHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;

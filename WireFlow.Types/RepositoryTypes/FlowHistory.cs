@@ -38,6 +38,11 @@ namespace WireFlow
         /// changes made to it then are recorded in the same step.</summary>
         public event Action<FlowBase> NodeAdded;
 
+        /// <summary>Raised once a step is undone or redone, for each change of a property in it, in the order they were made
+        /// again: the node, the property's name, and its value before and after the undo or redo. Changes a handler makes to
+        /// the tree are recorded as a new edit.</summary>
+        public event Action<FlowBase, string, object, object> PropertyReplayed;
+
         public FlowBase Root => root;
 
         /// <summary>Whether there is a step to undo, the step still open included.</summary>
@@ -96,6 +101,9 @@ namespace WireFlow
             });
             redoSteps.Add(step);
             OnChanged();
+            for (var i = step.Count - 1; i >= 0; i--)
+                if (step[i] is PropertyChange change)
+                    PropertyReplayed?.Invoke(change.Node, change.Name, change.NewValue, change.OldValue);
             return true;
         }
 
@@ -116,6 +124,9 @@ namespace WireFlow
             });
             undoSteps.Add(step);
             OnChanged();
+            foreach (var redone in step)
+                if (redone is PropertyChange change)
+                    PropertyReplayed?.Invoke(change.Node, change.Name, change.OldValue, change.NewValue);
             return true;
         }
 
@@ -307,6 +318,11 @@ namespace WireFlow
                 this.oldValue = oldValue;
                 this.newValue = newValue;
             }
+
+            public FlowBase Node => node;
+            public string Name => name;
+            public object OldValue => oldValue;
+            public object NewValue => newValue;
 
             public override void Undo() => node.GetType().GetProperty(name)?.SetValue(node, oldValue);
             public override void Redo() => node.GetType().GetProperty(name)?.SetValue(node, newValue);
