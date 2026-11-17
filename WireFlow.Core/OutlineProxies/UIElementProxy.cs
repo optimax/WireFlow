@@ -67,12 +67,23 @@ namespace WireFlow
         public UIElementProxy(FrameworkElement element)
         {
             UIElement = element;
-            Type = element.GetType().Name;
             Node = FlowView.GetNode(element);
+            Type = KindName(element, Node);
             Name = Node?.Name ?? element.Name;
             if (Node != null)
                 Node.PropertyChanged += NodePropertyChanged;
         }
+
+
+        // What the Outline calls an element that has no entry class of its own, as the tools and Properties name it: a
+        // rectangle and an ellipse by their tools' names, not by their controls' classes; an element of another kind by its
+        // kind, and one without a node by its class
+        private static string KindName(FrameworkElement element, FlowBase node) => element switch
+        {
+            WireFlowRectangle => "Rectangle",
+            WireFlowEllipse => "Ellipse",
+            _ => string.IsNullOrWhiteSpace(node?.Type) ? element.GetType().Name : node.Type
+        };
 
 
         private void NodePropertyChanged(object sender, PropertyChangedEventArgs e) => Refresh();
