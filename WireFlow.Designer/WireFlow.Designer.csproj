@@ -10,7 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <SplashScreen Include="SplashScreen.png" />
+    <!-- The splash screen is shown by DesignerSplash, which places it; the SplashScreen build item would show it centered on the screen -->
+    <Resource Include="SplashScreen.png" />
     <Resource Include="Cursors\*.cur" />
     <Resource Include="Images\*.png" />
     <Resource Include="Views\logo.png" />

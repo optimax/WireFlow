@@ -35,14 +35,7 @@ namespace WireFlow
 
         #region Properties
 
-        public string ConfigFileName
-        {
-            get
-            {
-                string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                return System.IO.Path.Combine(folderPath, Globals.CONFIG_APP_NAME, Globals.CONFIG_FILE_NAME);
-            }
-        }
+        public string ConfigFileName => ConfigSettings.FileName;
 
         public ConfigSettings Config { get; set; }
 
@@ -683,15 +676,7 @@ namespace WireFlow
 
         private void LoadConfigSettings()
         {
-            if (File.Exists(ConfigFileName))
-            {
-                string configStr = File.ReadAllText(ConfigFileName);
-                Config = JsonConvert.DeserializeObject<ConfigSettings>(configStr);
-            }
-            else
-            {
-                Config = new ConfigSettings();
-            }
+            Config = ConfigSettings.Read();
             Debug.Assert(Config != null);
             // The color dialog keeps its recent colors in the settings' list, which is saved with them
             Config.RecentColors ??= new List<string>();
@@ -739,24 +724,20 @@ namespace WireFlow
 
 
 
-        // The window where it was, at its size, maximized or not; a place no longer on any screen (a screen taken away) is left to Windows
+        // The window where it was, at its size, maximized or not; a place no longer on any screen (a screen taken away) is left to Windows.
+        // The splash screen is shown at its center (DesignerSplash).
         private void ApplyConfigSettings()
         {
-            if (!double.IsNaN(Config.Width) && !double.IsNaN(Config.Height) && Config.Width > 100 && Config.Height > 100)
+            if (Config.HasWindowSize())
             {
                 Width = Config.Width;
                 Height = Config.Height;
             }
-            if (!double.IsNaN(Config.Left) && !double.IsNaN(Config.Top))
+            if (Config.WindowBounds() is Rect place)
             {
-                var visible = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
-                var bounds = new Rect(Config.Left, Config.Top, Width, Height);
-                if (visible.IntersectsWith(bounds) && visible.Contains(new Point(Config.Left + Math.Min(100, Width / 2), Config.Top + 10)))
-                {
-                    WindowStartupLocation = WindowStartupLocation.Manual;
-                    Left = Config.Left;
-                    Top = Config.Top;
-                }
+                WindowStartupLocation = WindowStartupLocation.Manual;
+                Left = place.Left;
+                Top = place.Top;
             }
             if (Config.Maximized)
                 WindowState = WindowState.Maximized;

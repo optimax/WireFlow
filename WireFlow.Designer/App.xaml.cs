@@ -11,6 +11,13 @@ namespace WireFlow
         public IFlowRepository Repository { get; set; }
         public WireFlowEngine Engine { get; set; }
 
+
+        // The splash screen, at once, centered on the window about to be shown (DesignerSplash)
+        public App()
+        {
+            DesignerSplash.ShowAtStart();
+        }
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             // Brushes and colors in the property grid open the color dialog

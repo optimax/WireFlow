@@ -1,9 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Windows;
+using Newtonsoft.Json;
 
 namespace WireFlow
 {
     public class ConfigSettings
     {
+        // The settings file, in %APPDATA%\WireFlow
+        public static string FileName =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Globals.CONFIG_APP_NAME, Globals.CONFIG_FILE_NAME);
+
+
+
+        // The settings as the file keeps them, or the defaults when there is no file. The splash screen reads them before the window is
+        // made (DesignerSplash), so this class stays apart from the window, whose type takes long to load.
+        public static ConfigSettings Read()
+        {
+            string file = FileName;
+            if (!File.Exists(file))
+                return new ConfigSettings();
+            return JsonConvert.DeserializeObject<ConfigSettings>(File.ReadAllText(file));
+        }
+
+
+
+        // Whether a size is kept for the window
+        public bool HasWindowSize() => !double.IsNaN(Width) && !double.IsNaN(Height) && Width > 100 && Height > 100;
+
+
+
+        // The place and size the window opens at (in device-independent pixels; maximized, the place it goes back to), as kept here, or
+        // null where Windows places it: no place or size kept, or a place no longer on any screen (a screen taken away)
+        public Rect? WindowBounds()
+        {
+            if (!HasWindowSize() || double.IsNaN(Left) || double.IsNaN(Top))
+                return null;
+            var visible = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+            var bounds = new Rect(Left, Top, Width, Height);
+            if (visible.IntersectsWith(bounds) && visible.Contains(new Point(Left + Math.Min(100, Width / 2), Top + 10)))
+                return bounds;
+            return null;
+        }
+
+
+
         public bool Maximized { get; set; } = false;
         public double Left { get; set; } = double.NaN;
         public double Top { get; set; } = double.NaN;
