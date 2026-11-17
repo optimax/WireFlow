@@ -71,24 +71,92 @@ namespace WireFlow
         private Border navigateBadge;
 
 
-        // A tab hanging from the top edge of the area, at its center, with its lower corners rounded; clicks go through it to
-        // the page under it
+        /// <summary>Raised when the cross at the end of the Navigate mode badge is clicked: the window then leaves Navigate mode.</summary>
+        public event Action<DesignerNavigator> LeaveNavigateModeRequested;
+
+
+        // A tab hanging from the top edge of the area, at its center, with its lower corners rounded: its words, and a cross
+        // that leaves Navigate mode. Clicks go through it to the page under it, but for those on the cross.
         private Border CreateNavigateBadge()
         {
-            var text = new TextBlock { Text = "Navigate Mode", FontWeight = FontWeights.SemiBold, FontSize = 12 };
+            var text = new TextBlock { Text = "Navigate Mode", FontWeight = FontWeights.SemiBold, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
             text.SetResourceReference(TextBlock.ForegroundProperty, "NavigateBadgeTextBrush");
-            navigateBadge = new Border
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(text);
+            row.Children.Add(CreateNavigateBadgeCross());
+            navigateBadge = new ClickThroughBorder
             {
-                Child = text,
+                Child = row,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Top,
                 CornerRadius = new CornerRadius(0, 0, 8, 8),
-                Padding = new Thickness(16, 3, 16, 4),
-                IsHitTestVisible = false,
+                Padding = new Thickness(16, 3, 8, 4),
                 Visibility = Visibility.Collapsed,
             };
             navigateBadge.SetResourceReference(Border.BackgroundProperty, "NavigateBadgeBrush");
             return navigateBadge;
+        }
+
+
+        // The cross at the end of the badge, in the badge's text color: a click on it asks the window to leave Navigate mode.
+        // Under the mouse it shows a round spot of that color, faint.
+        private FrameworkElement CreateNavigateBadgeCross()
+        {
+            var spot = new System.Windows.Shapes.Ellipse { Opacity = 0 };
+            spot.SetResourceReference(Shape.FillProperty, "NavigateBadgeTextBrush");
+            var cross = new System.Windows.Shapes.Path
+            {
+                Width = 8,
+                Height = 8,
+                Stretch = Stretch.Uniform,
+                StrokeThickness = 1.6,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            cross.SetResourceReference(System.Windows.Shapes.Path.DataProperty, "ToolGlyph.close");
+            cross.SetResourceReference(Shape.StrokeProperty, "NavigateBadgeTextBrush");
+            var button = new Grid
+            {
+                Width = 16,
+                Height = 16,
+                Margin = new Thickness(6, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = Brushes.Transparent,
+                Cursor = Cursors.Arrow,
+                ToolTip = "Leave Navigate Mode (Esc)",
+            };
+            button.Children.Add(spot);
+            button.Children.Add(cross);
+            bool pressed = false;
+            button.MouseEnter += (sender, e) => spot.Opacity = 0.3;
+            button.MouseLeave += (sender, e) =>
+            {
+                spot.Opacity = 0;
+                pressed = false;
+            };
+            button.MouseLeftButtonDown += (sender, e) =>
+            {
+                pressed = true;
+                e.Handled = true;
+            };
+            button.MouseLeftButtonUp += (sender, e) =>
+            {
+                e.Handled = true;
+                if (!pressed)
+                    return;
+                pressed = false;
+                LeaveNavigateModeRequested?.Invoke(this);
+            };
+            return button;
+        }
+
+
+        // A border that mouse clicks go through to what lies under it, but for those on its content
+        private sealed class ClickThroughBorder : Border
+        {
+            protected override HitTestResult HitTestCore(PointHitTestParameters hitTestParameters) => null;
         }
 
 

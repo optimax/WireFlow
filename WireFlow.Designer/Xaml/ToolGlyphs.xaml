@@ -23,6 +23,8 @@
     <Geometry x:Key="ToolGlyph.box">M4.5,5 L19.5,5 A1.5,1.5 0 0 1 21,6.5 L21,17.5 A1.5,1.5 0 0 1 19.5,19 L4.5,19 A1.5,1.5 0 0 1 3,17.5 L3,6.5 A1.5,1.5 0 0 1 4.5,5 Z M7,10 L17,10 M7,14 L14,14</Geometry>
     <!-- Bring to Front: the marked square in front of the other -->
     <Geometry x:Key="ToolGlyph.bring-to-front">M3,3 L14,3 L14,14 L3,14 Z M4.8,9.2 L9.2,4.8 M6.3,12.2 L12.2,6.3 M14 10h7v11H10v-7</Geometry>
+    <!-- Close: a cross -->
+    <Geometry x:Key="ToolGlyph.close">M6 6l12 12M18 6L6 18</Geometry>
     <!-- Copy: a sheet before another, as PDFTools draws it -->
     <Geometry x:Key="ToolGlyph.copy">M9 7H20V21H9Z M5 17V3H16</Geometry>
     <!-- Cut: scissors, open, handles down -->

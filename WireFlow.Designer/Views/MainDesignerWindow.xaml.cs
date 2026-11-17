@@ -552,6 +552,13 @@ namespace WireFlow
         }
 
 
+        // The cross on a document's Navigate mode badge was clicked: leave the mode, with the Select tool, as Esc does
+        private void NavigatorLeaveNavigateModeHandler(DesignerNavigator sender)
+        {
+            IsNavigateMode = false;
+        }
+
+
         // The Designer's window, which Esc pressed in it or in one of its floating panes goes to
         private static MainDesignerWindow escapeWindow;
         private static bool escapeRegistered;
@@ -1916,6 +1923,7 @@ namespace WireFlow
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
+            navigator.LeaveNavigateModeRequested += NavigatorLeaveNavigateModeHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1956,6 +1964,7 @@ namespace WireFlow
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
+            navigator.LeaveNavigateModeRequested += NavigatorLeaveNavigateModeHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
@@ -1994,6 +2003,7 @@ namespace WireFlow
             navigator.SelectionChanged += NavigatorSelectionChangedHandler;
             navigator.ModifiedChanged += NavigatorModifiedChangedHandler;
             navigator.ElementDrawn += NavigatorElementDrawnHandler;
+            navigator.LeaveNavigateModeRequested += NavigatorLeaveNavigateModeHandler;
             navigator.ElementsChanged += NavigatorElementsChangedHandler;
             //navigator.NavigationFailed += NavigatorNavigationFailedHandler;
             navigator.PageName = href;
