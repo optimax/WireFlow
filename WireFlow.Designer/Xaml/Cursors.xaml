@@ -7,4 +7,8 @@
     <FrameworkElement x:Key="PenTextCursor" Cursor="/Cursors/pen-text.cur"/>
     <FrameworkElement x:Key="NavigateCursor" Cursor="/Cursors/navigate.cur"/>
     <FrameworkElement x:Key="PanHandCursor" Cursor="/Cursors/pan-hand.cur"/>
+    <!-- The Pick Color tool's: an eyedropper to take colors with, a paint bucket once it has some to give. Drawn by
+         Documents\make-cursors.cs from the tool glyphs of their names -->
+    <FrameworkElement x:Key="PickColorCursor" Cursor="/Cursors/pick-color.cur"/>
+    <FrameworkElement x:Key="PaintBucketCursor" Cursor="/Cursors/paint-bucket.cur"/>
 </ResourceDictionary>

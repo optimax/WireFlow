@@ -65,6 +65,8 @@
     <Geometry x:Key="ToolGlyph.navigate">M3,12 A9,9 0 1 0 21,12 A9,9 0 1 0 3,12 Z M15.5,8.5 L13.2,13.2 L8.5,15.5 L10.8,10.8 Z</Geometry>
     <!-- New: a blank sheet with a folded corner -->
     <Geometry x:Key="ToolGlyph.new">M6 3h8l5 5v13H6z M14 3v5h5</Geometry>
+    <!-- Paint Bucket: a tilted bucket of paint with its handle, and a drop falling from it at the lower left -->
+    <Geometry x:Key="ToolGlyph.paint-bucket">M13 3l8 8-8 8-8-8z M6 12h14 M8.5 2.5l4.5 4.5 M3.5 14c-.8 1.4-2 2.3-2 3.8a2 2 0 0 0 4 0c0-1.5-1.2-2.4-2-3.8z</Geometry>
     <!-- Pan: arrows in four directions -->
     <Geometry x:Key="ToolGlyph.pan">M12,3 L12,21 M3,12 L21,12 M9,6 L12,3 L15,6 M9,18 L12,21 L15,18 M6,9 L3,12 L6,15 M18,9 L21,12 L18,15</Geometry>
     <!-- Panel: a frame with an element along its top and one along its left side -->

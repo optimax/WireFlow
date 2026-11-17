@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Input;
 
 namespace WireFlow
@@ -13,8 +14,13 @@ namespace WireFlow
         public override string Glyph => "pick-color";
         public override MouseDragMode DesignerMode => MouseDragMode.Pick;
 
-        /// <summary>A cross to take colors with; a pen once it has some to give.</summary>
-        public override Cursor Cursor => HasColors ? Cursors.Pen : Cursors.Cross;
+        /// <summary>An eyedropper to take colors with; a paint bucket once it has some to give.</summary>
+        public override Cursor Cursor => HasColors ? Named("PaintBucketCursor", Cursors.Pen) : Named("PickColorCursor", Cursors.Cross);
+
+
+        // A cursor of the application's resources (Xaml\Cursors.xaml); where the application has none of that name, as a
+        // program that hosts the window without them, one of Windows' own
+        private static Cursor Named(string key, Cursor fallback) => (Application.Current?.TryFindResource(key) as FrameworkElement)?.Cursor ?? fallback;
 
 
         /// <summary>Whether colors were taken and wait to be given.</summary>
