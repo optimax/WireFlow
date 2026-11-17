@@ -2229,6 +2229,14 @@ namespace WireFlow
         public void FillSpace() => Fill(true, true);
 
 
+        /// <summary>Makes each selected element fill the room it has across: its left and right edges go out, its top and height stay.</summary>
+        public void FillWidth() => Fill(true, false);
+
+
+        /// <summary>Makes each selected element fill the room it has down: its top and bottom edges go out, its left and width stay.</summary>
+        public void FillHeight() => Fill(false, true);
+
+
         // Makes each selected element fill the room it has in what holds it, across, down or both (FillLayout): the page,
         // where the elements of every layer and of the page's layouts take room, or its group, where the group's other
         // children do. One after another, so that two selected elements do not fill the same room. A stack panel's child

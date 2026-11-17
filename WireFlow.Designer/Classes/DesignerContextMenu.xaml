@@ -49,6 +49,9 @@
                 <Separator/>
                 <MenuItem Header="Make Same Size" Command="{Binding MakeSameSizeCmd}"/>
                 <Separator/>
+                <MenuItem Header="Fill Width" Command="{Binding FillWidthCmd}"/>
+                <MenuItem Header="Fill Height" Command="{Binding FillHeightCmd}"/>
+                <Separator/>
                 <MenuItem Header="Exchange Width and Height" Command="{Binding ExchangeWidthAndHeightCmd}"/>
             </MenuItem>
             <MenuItem Header="Rotation">
