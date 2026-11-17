@@ -2855,21 +2855,43 @@ namespace WireFlow
 
 
 
+        // Help > WPF Color Chart: WPF's named colors, all but Transparent, which is none
         private void DebugGenerateWPFColorChart()
         {
-            CreateBlankDocumentTab("WPF Color Chart", null);
-            // A chart is looked at: a drag across it selects and moves nothing, and it never has changes to save
-            CurrentDesigner.IsViewOnly = true;
+            var colors = typeof(Colors).GetProperties().Where(p => p.Name != nameof(Colors.Transparent))
+                .Select(p => new KeyValuePair<string, Color>(p.Name, (Color)p.GetValue(null))).ToList();
+            ShowColorChart("WPF Color Chart", "WPF ALPHABETICAL COLOR CHART", colors);
+        }
 
+
+        // Help > Web Color Chart: the named colors of the Web, CSS's color keywords
+        private void ShowWebColorChart()
+        {
+            ShowColorChart("Web Color Chart", "WEB (CSS) NAMED COLOR CHART", WebColors.Named);
+        }
+
+
+        /// <summary>
+        /// Opens a chart of named colors in a tab of its own: a swatch, RRGGBB and the name of each, down four columns in
+        /// the order given, under a heading. The tab is for looking at: a drag across it selects and moves nothing, and it
+        /// never has changes to save.
+        /// </summary>
+        private void ShowColorChart(string tabTitle, string heading, IReadOnlyList<KeyValuePair<string, Color>> colors)
+        {
+            const int columns = 4;
+            // A row is as tall as its swatch with its margins, whatever the theme's font, so that a column holds the rows meant
+            const double rowHeight = 19.25 + 2 * 0.64;
+
+            CreateBlankDocumentTab(tabTitle, null);
+            CurrentDesigner.IsViewOnly = true;
 
             var canvas = CurrentDesigner.Designer.Canvas;
 
-            //DesignerCanvas.Margin = new Thickness(64, 48, 64, 48);
-
+            // As tall as the 35 rows of WPF's 140 colors need, with room to spare; a chart of more colors is taller by its rows
+            int rows = (colors.Count + columns - 1) / columns;
             canvas.Width = 1080;
-            canvas.Height = 830;
+            canvas.Height = 96 + Math.Max(734, Math.Ceiling(rows * rowHeight));
             canvas.Background = Brushes.White;
-
 
             var panel = new WrapPanel();
             panel.Orientation = Orientation.Vertical;
@@ -2885,14 +2907,9 @@ namespace WireFlow
 
             canvas.Children.Add(panel);
 
-
-            BrushConverter conv = new BrushConverter();
-            foreach (PropertyInfo prop in typeof(Colors).GetProperties())
+            foreach (var named in colors)
             {
-                if (prop.Name.ToLower() == "transparent")
-                    continue;
-
-                Brush brush = (Brush)conv.ConvertFromString(prop.Name);
+                Brush brush = new SolidColorBrush(named.Value);
 
                 Rectangle rect = new Rectangle();
                 rect.Fill = brush;
@@ -2901,19 +2918,20 @@ namespace WireFlow
                 rect.Margin = new Thickness(0.64);
 
                 TextBlock rgb = new TextBlock();
-                rgb.Text = brush.ToString().Substring(3);
+                rgb.Text = named.Value.ToString().Substring(3);
                 rgb.VerticalAlignment = VerticalAlignment.Center;
                 rgb.Width = 48;
                 rgb.Margin = new Thickness(3, 0, 0, 0);
                 rgb.Foreground = Brushes.DarkGray;
 
-                TextBlock text = new TextBlock() { Text = prop.Name };
+                TextBlock text = new TextBlock() { Text = named.Key };
                 text.VerticalAlignment = VerticalAlignment.Center;
                 text.Width = 132;
                 text.Margin = new Thickness(3, 0, 0, 0);
                 text.FontSize += 2;
 
                 Panel subPanel = new WrapPanel();
+                subPanel.Height = rowHeight;
                 subPanel.Children.Add(rect);
                 subPanel.Children.Add(rgb);
                 subPanel.Children.Add(text);
@@ -2921,9 +2939,7 @@ namespace WireFlow
                 panel.Children.Add(subPanel);
             }
 
-
-
-            TextBlock title = new TextBlock() { Text = "WPF ALPHABETICAL COLOR CHART" };
+            TextBlock title = new TextBlock() { Text = heading };
             title.TextAlignment = TextAlignment.Center;
             title.VerticalAlignment = VerticalAlignment.Center;
             title.Width = canvas.Width;
@@ -2933,7 +2949,6 @@ namespace WireFlow
             title.Margin = new Thickness(0, 0, 0, 0);
             Canvas.SetTop(title, 36);
             canvas.Children.Add(title);
-
         }
 
 
@@ -3203,6 +3218,8 @@ namespace WireFlow
         public ICommand DebugBreakpointCmd { get; set; }
         public ICommand DebugBlankCanvasCmd { get; set; }
         public ICommand DebugGenerateWPFColorChartCmd { get; set; }
+        /// <summary>Opens the chart of the Web's named colors (Help).</summary>
+        public ICommand WebColorChartCmd { get; set; }
         public ICommand DebugSaveXamlAsJsonCmd { get; set; }
         public ICommand DebugPopulateLayersCmd { get; set; }
 
@@ -3305,6 +3322,7 @@ namespace WireFlow
             DebugBreakpointCmd = new RelayCommand(o => DebugBreakpoint());
             DebugBlankCanvasCmd = new RelayCommand(o => DebugCreateBlankCanvas());
             DebugGenerateWPFColorChartCmd = new RelayCommand(o => DebugGenerateWPFColorChart());
+            WebColorChartCmd = new RelayCommand(o => ShowWebColorChart());
             DebugSaveXamlAsJsonCmd = new RelayCommand(o => DebugSaveXamlAsJson());
             DebugPopulateLayersCmd = new RelayCommand(o => PopulateOutlineTree());
         }
