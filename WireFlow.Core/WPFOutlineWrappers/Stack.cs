@@ -22,6 +22,17 @@ namespace WireFlow
         }
 
 
+        public static readonly DependencyProperty StackingFromProperty = DependencyProperty.Register(nameof(StackingFrom),
+            typeof(FlowStackingFrom), typeof(Stack), new FrameworkPropertyMetadata(FlowStackingFrom.Beginning, FrameworkPropertyMetadataOptions.AffectsArrange));
+
+        /// <summary>The end the children are stacked from: the panel's top or left, or its bottom or right.</summary>
+        public FlowStackingFrom StackingFrom
+        {
+            get => (FlowStackingFrom)GetValue(StackingFromProperty);
+            set => SetValue(StackingFromProperty, value);
+        }
+
+
         [System.ComponentModel.Category("Navigation")]
         public string Href { get; set; }
 
@@ -48,16 +59,25 @@ namespace WireFlow
         {
             var children = InternalChildren.OfType<FrameworkElement>().ToList();
             var panel = new Size(double.IsNaN(Width) ? arrangeSize.Width : Width, double.IsNaN(Height) ? arrangeSize.Height : Height);
-            var places = StackLayout.Arrange(panel, Direction, children.Select(c => new Size(c.Width, c.Height)).ToList());
+            // A child's own size is its node's: the size its control has across the panel is the one the panel gave it, which,
+            // after a change of direction, would be the size the other direction gave
+            var own = children.Select(c => FlowView.GetNode(c) is FlowElementBase node ? new Size(NotNegative(node.Width), NotNegative(node.Height)) : new Size(c.Width, c.Height)).ToList();
+            var places = StackLayout.Arrange(panel, Direction, own, StackingFrom == FlowStackingFrom.Ending);
             for (int i = 0; i < children.Count; i++)
             {
                 var child = children[i];
                 SetLeft(child, places[i].X);
                 SetTop(child, places[i].Y);
                 if (Direction == Orientation.Vertical)
+                {
                     child.Width = places[i].Width;
+                    child.Height = own[i].Height;
+                }
                 else
+                {
                     child.Height = places[i].Height;
+                    child.Width = own[i].Width;
+                }
                 // Measured again first, as its size changed; a size left automatic takes the size it asks for
                 child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                 var size = new Size(double.IsNaN(child.Width) ? child.DesiredSize.Width : child.Width, double.IsNaN(child.Height) ? child.DesiredSize.Height : child.Height);
@@ -72,5 +92,9 @@ namespace WireFlow
 
 
         private static double Coordinate(double value) => double.IsNaN(value) ? 0 : value;
+
+
+        // A size, which may be automatic (not a number) but not negative
+        private static double NotNegative(double value) => value < 0 ? 0 : value;
     }
 }

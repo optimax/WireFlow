@@ -86,7 +86,7 @@ namespace WireFlow
             ["group"] = Common.Concat(Position).ToArray(),
             ["stack"] = Common.Concat(Position).Concat(Size).Concat(new[]
             {
-                P("Direction", "Layout"), P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"),
+                P("Direction", "Layout"), P("StackingFrom", "Layout"), P("Fill", "Appearance", "Background"), P("Transparency", "Appearance"),
             }).ToArray(),
             ["panel"] = Common.Concat(Position).Concat(Size).Concat(new[]
             {

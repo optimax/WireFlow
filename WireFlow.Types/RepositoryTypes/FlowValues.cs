@@ -76,6 +76,13 @@ namespace WireFlow
         Vertical = 1,
     }
 
+    /// <summary>The end of a stack panel its children are stacked from: its top or left (Beginning), or its bottom or right (Ending).</summary>
+    public enum FlowStackingFrom
+    {
+        Beginning = 0,
+        Ending = 1,
+    }
+
     /// <summary>
     /// Where the panel holding an element places it, as a Delphi control's Align: along one of the sides of the room the
     /// panel has left, across the room left (Fill), or where the element's own position puts it (None).

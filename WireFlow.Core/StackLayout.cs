@@ -11,10 +11,12 @@ namespace WireFlow
     public static class StackLayout
     {
         /// <summary>
-        /// The children one after another from the panel's top left corner in the direction: each keeps its size in that
-        /// direction (none if it has none, as an automatic size) and gets the panel's size across it.
+        /// The children one after another in the direction: each keeps its size in that direction (none if it has none, as
+        /// an automatic size) and gets the panel's size across it. They start at the panel's top left corner, or, stacked
+        /// from the end, at its bottom (its right side, in a horizontal panel): the first child lies against that end and
+        /// each next one before it.
         /// </summary>
-        public static Rect[] Arrange(Size panel, Orientation direction, IReadOnlyList<Size> children)
+        public static Rect[] Arrange(Size panel, Orientation direction, IReadOnlyList<Size> children, bool fromEnd = false)
         {
             var result = new Rect[children.Count];
             double offset = 0;
@@ -23,13 +25,13 @@ namespace WireFlow
                 if (direction == Orientation.Vertical)
                 {
                     double height = Length(children[i].Height);
-                    result[i] = new Rect(0, offset, Length(panel.Width), height);
+                    result[i] = new Rect(0, fromEnd ? Length(panel.Height) - offset - height : offset, Length(panel.Width), height);
                     offset += height;
                 }
                 else
                 {
                     double width = Length(children[i].Width);
-                    result[i] = new Rect(offset, 0, width, Length(panel.Height));
+                    result[i] = new Rect(fromEnd ? Length(panel.Width) - offset - width : offset, 0, width, Length(panel.Height));
                     offset += width;
                 }
             }

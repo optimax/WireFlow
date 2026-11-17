@@ -875,6 +875,7 @@ namespace WireFlow
                 Height = stack.Height,
                 Width = stack.Width,
                 Direction = stack.Direction.ToFlow(),
+                StackingFrom = stack.StackingFrom,
                 Fill = stack.Background?.ToString(),
                 Transparency = 1 - stack.Opacity,
                 Href = stack.Href,
@@ -1783,6 +1784,7 @@ namespace WireFlow
             stack.Width = element.Width;
             stack.Height = element.Height;
             stack.Direction = element.Direction.ToWpf();
+            stack.StackingFrom = element.StackingFrom;
             stack.Background = new SolidColorBrush(ColorUtils.StringToColor(element.Fill, "Transparent"));
             stack.Opacity = 1 - element.Transparency;
             stack.Href = element.Href;
