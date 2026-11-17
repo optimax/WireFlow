@@ -1560,9 +1560,11 @@ namespace WireFlow
             var result = dlg.ShowDialog();
             if (result != true)
                 return;
-            Engine.CreatePage(dlg.PageName, dlg.LayoutName);
+            string key = Engine.CreatePage(dlg.PageName, dlg.LayoutName);
             var pages = Engine.Pages;
             Pages = new ObservableCollection<string>(pages);
+            // The new page opens in a tab of its own, ready to be edited
+            NewPageTab(key, Engine.Project.Background, OnNavigatorLoaded);
         }
 
 
@@ -1879,9 +1881,11 @@ namespace WireFlow
             var result = dlg.ShowDialog();
             if (result != true)
                 return;
-            Engine.CreateLayout(dlg.PageName, dlg.LayoutName);
+            string key = Engine.CreateLayout(dlg.PageName, dlg.LayoutName);
             var layouts = Engine.Layouts;
             Layouts = new ObservableCollection<string>(layouts);
+            // The new layout opens in a tab of its own, as a new page does
+            NewLayoutTab(key, Engine.Project.Background, OnNavigatorLoaded);
         }
 
 
@@ -1916,6 +1920,8 @@ namespace WireFlow
                 return;
             Engine.CreatePart(dlg.Name);
             Parts = new ObservableCollection<string>(Engine.Parts);
+            // The new part opens in a tab of its own, as a new page does
+            NewPartTab(dlg.Name, Engine.Project.Background, OnNavigatorLoaded);
         }
 
 
