@@ -104,21 +104,10 @@ namespace WireFlow
         #region The eye and the padlock
 
         /// <summary>
-        /// Whether the entry has the Outline's eye and padlock: a layer of the page or layout open, or an element on one.
-        /// The layers and elements of the layouts a page shows are not its own, and are changed in their layout's tab.
+        /// Whether the entry has the Outline's eye and padlock: a layer of a page or layout, or an element on one, the
+        /// page's own or those of the layouts it shows, which change their layout. An element of a part has none.
         /// </summary>
-        public bool HasState
-        {
-            get
-            {
-                if (!(Node is FlowElementBase || Node is FlowLayer))
-                    return false;
-                for (DependencyObject holder = UIElement; holder != null; holder = LogicalTreeHelper.GetParent(holder))
-                    if (holder is Layer layer && !(holder is Layout))
-                        return !(layer is Master);
-                return false;
-            }
-        }
+        public bool HasState => FlowPath.Of(Node, out _) != null;
 
 
         /// <summary>Whether the element or layer is set to show: an element's Visible, a layer's not being Hidden.</summary>

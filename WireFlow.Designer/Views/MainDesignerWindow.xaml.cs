@@ -1112,16 +1112,102 @@ namespace WireFlow
         // The eye of an Outline entry: its element or layer is hidden if it is set to show, and shown if it is hidden
         private void OutlineToggleVisible(UIElementProxy entry)
         {
-            if (entry != null)
-                CurrentDesigner?.SetVisible(entry.Node, !entry.Visible);
+            var (navigator, node, layoutKey) = OutlineTarget(entry);
+            if (node == null)
+                return;
+            bool visible = node is FlowElementBase element ? !element.Visible : ((FlowLayer)node).Hidden;
+            if (navigator != null)
+                navigator.SetVisible(node, visible);
+            else
+                ChangeClosedLayout(layoutKey, entry.Node, target =>
+                {
+                    if (target is FlowElementBase e)
+                        e.Visible = visible;
+                    else
+                        ((FlowLayer)target).Hidden = !visible;
+                });
         }
 
 
         // The padlock of an Outline entry: its element or layer is locked if it is free, and freed if it is locked
         private void OutlineToggleLocked(UIElementProxy entry)
         {
-            if (entry != null)
-                CurrentDesigner?.SetLocked(entry.Node, !entry.Locked);
+            var (navigator, node, layoutKey) = OutlineTarget(entry);
+            if (node == null)
+                return;
+            bool locked = node is FlowElementBase element ? !element.Locked : !((FlowLayer)node).Locked;
+            if (navigator != null)
+                navigator.SetLocked(node, locked);
+            else
+                ChangeClosedLayout(layoutKey, entry.Node, target =>
+                {
+                    if (target is FlowElementBase e)
+                        e.Locked = locked;
+                    else
+                        ((FlowLayer)target).Locked = locked;
+                });
+        }
+
+
+        // Whether an Outline entry's eye can be used: its element or layer is not kept from change, itself or by what holds it
+        private bool CanOutlineToggleVisible(UIElementProxy entry)
+        {
+            var (navigator, node, _) = OutlineTarget(entry);
+            if (node == null)
+                return false;
+            if (navigator != null)
+                return navigator.CanSetVisible(node);
+            return node is FlowElementBase element ? !element.IsLocked : !((FlowLayer)node).Locked;
+        }
+
+
+        // Whether an Outline entry's padlock can be used: any element or layer can be locked and freed
+        private bool CanOutlineToggleLocked(UIElementProxy entry)
+        {
+            var (navigator, node, _) = OutlineTarget(entry);
+            return node != null && (navigator == null || navigator.CanSetLocked(node));
+        }
+
+
+        /// <summary>
+        /// What an Outline entry's eye and padlock change: a layer or element of the page or layout in front, in its tab; one
+        /// of a layout it shows, that layout's own, in the layout's tab when one has it open (as an edit there, which its Undo
+        /// takes back), and otherwise as the project has it (a null navigator, the layout's key, and the node shown, which
+        /// is a copy of it). Nothing (a null node) for an entry that has no eye and padlock.
+        /// </summary>
+        private (DesignerNavigator Navigator, FlowBase Node, string LayoutKey) OutlineTarget(UIElementProxy entry)
+        {
+            var node = entry?.Node;
+            if (IsNavigateMode || CurrentDesigner == null || node == null)
+                return default;
+            if (CurrentDesigner.IsOwn(node))
+                return (CurrentDesigner, node, null);
+            var path = FlowPath.Of(node, out var layout);
+            if (path == null || Engine == null || string.IsNullOrEmpty(layout.Key)
+                || !Engine.Layouts.Contains(layout.Key, StringComparer.OrdinalIgnoreCase))
+                return default;
+            var tab = FindTab(DesignerNavigatorDocument.LayoutKind, layout.Key);
+            if (tab == null)
+                return (null, node, layout.Key);
+            var own = FlowPath.At(tab.Navigator.CurrentPage as FlowPage, path);
+            return own != null && own.GetType() == node.GetType() && tab.Navigator.IsOwn(own) ? (tab.Navigator, own, layout.Key) : default;
+        }
+
+
+        // Changes a layer or element of a layout no tab has open, as the project has it: the change is saved into the
+        // layout's draft at once, as links retargeted in documents not open are, and the pages and layouts open that are
+        // set on it show it once the edit is done
+        private void ChangeClosedLayout(string layoutKey, FlowBase shown, Action<FlowBase> change)
+        {
+            var layout = Engine?.GetMasterPage(layoutKey);
+            var path = FlowPath.Of(shown, out _);
+            var node = FlowPath.At(layout, path);
+            if (node == null || node.GetType() != shown.GetType())
+                return;
+            change(node);
+            Engine.SaveLayout(layout);
+            ScheduleLayoutRefresh(layoutKey);
+            CommandManager.InvalidateRequerySuggested();
         }
 
 
@@ -1790,6 +1876,9 @@ namespace WireFlow
                 {
                     Engine.RefreshLayouts(page, canvas);
                     doc.Navigator.ScheduleLinkHighlights();
+                    // The Outline lists the layouts' layers and elements too, which are drawn anew
+                    if (doc.Navigator == CurrentDesigner)
+                        PopulateOutlineTree();
                 }
             }
         }
@@ -3283,10 +3372,8 @@ namespace WireFlow
             // Navigate mode leaves the page as it is: the commands that change it without a selection wait for Design mode
             AddLayerCmd = new RelayCommand(o => CurrentDesigner?.AddLayer(), o => !IsNavigateMode && CurrentDesigner?.CurrentPage is FlowPage);
             OutlineDeleteCmd = new RelayCommand(o => OutlineDelete(), o => !IsNavigateMode && CanOutlineDelete());
-            OutlineToggleVisibleCmd = new RelayCommand(o => OutlineToggleVisible(o as UIElementProxy),
-                o => !IsNavigateMode && o is UIElementProxy entry && CurrentDesigner?.CanSetVisible(entry.Node) == true);
-            OutlineToggleLockedCmd = new RelayCommand(o => OutlineToggleLocked(o as UIElementProxy),
-                o => !IsNavigateMode && o is UIElementProxy entry && CurrentDesigner?.CanSetLocked(entry.Node) == true);
+            OutlineToggleVisibleCmd = new RelayCommand(o => OutlineToggleVisible(o as UIElementProxy), o => CanOutlineToggleVisible(o as UIElementProxy));
+            OutlineToggleLockedCmd = new RelayCommand(o => OutlineToggleLocked(o as UIElementProxy), o => CanOutlineToggleLocked(o as UIElementProxy));
             UndoCmd = new RelayCommand(o => CurrentDesigner?.Undo(), o => !IsNavigateMode && (CurrentDesigner?.CanUndo ?? false));
             NavigateModeCmd = new RelayCommand(o => IsNavigateMode = !IsNavigateMode);
             HighlightLinksCmd = new RelayCommand(o => HighlightLinks = !HighlightLinks);
