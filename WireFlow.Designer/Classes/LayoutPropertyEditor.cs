@@ -10,9 +10,10 @@ using OptimaxTools.Wpf;
 namespace WireFlow
 {
     /// <summary>
-    /// The editor of a page's or layout's Layout (its node's Master) in Properties: a list of the project's layouts by name, to
-    /// choose one from, whose box also takes a layout's name or ID typed in (kept as typed); empty is none. A value is set
-    /// when chosen, or, typed, with Enter or as the box loses the focus; Esc takes the typing back.
+    /// The editor of a page's or layout's Layout (its node's Master) in Properties: a box to type a layout's name or ID in
+    /// (kept as typed), with a drop-down list of the project's layouts by name to choose one from. The list holds layouts
+    /// only: none is the box emptied. A value is set when chosen, or, typed, with Enter or as the box loses the focus; Esc
+    /// takes the typing back.
     /// </summary>
     public sealed class LayoutPropertyEditor : PropertyEditor
     {
@@ -28,8 +29,7 @@ namespace WireFlow
 
         public override FrameworkElement CreateEditor(PropertyItem item)
         {
-            var names = new List<string> { "" };
-            names.AddRange(LayoutNames?.Invoke() ?? new List<string>());
+            var names = (LayoutNames?.Invoke() ?? new List<string>()).Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
             var combo = new ComboBox { IsEditable = true, IsTextSearchEnabled = false, ItemsSource = names, IsEnabled = !item.IsReadOnly };
             combo.SetBinding(ComboBox.TextProperty, new Binding(nameof(PropertyItem.Text))
             {
