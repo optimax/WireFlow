@@ -95,6 +95,11 @@ namespace WireFlow
             ["part"] = new[] { P("Name", "Common", "Part"), P("Id", "Common", "ID"), P("Href", "Navigation") }.Concat(Position).Concat(Size).ToArray(),
         };
 
+        /// <summary>Whether Properties shows a property of a node, by the property's own name (Fill, Stroke, ...), for the node's kind.</summary>
+        public static bool Shows(FlowBase node, string property) =>
+            node != null && Kinds.TryGetValue(node.Type ?? "", out var kind) && kind.Any(shown => shown.Property == property);
+
+
         private static readonly Shown[] Unknown = new[] { P("Name", "Common"), P("Id", "Common", "ID"), P("Type", "Common", readOnly: true) }.Concat(Position).Concat(Size).ToArray();
 
         private static readonly Shown[] Page =

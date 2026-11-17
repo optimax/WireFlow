@@ -627,6 +627,7 @@ namespace WireFlow
             DefaultDrawingTool = RegisterDrawingTool<SelectDrawingTool>();
             RegisterDrawingTool<PanDrawingTool>();
             NavigateModeTool = RegisterDrawingTool<NavigateDrawingTool>();
+            RegisterDrawingTool<PickColorDrawingTool>();
 
             RegisterDrawingTool<SeparatorDrawingTool>();
 

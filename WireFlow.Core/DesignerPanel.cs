@@ -18,7 +18,9 @@ namespace WireFlow
         Select = 0,
         Pan,
         Navigate,
-        Draw
+        Draw,
+        // A click names the element clicked, as in Navigate, for a tool that takes something from it or gives it something
+        Pick
     }
 
 
@@ -83,6 +85,9 @@ namespace WireFlow
 
         //public event Action<DesignerPanel, Point, FrameworkElement> NavigateHover;
         public event Action<DesignerPanel, Point, FrameworkElement> NavigateClick;
+
+        /// <summary>Raised in Pick mode for a click on the page: where, and the element clicked.</summary>
+        public event Action<DesignerPanel, Point, FrameworkElement> PickClick;
 
         public event Action<DesignerPanel, double> ZoomLevelChanged;
 
@@ -342,6 +347,12 @@ namespace WireFlow
                     clickedElement = e.Source as FrameworkElement;
                     if (clickedElement != null)
                         NavigateClick?.Invoke(this, start, clickedElement);
+                    break;
+                case MouseDragMode.Pick:
+                    start = e.GetPosition(Canvas);
+                    clickedElement = e.Source as FrameworkElement ?? (e.Source as Run)?.Parent as FrameworkElement;
+                    if (clickedElement != null)
+                        PickClick?.Invoke(this, start, clickedElement);
                     break;
             }
         }

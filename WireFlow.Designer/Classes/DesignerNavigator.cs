@@ -527,6 +527,7 @@ namespace WireFlow
             Designer.DrawMove += DesignerDrawMoveHandler;
             Designer.DrawEnd += DesignerDrawEndHandler;
             Designer.NavigateClick += DesignerNavigateClickHandler;
+            Designer.PickClick += DesignerPickClickHandler;
         }
 
 
@@ -861,6 +862,38 @@ namespace WireFlow
             if (target != null)
                 OnNavigating(target);
             //NavigateToPage(href) is called by the Navigation Manager, not here!
+        }
+
+        // A click with the Pick Color tool; with Shift held, the colors given are kept for the next click
+        public void DesignerPickClickHandler(DesignerPanel designer, Point mousePos, FrameworkElement element) => PickColor(element, IsShiftPressed);
+
+
+        /// <summary>
+        /// The Pick Color tool's click on an element: it takes the element's colors, its fill and its stroke, or, when the
+        /// tool has colors taken, gives them to the element; the tool then forgets them, unless they are kept, as with Shift
+        /// held, to be given to each element clicked after. The element is the innermost one around what was clicked that
+        /// has a fill or a stroke.
+        /// </summary>
+        public void PickColor(FrameworkElement element, bool keep)
+        {
+            if (!(SelectedDrawingTool is PickColorDrawingTool pick))
+                return;
+            FlowElementBase node = null;
+            for (DependencyObject current = element; current != null && !(current is Layer) && node == null; current = LogicalTreeHelper.GetParent(current))
+                if (FlowView.GetNode(current) is FlowElementBase clicked && PickColorDrawingTool.HasColor(clicked))
+                    node = clicked;
+            if (node == null)
+                return;
+            if (!pick.HasColors)
+                pick.Take(node);
+            else
+            {
+                if (pick.GiveTo(node))
+                    IsModified = true;
+                if (!keep)
+                    pick.Clear();
+            }
+            Designer.Cursor = pick.Cursor;
         }
 
         #endregion
@@ -1757,6 +1790,14 @@ namespace WireFlow
 
             if (tool.DesignerMode == MouseDragMode.Navigate)
             {
+                DeselectAll();
+            }
+            // The Pick Color tool starts with no colors taken, and nothing selected: a selected element's handles would
+            // take the clicks meant for it
+            if (tool is PickColorDrawingTool pick)
+            {
+                pick.Clear();
+                Designer.Cursor = pick.Cursor;
                 DeselectAll();
             }
 
