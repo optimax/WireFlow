@@ -917,8 +917,10 @@ namespace WireFlow
                 return;
             if (!pick.HasColors)
                 pick.Take(node);
-            else if (node.IsLocked)
-                // A locked element keeps its colors, and the tool the ones it has
+            else if (node.IsLocked || !IsOwn(node))
+                // A locked element keeps its colors, and the tool the ones it has; so does an element of a layout the page
+                // shows (or of a part), which is drawn from a copy: a change to it would show on the page, but neither the
+                // page's Undo nor its saving would reach it, and the layout would not change. It is changed in its own tab.
                 return;
             else
             {
