@@ -2858,6 +2858,8 @@ namespace WireFlow
         private void DebugGenerateWPFColorChart()
         {
             CreateBlankDocumentTab("WPF Color Chart", null);
+            // A chart is looked at: a drag across it selects and moves nothing, and it never has changes to save
+            CurrentDesigner.IsViewOnly = true;
 
 
             var canvas = CurrentDesigner.Designer.Canvas;

@@ -298,11 +298,19 @@ namespace WireFlow
         public event Action<DesignerNavigator> ModifiedChanged;
 
 
+        /// <summary>
+        /// Whether the navigator shows something that is no document, as a color chart does: nothing on it is selected,
+        /// moved or drawn, whatever the tool, and it never has changes to save.
+        /// </summary>
+        public bool IsViewOnly { get; set; }
+
+
         public bool IsModified {
             get { return Designer.IsModified; }
             set
             {
-                if (Designer.IsModified == value)
+                // What is no document has no changes to save
+                if (Designer.IsModified == value || (value && IsViewOnly))
                     return;
                 Designer.IsModified = value;
                 ModifiedChanged?.Invoke(this);
@@ -593,6 +601,9 @@ namespace WireFlow
         public void DesignerSelectStartHandler(DesignerPanel designer, Point mousePos, FrameworkElement clickedElement)
         {
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {mousePos}");
+            // A chart is looked at, not worked on
+            if (IsViewOnly)
+                return;
             // A drag whose end was missed ends here
             EndGestureStep();
             pendingChildSelection = null;
@@ -650,6 +661,8 @@ namespace WireFlow
         public void DesignerSelectMoveHandler(DesignerPanel designer, Point mousePos)
         {
             Point currentPoint = mousePos;
+            if (IsViewOnly)
+                return;
 
             if (IsDraggingShapes)
             {
@@ -684,6 +697,8 @@ namespace WireFlow
         {
             Point currentPoint = mousePos;
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {currentPoint}");
+            if (IsViewOnly)
+                return;
 
             if (IsSelecting)
                 SelectWithRubberband();
@@ -817,6 +832,9 @@ namespace WireFlow
         public void DesignerDrawStartHandler(DesignerPanel designer, Point mousePos)
         {
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {mousePos}");
+            // A chart is looked at, not worked on
+            if (IsViewOnly)
+                return;
             //bool isModifierKeyPressed = IsModifierKeyPressed;
             StartPoint = mousePos;
             CreateRubberband();
@@ -827,6 +845,8 @@ namespace WireFlow
         {
             Point currentPoint = mousePos;
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {currentPoint}");
+            if (IsViewOnly)
+                return;
             AdjustRubberband(mousePos);
         }
 
@@ -835,6 +855,8 @@ namespace WireFlow
         {
 
             Debug.WriteLine($"{MethodBase.GetCurrentMethod().Name}: {mousePos}");
+            if (IsViewOnly)
+                return;
             //bool isModifierKeyPressed = IsModifierKeyPressed;
             if (!IsShiftPressed)
                 DeselectAll();
@@ -1346,7 +1368,8 @@ namespace WireFlow
 
         void SelectElement(FrameworkElement clickedElement)
         {
-            if (LayerOf(clickedElement) != CurrentLayer || selectedElements.Contains(clickedElement))
+            // Nothing on a chart is selected, from the Outline either
+            if (IsViewOnly || LayerOf(clickedElement) != CurrentLayer || selectedElements.Contains(clickedElement))
                 return;
 
             AdornerLayer aLayer = AdornerLayer.GetAdornerLayer(clickedElement);
