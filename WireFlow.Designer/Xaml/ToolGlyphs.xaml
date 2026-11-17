@@ -75,6 +75,8 @@
     <Geometry x:Key="ToolGlyph.same-height">M4 5v14 M2 7l2-2 2 2M2 17l2 2 2-2 M10,5 L12,5 A1,1 0 0 1 13,6 L13,18 A1,1 0 0 1 12,19 L10,19 A1,1 0 0 1 9,18 L9,6 A1,1 0 0 1 10,5 Z M17,5 L20,5 A1,1 0 0 1 21,6 L21,18 A1,1 0 0 1 20,19 L17,19 A1,1 0 0 1 16,18 L16,6 A1,1 0 0 1 17,5 Z</Geometry>
     <!-- Make Same Width: two bars of one width under a span arrow -->
     <Geometry x:Key="ToolGlyph.same-width">M5 4h14 M7 2L5 4l2 2M17 2l2 2-2 2 M6,9 L18,9 A1,1 0 0 1 19,10 L19,12 A1,1 0 0 1 18,13 L6,13 A1,1 0 0 1 5,12 L5,10 A1,1 0 0 1 6,9 Z M6,16 L18,16 A1,1 0 0 1 19,17 L19,20 A1,1 0 0 1 18,21 L6,21 A1,1 0 0 1 5,20 L5,17 A1,1 0 0 1 6,16 Z</Geometry>
+    <!-- Save All: the Save diskette in front of another, whose top and left edges show behind it -->
+    <Geometry x:Key="ToolGlyph.save-all">M7 6H17L20 9V21H7Z M10 6V10H16V6 M10 21V15H17V21 M7 18H4V3H14L17 6</Geometry>
     <!-- Save: a diskette, as PDFTools draws it -->
     <Geometry x:Key="ToolGlyph.save">M5 3H17L20 6V21H4V3Z M8 3V9H16V3 M7 14H17V21H7Z</Geometry>
     <!-- Select: the mouse pointer -->

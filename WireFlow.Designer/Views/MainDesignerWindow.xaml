@@ -310,6 +310,9 @@
                 <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveFileCmd}" ToolTip="Save (Ctrl+S)">
                     <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.save}"/>
                 </Button>
+                <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveAllCmd}" ToolTip="Save All: every document, as a new revision of the project (Ctrl+Shift+S)">
+                    <Path Style="{StaticResource ToolbarIconStyle}" Data="{StaticResource ToolGlyph.save-all}"/>
+                </Button>
                 <Border Style="{StaticResource ToolbarSeparatorStyle}"/>
                 <!-- Design or Navigate mode, and Back and Forward through the pages visited in Navigate mode -->
                 <!-- The Navigate Mode toggle, left out for now (user decision): the Navigate tool, F9 and View > Navigate Mode
